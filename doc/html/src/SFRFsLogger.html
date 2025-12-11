@@ -1,0 +1,1083 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsLogger</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsLogger.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> SFRFsLogger &lt; handle
+<span class="comment">% SFRFsLogger - Singleton logger supporting parallel workers</span>
+<span class="comment">%</span>
+<span class="comment">% Provides a per-process singleton logger instance writing to unique files</span>
+<span class="comment">% named by worker ID (0 for main MATLAB, &gt;0 for parallel workers).</span>
+<span class="comment">% Supports all standard java.util.logging levels.</span>
+<span class="comment">%</span>
+<span class="comment">% Usage:</span>
+<span class="comment">%   logger = SFRFsLogger.getLogger();</span>
+<span class="comment">%   logger.info('A relevant bit of information');</span>
+<span class="comment">%   logger.warning('A warning message');</span>
+<span class="comment">%   logger.severe('A message signaling a severe condition');</span>
+<span class="comment">%   logger.finer('An informative message for debugging');</span>
+<span class="comment">%   logger.finest('A very detailed message');</span>
+<span class="comment">%   logger.config('A relevant remark on configuration');</span>
+<span class="comment">%</span>
+<span class="comment">% Log files:</span>
+<span class="comment">%   Files named 'SFRFsLogger_worker&lt;ID&gt;.log' saved in the configured log</span>
+<span class="comment">%   folder.</span>
+
+
+    <span class="keyword">properties</span>
+        logFolder    <span class="comment">% Log files directory</span>
+        pattern      <span class="comment">% Log filename pattern with placeholders</span>
+        limit        <span class="comment">% Max file size in bytes before rotation</span>
+        count        <span class="comment">% Number of rotated log files kept</span>
+        append       <span class="comment">% Whether to append to existing log files</span>
+        level        <span class="comment">% Log level filter (e.g., 'ALL', 'INFO')</span>
+        formatter    <span class="comment">% Java class for log message formatting</span>
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">properties</span> (Constant)
+        <span class="comment">% Base prefix for all properties</span>
+        LOGGER_BASE_NAME = <span class="string">'SFRFsLogger'</span>;
+
+        <span class="comment">% FileHandler related properties</span>
+        FILE_HANDLER_PATTERN   = <span class="string">'SFRFsLogger.FileHandler.pattern'</span>;
+        FILE_HANDLER_LIMIT     = <span class="string">'SFRFsLogger.FileHandler.limit'</span>;
+        FILE_HANDLER_COUNT     = <span class="string">'SFRFsLogger.FileHandler.count'</span>;
+        FILE_HANDLER_APPEND    = <span class="string">'SFRFsLogger.FileHandler.append'</span>;
+        FILE_HANDLER_LEVEL     = <span class="string">'SFRFsLogger.FileHandler.level'</span>;
+        FILE_HANDLER_FORMATTER = <span class="string">'SFRFsLogger.FileHandler.formatter'</span>;
+
+        <span class="comment">% Optional log folder path property</span>
+        LOG_FOLDER            = <span class="string">'SFRFsLogger.logFolder'</span>;
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Constant, Access = private)
+        DEFAULT_PATTERN = SFRFsLogger.getDefaultPattern();
+        DEFAULT_LIMIT = <span class="string">'1000000'</span>;
+        DEFAULT_COUNT = <span class="string">'3'</span>;
+        DEFAULT_APPEND = <span class="string">'true'</span>;
+        DEFAULT_LEVEL = <span class="string">'ALL'</span>;
+        DEFAULT_FORMATTER = <span class="string">'java.util.logging.SimpleFormatter'</span>;
+
+        <span class="comment">% Define level name strings</span>
+        LEVEL_ALL     = <span class="string">'ALL'</span>;
+        LEVEL_SEVERE  = <span class="string">'SEVERE'</span>;
+        LEVEL_WARNING = <span class="string">'WARNING'</span>;
+        LEVEL_INFO    = <span class="string">'INFO'</span>;
+        LEVEL_CONFIG  = <span class="string">'CONFIG'</span>;
+        LEVEL_FINE    = <span class="string">'FINE'</span>;
+        LEVEL_FINER   = <span class="string">'FINER'</span>;
+        LEVEL_FINEST  = <span class="string">'FINEST'</span>;
+        LEVEL_OFF     = <span class="string">'OFF'</span>;
+
+        LEVEL_MAP = SFRFsLogger.initLevelMap();
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        Logger
+        debugEnabled = false; <span class="comment">% default disabled</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private, Static)
+        <span class="keyword">function</span> map = initLevelMap()
+            import <span class="string">java.util.logging.Level</span>
+
+            map = containers.Map( <span class="keyword">...</span>
+            { <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_ALL, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_SEVERE, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_WARNING, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_INFO, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_CONFIG, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_FINE, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_FINER, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_FINEST, <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_OFF}, <span class="keyword">...</span>
+            { <span class="keyword">...</span>
+                Level.ALL, <span class="keyword">...</span>
+                Level.SEVERE, <span class="keyword">...</span>
+                Level.WARNING, <span class="keyword">...</span>
+                Level.INFO, <span class="keyword">...</span>
+                Level.CONFIG, <span class="keyword">...</span>
+                Level.FINE, <span class="keyword">...</span>
+                Level.FINER, <span class="keyword">...</span>
+                Level.FINEST, <span class="keyword">...</span>
+                Level.OFF});
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> singleObj = getInstanceInternal()
+            <span class="comment">% Get or create the singleton logger instance for this process</span>
+            <span class="keyword">persistent</span> localObj
+            <span class="keyword">if</span> isempty(localObj) || ~isvalid(localObj)
+                localObj = SFRFsLogger();
+            <span class="keyword">end</span>
+            singleObj = localObj;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+        <span class="keyword">function</span> obj = getLogger()
+            <span class="comment">% Return the singleton logger instance for the current MATLAB</span>
+            <span class="comment">% process/worker</span>
+            obj = SFRFsLogger.getInstanceInternal();
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+
+        <span class="keyword">function</span> obj = SFRFsLogger()
+            import <span class="string">java.util.logging.FileHandler</span>
+            import <span class="string">java.util.logging.Logger</span>
+            import <span class="string">java.util.logging.Level</span>
+            import <span class="string">java.util.logging.LogManager</span>
+            import <span class="string">java.util.logging.SimpleFormatter</span>
+            import <span class="string">java.io.FileInputStream</span>
+
+
+            <span class="comment">% Load logging properties file</span>
+            propertiesFile = SFRFsLogger.getPropertiesFilePath();
+            fis = FileInputStream(propertiesFile);
+            cleanupObj = onCleanup(@() fis.close());
+            <span class="keyword">try</span>
+                LogManager.getLogManager().readConfiguration(fis);
+            <span class="keyword">catch</span> ME
+                warning(ME.identifier, <span class="string">'%s'</span>, ME.message);
+            <span class="keyword">end</span>
+
+
+            <span class="comment">% Read log folder from properties or default to prefdir location</span>
+            logFolder = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                SFRFsLogger.LOG_FOLDER, <span class="keyword">...</span>
+                fullfile(prefdir, <span class="string">'sfrfs'</span>, <span class="string">'logs'</span>));
+
+            <span class="comment">% Ensure log folder exists</span>
+            <span class="keyword">if</span> ~exist(logFolder, <span class="string">'dir'</span>)
+                mkdir(logFolder);
+            <span class="keyword">end</span>
+            obj.logFolder = logFolder;
+
+            <span class="comment">% Get worker ID and build logger name</span>
+            wid = SFRFsLogger.getWorkerID();
+            loggerName = <span class="keyword">...</span>
+                sprintf(<span class="string">'%s_worker%d'</span>, SFRFsLogger.LOGGER_BASE_NAME, wid);
+            obj.Logger = Logger.getLogger(loggerName);
+            obj.Logger.setUseParentHandlers(false);
+
+            <span class="comment">% Clear existing handlers to avoid duplicates</span>
+            handlers = obj.Logger.getHandlers();
+            <span class="keyword">for</span> k = 1:length(handlers)
+                obj.Logger.removeHandler(handlers(k));
+            <span class="keyword">end</span>
+
+            <span class="comment">% Add FileHandler if none exist</span>
+            handlers = obj.Logger.getHandlers();
+            <span class="keyword">if</span> isempty(handlers)
+                <span class="comment">% Read FileHandler properties dynamically</span>
+                pattern = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_PATTERN, <span class="keyword">...</span>
+                    SFRFsLogger.DEFAULT_PATTERN);
+                obj.pattern = pattern;
+                limitStr = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_LIMIT, <span class="keyword">...</span>
+                    SFRFsLogger.DEFAULT_LIMIT);
+                obj.limit = limitStr;
+                countStr = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_COUNT, <span class="keyword">...</span>
+                    SFRFsLogger.DEFAULT_COUNT);
+                obj.count = countStr;
+                appendStr = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_APPEND,<span class="keyword">...</span>
+                    SFRFsLogger.DEFAULT_APPEND);
+                obj.append = appendStr;
+                levelStr = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_LEVEL, <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_LEVEL);
+                obj.level = levelStr;
+                formatterClass = SFRFsLogger.getPropertyOrDefault( <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_FORMATTER, <span class="keyword">...</span>
+                    SFRFsLogger.FILE_HANDLER_FORMATTER);
+                obj.formatter = formatterClass;
+
+                <span class="comment">% Expand ~ if present in logFolder</span>
+                <span class="keyword">if</span> startsWith(logFolder, <span class="string">'~'</span>)
+                    homeDir = getenv(<span class="string">'HOME'</span>);
+                    <span class="keyword">if</span> isempty(homeDir)
+                        <span class="comment">% maybe works in Win systems?</span>
+                        homeDir = getenv(<span class="string">'USERPROFILE'</span>);
+                    <span class="keyword">end</span>
+                    logFolder = fullfile(homeDir, logFolder(2:end));
+                <span class="keyword">end</span>
+
+                <span class="comment">% Create full log filename with worker id replacing %u</span>
+                logFileName = fullfile(logFolder, sprintf(pattern, wid));
+
+                <span class="comment">% Parse numeric and boolean parameters</span>
+                limit = str2double(limitStr);
+                count = str2double(countStr);
+                append = strcmpi(appendStr, <span class="string">'true'</span>);
+
+                <span class="comment">% Create FileHandler with rotation settings</span>
+                fileHandler = <span class="keyword">...</span>
+                    FileHandler( logFileName, limit, count, append); <span class="comment">%#ok&lt;UNRCH&gt;</span>
+
+                <span class="comment">% Take care of format, this does not work,</span>
+                <span class="comment">% property must be set before starting MATLAB</span>
+                java.lang.System.setProperty(<span class="keyword">...</span>
+                    <span class="string">'java.util.logging.SimpleFormatter.format'</span>, <span class="keyword">...</span>
+                    <span class="string">'%1$tF %1$tT %4$s %3$s [%2$s] %5$s%6$s%n'</span>);
+
+                <span class="comment">% Instantiate formatter</span>
+                fileHandler.setFormatter(<span class="keyword">...</span>
+                    SFRFsLogger.createFormatter(formatterClass));
+
+
+                <span class="comment">% Set log levels</span>
+                levelVal = SFRFsLogger.getJavaLogLevel(levelStr);
+                fileHandler.setLevel(levelVal);
+                obj.Logger.setLevel(levelVal);
+
+                <span class="comment">% Add FileHandler to logger</span>
+                obj.Logger.addHandler(fileHandler)
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fullMsg = formatLogMessage(obj, varargin)
+            msgParts = cellfun(@(x) SFRFsLogger.convertToString(x), <span class="keyword">...</span>
+                varargin, <span class="string">'UniformOutput'</span>, false);
+            msgParts = cellfun(@char, msgParts, <span class="string">'UniformOutput'</span>, false);
+            msg = strjoin(msgParts, <span class="string">' '</span>);
+
+            <span class="keyword">if</span> obj.isDebugEnabled()
+                metaInfo = SFRFsLogger.getMetaInfo();
+            <span class="keyword">else</span>
+                metaInfo = <span class="string">''</span>;
+            <span class="keyword">end</span>
+
+            fullMsg = [metaInfo msg];
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> log(obj, levelStr, msg)
+            <span class="comment">% Log a message with a specified level string</span>
+            <span class="comment">% Supported levels: ALL, SEVERE, WARNING, INFO, CONFIG, FINE,</span>
+            <span class="comment">%                   FINER, FINEST, OFF</span>
+            upperLevel = upper(levelStr);
+            <span class="keyword">if</span> ~isKey(SFRFsLogger.LEVEL_MAP, upperLevel)
+                error(<span class="string">'sfrfs:SFRFsLogger:UnknownLogLevel'</span>, <span class="keyword">...</span>
+                    <span class="string">'Unknown log level: %s'</span>, levelStr);
+            <span class="keyword">end</span>
+            obj.Logger.log(obj.LEVEL_MAP(upperLevel), msg);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> value = getPropertyOrDefault(propKey, defaultVal)
+            value = SFRFsLogger.getPropertyFromLogManager(propKey);
+            <span class="keyword">if</span> isempty(value)
+                value = defaultVal;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> pattern = getDefaultPattern()
+                pattern = [SFRFsLogger.LOGGER_BASE_NAME <span class="string">'_worker%u.log'</span>];
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> formatterObj = createFormatter(formatterClassName)
+
+            <span class="comment">% Allow only known safe formatter classes</span>
+            validFormatters = containers.Map( <span class="keyword">...</span>
+                {<span class="string">'java.util.logging.SimpleFormatter'</span>, <span class="keyword">...</span>
+                 <span class="string">'java.util.logging.XMLFormatter'</span>}, <span class="keyword">...</span>
+                {@java.util.logging.SimpleFormatter, <span class="keyword">...</span>
+                @java.util.logging.XMLFormatter});
+
+            <span class="keyword">if</span> isKey(validFormatters, formatterClassName)
+                <span class="comment">% Instantiate using function handle stored in the map</span>
+                formatterConstructor = validFormatters(formatterClassName);
+                formatterObj = formatterConstructor();
+            <span class="keyword">else</span>
+                warning([<span class="string">'Unknown formatter class %s, '</span><span class="keyword">...</span>
+                    <span class="string">'defaulting to SimpleFormatter.'</span>], formatterClassName);
+                formatterObj = java.util.logging.SimpleFormatter();
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> wid = getWorkerID()
+            <span class="comment">% Get a unique worker ID or zero for the main MATLAB process</span>
+            wid = 0;
+            <span class="keyword">try</span>
+                t = getCurrentTask();
+                <span class="keyword">if</span> ~isempty(t)
+                    wid = t.ID;
+                <span class="keyword">end</span>
+            <span class="keyword">catch</span>
+                <span class="comment">% Not in parallel, wid stays 0</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> propertiesFile = getPropertiesFilePath()
+            <span class="comment">% Locate logging.properties file in toolbox resources folder</span>
+            classFilePath = mfilename(<span class="string">'fullpath'</span>);
+            toolboxRoot = fileparts(classFilePath);
+            propertiesFile = fullfile(<span class="keyword">...</span>
+                toolboxRoot, <span class="string">'resources'</span>, <span class="string">'logging.properties'</span>);
+            <span class="keyword">if</span> ~exist(propertiesFile, <span class="string">'file'</span>)
+                error(<span class="string">'Properties file not found: %s'</span>, propertiesFile);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> propValue = getPropertyFromLogManager(propName)
+            import <span class="string">java.util.logging.LogManager</span>;
+            lm = LogManager.getLogManager();
+            rawValue = lm.getProperty(propName);
+
+            <span class="keyword">if</span> isempty(rawValue)
+                propValue = <span class="string">''</span>;
+            <span class="keyword">else</span>
+                propValue = char(rawValue);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> enableDebug(obj)
+            obj.debugEnabled = true;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> disableDebug(obj)
+            obj.debugEnabled = false;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isDebugEnabled(obj)
+            tf = obj.debugEnabled;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> info(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.info(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> warning(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.warning(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> severe(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.severe(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fine(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.fine(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> finest(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.finest(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> finer(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.finer(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> all(obj, varargin)
+            import <span class="string">java.util.logging.Level</span>;
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.log(Level.ALL, fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> config(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.config(fullMsg);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isAllEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_ALL));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isSevereEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_SEVERE));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isWarningEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_WARNING));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isInfoEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_INFO));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isConfigEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_CONFIG));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isFineEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINE));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isFinerEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINER));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isFinestEnabled(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINEST));
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> tf = isLoggingOff(obj)
+            tf = obj.Logger.isLoggable( <span class="keyword">...</span>
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_OFF));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+        <span class="keyword">function</span> str = convertToString(x)
+            <span class="comment">% Convert input of any type to a string suitable for logging</span>
+
+            <span class="keyword">if</span> ischar(x)
+                str = string(x);
+            <span class="keyword">elseif</span> isstring(x)
+                str = x;
+            <span class="keyword">elseif</span> isnumeric(x) || islogical(x)
+                <span class="comment">% Convert arrays to string matrix representation</span>
+                str = mat2str(x);
+            <span class="keyword">elseif</span> iscell(x)
+                <span class="comment">% For cell arrays, convert element-wise recursively</span>
+                cellStrs = cellfun(<span class="keyword">...</span>
+                    @(c) SFRFsLogger.convertToStr(c), x, <span class="keyword">...</span>
+                    <span class="string">'UniformOutput'</span>, false);
+                str = [<span class="string">'{'</span> strjoin(cellStrs, <span class="string">', '</span>) <span class="string">'}'</span>];
+            <span class="keyword">elseif</span> isobject(x) &amp;&amp; ismethod(x, <span class="string">'toString'</span>)
+                <span class="comment">% Custom object with toString method</span>
+                str = x.toString();
+            <span class="keyword">else</span>
+                str = [<span class="string">'&lt;'</span> class(x) <span class="string">'&gt;'</span>];
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> levelVal = getJavaLogLevel(levelStr)
+        <span class="comment">% Convert a level string to corresponding java.util.logging.Level</span>
+
+            upperLevel = upper(levelStr);
+
+            <span class="keyword">if</span> isKey(SFRFsLogger.LEVEL_MAP, upperLevel)
+                levelVal = SFRFsLogger.LEVEL_MAP(upperLevel);
+            <span class="keyword">else</span>
+                warning(<span class="string">'sfrfs:SFRFsLogger:UnknownLogLevel'</span>, <span class="keyword">...</span>
+                    <span class="string">'Unknown log level: %s. Defaulting to ALL.'</span>, levelStr);
+                levelVal = SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_ALL);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> metaStr = getMetaInfo()
+            <span class="comment">% Get stack for line/file info (skip 2 frames)</span>
+            stackFileLine = dbstack(2, <span class="string">'-completenames'</span>);
+            <span class="comment">% Get stack for caller method name (skip 3 frames)</span>
+            stackMethod = dbstack(3, <span class="string">'-completenames'</span>);
+
+            <span class="keyword">if</span> isempty(stackFileLine)
+                metaStr = <span class="string">''</span>;
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+
+            callerFile = stackFileLine(1);
+            [~, fileName, ext] = fileparts(callerFile.file);
+            fullName = [fileName, ext];
+            lineNumber = callerFile.line;
+
+            <span class="keyword">if</span> isempty(stackMethod)
+                methodName = <span class="string">''</span>;
+            <span class="keyword">else</span>
+                methodName = stackMethod(1).name;
+            <span class="keyword">end</span>
+
+            metaStr = <span class="keyword">...</span>
+                sprintf(<span class="string">'[%s@%s:%d] '</span>, methodName, fullName, lineNumber);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef SFRFsLogger < handle
+% SFRFsLogger - Singleton logger supporting parallel workers
+%
+% Provides a per-process singleton logger instance writing to unique files
+% named by worker ID (0 for main MATLAB, >0 for parallel workers).
+% Supports all standard java.util.logging levels.
+%
+% Usage:
+%   logger = SFRFsLogger.getLogger();
+%   logger.info('A relevant bit of information');
+%   logger.warning('A warning message');
+%   logger.severe('A message signaling a severe condition');
+%   logger.finer('An informative message for debugging');
+%   logger.finest('A very detailed message');
+%   logger.config('A relevant remark on configuration');
+%
+% Log files:
+%   Files named 'SFRFsLogger_worker<ID>.log' saved in the configured log 
+%   folder.
+
+
+    properties
+        logFolder    % Log files directory
+        pattern      % Log filename pattern with placeholders
+        limit        % Max file size in bytes before rotation
+        count        % Number of rotated log files kept
+        append       % Whether to append to existing log files
+        level        % Log level filter (e.g., 'ALL', 'INFO')
+        formatter    % Java class for log message formatting
+    end
+
+
+    properties (Constant)
+        % Base prefix for all properties
+        LOGGER_BASE_NAME = 'SFRFsLogger';
+
+        % FileHandler related properties
+        FILE_HANDLER_PATTERN   = 'SFRFsLogger.FileHandler.pattern';
+        FILE_HANDLER_LIMIT     = 'SFRFsLogger.FileHandler.limit';
+        FILE_HANDLER_COUNT     = 'SFRFsLogger.FileHandler.count';
+        FILE_HANDLER_APPEND    = 'SFRFsLogger.FileHandler.append';
+        FILE_HANDLER_LEVEL     = 'SFRFsLogger.FileHandler.level';
+        FILE_HANDLER_FORMATTER = 'SFRFsLogger.FileHandler.formatter';
+
+        % Optional log folder path property
+        LOG_FOLDER            = 'SFRFsLogger.logFolder';
+    end
+
+    properties (Constant, Access = private)
+        DEFAULT_PATTERN = SFRFsLogger.getDefaultPattern();
+        DEFAULT_LIMIT = '1000000';   
+        DEFAULT_COUNT = '3';        
+        DEFAULT_APPEND = 'true';      
+        DEFAULT_LEVEL = 'ALL';
+        DEFAULT_FORMATTER = 'java.util.logging.SimpleFormatter';
+
+        % Define level name strings
+        LEVEL_ALL     = 'ALL';
+        LEVEL_SEVERE  = 'SEVERE';
+        LEVEL_WARNING = 'WARNING';
+        LEVEL_INFO    = 'INFO';
+        LEVEL_CONFIG  = 'CONFIG';
+        LEVEL_FINE    = 'FINE';
+        LEVEL_FINER   = 'FINER';
+        LEVEL_FINEST  = 'FINEST';
+        LEVEL_OFF     = 'OFF';
+
+        LEVEL_MAP = SFRFsLogger.initLevelMap();
+    end
+
+    properties (Access = private)
+        Logger
+        debugEnabled = false; % default disabled
+    end
+
+    methods (Access = private, Static)
+        function map = initLevelMap()
+            import java.util.logging.Level
+                
+            map = containers.Map( ...
+            { ...
+                SFRFsLogger.LEVEL_ALL, ...
+                SFRFsLogger.LEVEL_SEVERE, ...
+                SFRFsLogger.LEVEL_WARNING, ...
+                SFRFsLogger.LEVEL_INFO, ...
+                SFRFsLogger.LEVEL_CONFIG, ...
+                SFRFsLogger.LEVEL_FINE, ...
+                SFRFsLogger.LEVEL_FINER, ...
+                SFRFsLogger.LEVEL_FINEST, ...
+                SFRFsLogger.LEVEL_OFF}, ...
+            { ...
+                Level.ALL, ...
+                Level.SEVERE, ...
+                Level.WARNING, ...
+                Level.INFO, ...
+                Level.CONFIG, ...
+                Level.FINE, ...
+                Level.FINER, ...
+                Level.FINEST, ...
+                Level.OFF}); 
+        end
+
+        function singleObj = getInstanceInternal()
+            % Get or create the singleton logger instance for this process
+            persistent localObj
+            if isempty(localObj) || ~isvalid(localObj)
+                localObj = SFRFsLogger();
+            end
+            singleObj = localObj;
+        end
+    end
+
+    methods (Static)
+        function obj = getLogger()
+            % Return the singleton logger instance for the current MATLAB 
+            % process/worker
+            obj = SFRFsLogger.getInstanceInternal();
+        end
+    end
+
+    methods (Access = private)
+
+        function obj = SFRFsLogger()
+            import java.util.logging.FileHandler
+            import java.util.logging.Logger
+            import java.util.logging.Level
+            import java.util.logging.LogManager
+            import java.util.logging.SimpleFormatter
+            import java.io.FileInputStream
+
+        
+            % Load logging properties file
+            propertiesFile = SFRFsLogger.getPropertiesFilePath();
+            fis = FileInputStream(propertiesFile);
+            cleanupObj = onCleanup(@() fis.close());
+            try
+                LogManager.getLogManager().readConfiguration(fis);
+            catch ME
+                warning(ME.identifier, '%s', ME.message);
+            end
+
+        
+            % Read log folder from properties or default to prefdir location
+            logFolder = SFRFsLogger.getPropertyOrDefault( ...
+                SFRFsLogger.LOG_FOLDER, ...
+                fullfile(prefdir, 'sfrfs', 'logs'));
+
+            % Ensure log folder exists
+            if ~exist(logFolder, 'dir')
+                mkdir(logFolder);
+            end
+            obj.logFolder = logFolder;
+        
+            % Get worker ID and build logger name
+            wid = SFRFsLogger.getWorkerID();
+            loggerName = ...
+                sprintf('%s_worker%d', SFRFsLogger.LOGGER_BASE_NAME, wid);
+            obj.Logger = Logger.getLogger(loggerName);
+            obj.Logger.setUseParentHandlers(false);
+        
+            % Clear existing handlers to avoid duplicates
+            handlers = obj.Logger.getHandlers();
+            for k = 1:length(handlers)
+                obj.Logger.removeHandler(handlers(k));
+            end
+        
+            % Add FileHandler if none exist
+            handlers = obj.Logger.getHandlers();
+            if isempty(handlers)
+                % Read FileHandler properties dynamically
+                pattern = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_PATTERN, ...
+                    SFRFsLogger.DEFAULT_PATTERN);
+                obj.pattern = pattern;
+                limitStr = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_LIMIT, ...
+                    SFRFsLogger.DEFAULT_LIMIT);
+                obj.limit = limitStr;
+                countStr = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_COUNT, ...
+                    SFRFsLogger.DEFAULT_COUNT);
+                obj.count = countStr;
+                appendStr = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_APPEND,...
+                    SFRFsLogger.DEFAULT_APPEND);
+                obj.append = appendStr;
+                levelStr = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_LEVEL, ...
+                    SFRFsLogger.FILE_HANDLER_LEVEL);
+                obj.level = levelStr;
+                formatterClass = SFRFsLogger.getPropertyOrDefault( ...
+                    SFRFsLogger.FILE_HANDLER_FORMATTER, ...
+                    SFRFsLogger.FILE_HANDLER_FORMATTER);
+                obj.formatter = formatterClass;
+        
+                % Expand ~ if present in logFolder
+                if startsWith(logFolder, '~')
+                    homeDir = getenv('HOME');
+                    if isempty(homeDir)
+                        % maybe works in Win systems?
+                        homeDir = getenv('USERPROFILE');
+                    end
+                    logFolder = fullfile(homeDir, logFolder(2:end));
+                end
+        
+                % Create full log filename with worker id replacing %u
+                logFileName = fullfile(logFolder, sprintf(pattern, wid));
+        
+                % Parse numeric and boolean parameters
+                limit = str2double(limitStr);
+                count = str2double(countStr);
+                append = strcmpi(appendStr, 'true');
+        
+                % Create FileHandler with rotation settings
+                fileHandler = ...
+                    FileHandler( logFileName, limit, count, append); %#ok<UNRCH>
+        
+                % Take care of format, this does not work,
+                % property must be set before starting MATLAB
+                java.lang.System.setProperty(...
+                    'java.util.logging.SimpleFormatter.format', ...
+                    '%1$tF %1$tT %4$s %3$s [%2$s] %5$s%6$s%n');
+                
+                % Instantiate formatter
+                fileHandler.setFormatter(...
+                    SFRFsLogger.createFormatter(formatterClass));
+
+        
+                % Set log levels
+                levelVal = SFRFsLogger.getJavaLogLevel(levelStr);
+                fileHandler.setLevel(levelVal);
+                obj.Logger.setLevel(levelVal);
+        
+                % Add FileHandler to logger
+                obj.Logger.addHandler(fileHandler)
+            end
+        end
+
+        function fullMsg = formatLogMessage(obj, varargin)
+            msgParts = cellfun(@(x) SFRFsLogger.convertToString(x), ...
+                varargin, 'UniformOutput', false);
+            msgParts = cellfun(@char, msgParts, 'UniformOutput', false);
+            msg = strjoin(msgParts, ' ');
+
+            if obj.isDebugEnabled()
+                metaInfo = SFRFsLogger.getMetaInfo();
+            else
+                metaInfo = '';
+            end
+
+            fullMsg = [metaInfo msg];
+        end
+
+        function log(obj, levelStr, msg)
+            % Log a message with a specified level string
+            % Supported levels: ALL, SEVERE, WARNING, INFO, CONFIG, FINE,
+            %                   FINER, FINEST, OFF
+            upperLevel = upper(levelStr);
+            if ~isKey(SFRFsLogger.LEVEL_MAP, upperLevel)
+                error('sfrfs:SFRFsLogger:UnknownLogLevel', ...
+                    'Unknown log level: %s', levelStr);
+            end
+            obj.Logger.log(obj.LEVEL_MAP(upperLevel), msg);
+        end
+    end
+
+    methods (Static, Access = private)
+
+        function value = getPropertyOrDefault(propKey, defaultVal)
+            value = SFRFsLogger.getPropertyFromLogManager(propKey);
+            if isempty(value)
+                value = defaultVal;
+            end
+        end
+
+        function pattern = getDefaultPattern()
+                pattern = [SFRFsLogger.LOGGER_BASE_NAME '_worker%u.log'];
+        end
+
+        function formatterObj = createFormatter(formatterClassName)
+            
+            % Allow only known safe formatter classes
+            validFormatters = containers.Map( ...
+                {'java.util.logging.SimpleFormatter', ...
+                 'java.util.logging.XMLFormatter'}, ...
+                {@java.util.logging.SimpleFormatter, ...
+                @java.util.logging.XMLFormatter});
+
+            if isKey(validFormatters, formatterClassName)
+                % Instantiate using function handle stored in the map
+                formatterConstructor = validFormatters(formatterClassName);
+                formatterObj = formatterConstructor();
+            else
+                warning(['Unknown formatter class %s, '...
+                    'defaulting to SimpleFormatter.'], formatterClassName);
+                formatterObj = java.util.logging.SimpleFormatter();
+            end
+        end
+
+        function wid = getWorkerID()
+            % Get a unique worker ID or zero for the main MATLAB process
+            wid = 0;
+            try
+                t = getCurrentTask();
+                if ~isempty(t)
+                    wid = t.ID;
+                end
+            catch
+                % Not in parallel, wid stays 0
+            end
+        end
+
+        function propertiesFile = getPropertiesFilePath()
+            % Locate logging.properties file in toolbox resources folder
+            classFilePath = mfilename('fullpath');
+            toolboxRoot = fileparts(classFilePath);
+            propertiesFile = fullfile(...
+                toolboxRoot, 'resources', 'logging.properties');
+            if ~exist(propertiesFile, 'file')
+                error('Properties file not found: %s', propertiesFile);
+            end
+        end
+
+        function propValue = getPropertyFromLogManager(propName)
+            import java.util.logging.LogManager;
+            lm = LogManager.getLogManager();
+            rawValue = lm.getProperty(propName);
+        
+            if isempty(rawValue)
+                propValue = '';
+            else
+                propValue = char(rawValue);
+            end
+        end
+    end
+
+    
+    methods
+        function enableDebug(obj)
+            obj.debugEnabled = true;
+        end
+
+        function disableDebug(obj)
+            obj.debugEnabled = false; 
+        end
+
+        function tf = isDebugEnabled(obj)
+            tf = obj.debugEnabled;
+        end
+
+        function info(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.info(fullMsg);
+        end
+
+        function warning(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.warning(fullMsg);
+        end
+
+        function severe(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.severe(fullMsg);
+        end
+
+        function fine(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.fine(fullMsg);
+        end
+
+        function finest(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.finest(fullMsg);
+        end
+
+        function finer(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.finer(fullMsg);
+        end
+
+        function all(obj, varargin)
+            import java.util.logging.Level;
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.log(Level.ALL, fullMsg);
+        end
+
+        function config(obj, varargin)
+            fullMsg = obj.formatLogMessage(varargin{:});
+            obj.Logger.config(fullMsg);
+        end
+
+        function tf = isAllEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_ALL));
+        end
+        function tf = isSevereEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_SEVERE));
+        end
+        function tf = isWarningEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_WARNING));
+        end
+        function tf = isInfoEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_INFO));
+        end
+        function tf = isConfigEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_CONFIG));
+        end
+        function tf = isFineEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINE));
+        end
+        function tf = isFinerEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINER));
+        end
+        function tf = isFinestEnabled(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_FINEST));
+        end
+        function tf = isLoggingOff(obj)
+            tf = obj.Logger.isLoggable( ...
+                SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_OFF));
+        end
+    end
+
+    methods (Static, Access = private)
+        function str = convertToString(x)
+            % Convert input of any type to a string suitable for logging
+   
+            if ischar(x)
+                str = string(x);
+            elseif isstring(x)
+                str = x;
+            elseif isnumeric(x) || islogical(x)
+                % Convert arrays to string matrix representation
+                str = mat2str(x);
+            elseif iscell(x)
+                % For cell arrays, convert element-wise recursively
+                cellStrs = cellfun(...
+                    @(c) SFRFsLogger.convertToStr(c), x, ...
+                    'UniformOutput', false);
+                str = ['{' strjoin(cellStrs, ', ') '}'];
+            elseif isobject(x) && ismethod(x, 'toString')
+                % Custom object with toString method
+                str = x.toString();
+            else
+                str = ['<' class(x) '>'];
+            end
+        end
+
+        function levelVal = getJavaLogLevel(levelStr)
+        % Convert a level string to corresponding java.util.logging.Level 
+        
+            upperLevel = upper(levelStr);
+            
+            if isKey(SFRFsLogger.LEVEL_MAP, upperLevel)
+                levelVal = SFRFsLogger.LEVEL_MAP(upperLevel);
+            else
+                warning('sfrfs:SFRFsLogger:UnknownLogLevel', ...
+                    'Unknown log level: %s. Defaulting to ALL.', levelStr);
+                levelVal = SFRFsLogger.LEVEL_MAP(SFRFsLogger.LEVEL_ALL);
+            end
+        end
+
+        function metaStr = getMetaInfo()
+            % Get stack for line/file info (skip 2 frames)
+            stackFileLine = dbstack(2, '-completenames');
+            % Get stack for caller method name (skip 3 frames)
+            stackMethod = dbstack(3, '-completenames');
+        
+            if isempty(stackFileLine)
+                metaStr = '';
+                return;
+            end
+        
+            callerFile = stackFileLine(1);
+            [~, fileName, ext] = fileparts(callerFile.file);
+            fullName = [fileName, ext];
+            lineNumber = callerFile.line;
+        
+            if isempty(stackMethod)
+                methodName = ''; 
+            else
+                methodName = stackMethod(1).name;
+            end
+        
+            metaStr = ...
+                sprintf('[%s@%s:%d] ', methodName, fullName, lineNumber);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

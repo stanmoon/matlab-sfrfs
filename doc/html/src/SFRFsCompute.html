@@ -1,0 +1,478 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsCompute</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsCompute.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> SFRFsCompute &lt; handle
+    <span class="comment">% SFRFsCompute Performs spectral fault receptive field computations</span>
+    <span class="comment">%   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and</span>
+    <span class="comment">%   ParametersSnapshot to compute responses on input signals.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Example usage:</span>
+    <span class="comment">%   sfrfsCalc = SFRFsCompute(paramsSnapshot, rfgfInstance);</span>
+    <span class="comment">%   responseTable = sfrfsCalc.compute(x, operatingCondition);</span>
+
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        paramsSnapshot <span class="typesection">ParametersSnapshot  </span><span class="comment">% Sampling and timing parameters</span>
+        rfgfs <span class="typesection">ReceptiveFieldGainFunctions  </span><span class="comment">% RFGFs encapsulating also:</span>
+                                           <span class="comment">%    - SFRFs, and</span>
+                                           <span class="comment">%    - operatingConditions</span>
+                                           <span class="comment">% parameters.</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        samplingFrequency <span class="typesection">double</span>
+        sfrfsParams <span class="typesection">SFRFsParameters</span>
+        rfgfsTable <span class="typesection">table</span>
+        operatingConditions <span class="typesection">table</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = SFRFsCompute(args)
+        <span class="comment">% SFRFsCompute Construct a configured SFRFsCompute object</span>
+        <span class="comment">%</span>
+        <span class="comment">% obj = SFRFsCompute(...</span>
+        <span class="comment">%   snapshotParameters = sp, rfgfs = rfgfsInstance)</span>
+        <span class="comment">% creates an instance configured with the given snapshot parameters</span>
+        <span class="comment">% and receptive field gain functions.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Named input arguments:</span>
+        <span class="comment">%   snapshotParameters                  - Sampling parameters</span>
+        <span class="comment">%   rfgfs                               - Receptive field gain</span>
+        <span class="comment">%                                         functions and parameters</span>
+        <span class="comment">%</span>
+        <span class="comment">% See also ParametersSnapshot, ReceptiveFieldGainFunctions, compute</span>
+            <span class="keyword">arguments</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot</span>
+                args.rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+            <span class="keyword">end</span>
+            obj.paramsSnapshot = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.samplingFrequency(obj)
+            val = obj.paramsSnapshot.samplingFrequency;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.sfrfsParams(obj)
+            val = obj.rfgfs.frequencyBands.sfrfsParams;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.rfgfsTable(obj)
+            val = obj.rfgfs.gainFunctionsTable;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.operatingConditions(obj)
+            val = obj.rfgfs.frequencyBands.operatingConditions;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> responseTable = compute(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.temporalSnapshot <span class="typesection">(:, :) double </span>= []
+                args.spectrumSnapshot <span class="typesection">(:, :) double </span>= []
+                args.operatingCondition <span class="typesection">table </span><span class="keyword">...</span>
+                    <span class="typesection">{SFRFsCompute.mustBeOneRowTable}</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isempty(args.temporalSnapshot) &amp;&amp; <span class="keyword">...</span>
+                    isempty(args.spectrumSnapshot)
+                error(<span class="string">'sfrfs:SFRFsCompute:NoInputSingal'</span>, <span class="keyword">...</span>
+                    <span class="string">'Either temporal or spectral data must be provided.'</span>);
+            <span class="keyword">elseif</span> ~isempty(args.temporalSnapshot) &amp;&amp; <span class="keyword">...</span>
+                    ~isempty(args.spectrumSnapshot)
+                error(<span class="string">'sfrfs:SFRFsCompute:AmbiguousInputSignal'</span>,<span class="keyword">...</span>
+                    [<span class="string">'Only one of temporal or spectral data'</span> <span class="keyword">...</span>
+                     <span class="string">' should be provided.'</span>]);
+            <span class="keyword">end</span>
+
+
+            log = SFRFsLogger.getLogger();
+
+            <span class="comment">% Retrieve frequency domain details</span>
+            f = obj.paramsSnapshot.getFrequencyDomain();
+
+            <span class="comment">% Access gain functions table</span>
+            gainTable = obj.rfgfs.gainFunctionsTable;
+
+            <span class="comment">% Validate and filter operating conditions</span>
+            requiredVars = {<span class="string">'Speed'</span>, <span class="string">'Load'</span>};
+            <span class="keyword">if</span> ~all(ismember(<span class="keyword">...</span>
+                    requiredVars, <span class="keyword">...</span>
+                    args.operatingCondition.Properties.VariableNames))
+                error(<span class="string">'sfrfs:SFRFsCompute:MissingColumn'</span>, <span class="keyword">...</span>
+                      <span class="string">'Nonconforming to expected Speed and Load columns.'</span>);
+            <span class="keyword">end</span>
+
+            <span class="comment">% RequiredVars for filtering gainTable by operatingCondition</span>
+            maskRows = ismember(<span class="keyword">...</span>
+                gainTable(:, requiredVars), <span class="keyword">...</span>
+                args.operatingCondition(:, requiredVars));
+            idxs = find(maskRows);
+
+            <span class="keyword">if</span> isempty(idxs)
+                <span class="keyword">if</span> log.isSevereEnabled()
+                    jsonStr = jsonencode(args.operatingCondition);
+                    msg = sprintf(<span class="keyword">...</span>
+                        <span class="string">'Operating condition missing in RFGFs: %s'</span>, <span class="keyword">...</span>
+                        jsonStr);
+                    log.severe(msg);
+                <span class="keyword">end</span>
+                error(<span class="string">'sfrfs:SFRFsCompute:MissingFaultBands'</span>, <span class="keyword">...</span>
+                      <span class="string">'Operating condition missing in RFGRs.'</span>);
+            <span class="keyword">end</span>
+
+            selectedBands = gainTable(idxs, :);
+
+            <span class="comment">% Compute or use provided FFT</span>
+            <span class="keyword">if</span> isempty(args.spectrumSnapshot)
+                X = fft(args.temporalSnapshot, [], 1);
+            <span class="keyword">else</span>
+                X = args.spectrumSnapshot;
+            <span class="keyword">end</span>
+
+            nFFT = size(X, 1);
+
+
+            <span class="comment">% Calculate SFRF responses per fault mode</span>
+            SFRF = cell(height(selectedBands), 1);
+            <span class="keyword">for</span> i = 1:height(selectedBands)
+
+                masks = selectedBands.FrequencyBankMasks{i};
+                <span class="comment">% Ensure mask lengths match FFT length</span>
+                <span class="keyword">if</span> length(masks.CenterFrequencyBankMask) ~= nFFT || <span class="keyword">...</span>
+                        length(masks.SurroundFrequencyBankMask) ~= nFFT
+                    error(<span class="string">'sfrfs:SFRFsCompute:MaskLength'</span>, <span class="keyword">...</span>
+                        <span class="string">'Mask length does not match FFT length.'</span>);
+                <span class="keyword">end</span>
+
+                <span class="comment">% Extract fault type for current row (example)</span>
+                faultGroup = selectedBands.FaultGroup(i);
+                faultType = <span class="keyword">...</span>
+                    obj.rfgfs.frequencyBands.faultGroupToTypeName(<span class="keyword">...</span>
+                    faultGroup);
+
+                <span class="comment">% Retrieve inhibition factor specific to fault type</span>
+                k = obj.sfrfsParams.(faultType).inhibitionFactor;
+
+                SFRF{i} = obj.computeSingleModeResponse(<span class="keyword">...</span>
+                    X, <span class="keyword">...</span>
+                    masks.CenterFrequencyBankMask, <span class="keyword">...</span>
+                    masks.SurroundFrequencyBankMask, <span class="keyword">...</span>
+                    f, <span class="keyword">...</span>
+                    k);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Construct response table including SFRF results</span>
+            responseTable = selectedBands;
+            responseTable.SFRFs = SFRF;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> response = computeSingleModeResponse(<span class="keyword">...</span>
+                ~, X, centerMask, surroundMask, f, k)
+            <span class="comment">% Compute SFRF response for one fault mode over all signals</span>
+
+            spectrumCenter = X .* centerMask;
+            spectrumSurround = X .* surroundMask;
+
+            magCenter = abs(spectrumCenter) / length(centerMask);
+            magSurround = abs(spectrumSurround) / length(surroundMask);
+
+            integralCenter = trapz(f, magCenter, 1);
+            integralSurround = trapz(f, magSurround, 1);
+
+            response = integralCenter - k * integralSurround;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+        <span class="keyword">function</span> mustBeOneRowTable(tbl)
+            <span class="keyword">if</span> ~(istable(tbl) &amp;&amp; size(tbl, 1) == 1)
+                error(<span class="string">'Input must be a table with exactly one row.'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef SFRFsCompute < handle
+    % SFRFsCompute Performs spectral fault receptive field computations
+    %   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and
+    %   ParametersSnapshot to compute responses on input signals.
+    %
+    % Example usage:
+    %   sfrfsCalc = SFRFsCompute(paramsSnapshot, rfgfInstance);
+    %   responseTable = sfrfsCalc.compute(x, operatingCondition);
+    
+
+    properties (SetAccess = private)
+        paramsSnapshot ParametersSnapshot  % Sampling and timing parameters
+        rfgfs ReceptiveFieldGainFunctions  % RFGFs encapsulating also:
+                                           %    - SFRFs, and 
+                                           %    - operatingConditions
+                                           % parameters.
+    end
+
+    properties (Dependent)
+        samplingFrequency double
+        sfrfsParams SFRFsParameters
+        rfgfsTable table
+        operatingConditions table
+    end
+    
+    methods
+        function obj = SFRFsCompute(args)
+        % SFRFsCompute Construct a configured SFRFsCompute object
+        %
+        % obj = SFRFsCompute(...
+        %   snapshotParameters = sp, rfgfs = rfgfsInstance)
+        % creates an instance configured with the given snapshot parameters 
+        % and receptive field gain functions.
+        %
+        % Named input arguments:
+        %   snapshotParameters                  - Sampling parameters
+        %   rfgfs                               - Receptive field gain 
+        %                                         functions and parameters
+        %
+        % See also ParametersSnapshot, ReceptiveFieldGainFunctions, compute
+            arguments
+                args.snapshotParameters ParametersSnapshot
+                args.rfgfs ReceptiveFieldGainFunctions
+            end
+            obj.paramsSnapshot = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+        end
+        
+        function val = get.samplingFrequency(obj)
+            val = obj.paramsSnapshot.samplingFrequency;
+        end
+        
+        function val = get.sfrfsParams(obj)
+            val = obj.rfgfs.frequencyBands.sfrfsParams;
+        end
+
+        function val = get.rfgfsTable(obj)
+            val = obj.rfgfs.gainFunctionsTable;
+        end
+
+        function val = get.operatingConditions(obj)
+            val = obj.rfgfs.frequencyBands.operatingConditions;
+        end
+        
+        function responseTable = compute(obj, args)
+            arguments
+                obj
+                args.temporalSnapshot (:, :) double = []
+                args.spectrumSnapshot (:, :) double = []
+                args.operatingCondition table ...
+                    {SFRFsCompute.mustBeOneRowTable}
+            end
+
+            if isempty(args.temporalSnapshot) && ...
+                    isempty(args.spectrumSnapshot)
+                error('sfrfs:SFRFsCompute:NoInputSingal', ...
+                    'Either temporal or spectral data must be provided.');
+            elseif ~isempty(args.temporalSnapshot) && ...
+                    ~isempty(args.spectrumSnapshot)
+                error('sfrfs:SFRFsCompute:AmbiguousInputSignal',...
+                    ['Only one of temporal or spectral data' ...
+                     ' should be provided.']);
+            end
+
+            
+            log = SFRFsLogger.getLogger();
+
+            % Retrieve frequency domain details
+            f = obj.paramsSnapshot.getFrequencyDomain();
+            
+            % Access gain functions table
+            gainTable = obj.rfgfs.gainFunctionsTable;
+            
+            % Validate and filter operating conditions
+            requiredVars = {'Speed', 'Load'};
+            if ~all(ismember(...
+                    requiredVars, ...
+                    args.operatingCondition.Properties.VariableNames))
+                error('sfrfs:SFRFsCompute:MissingColumn', ...
+                      'Nonconforming to expected Speed and Load columns.');
+            end
+            
+            % RequiredVars for filtering gainTable by operatingCondition
+            maskRows = ismember(...
+                gainTable(:, requiredVars), ...
+                args.operatingCondition(:, requiredVars));
+            idxs = find(maskRows);
+            
+            if isempty(idxs)
+                if log.isSevereEnabled()
+                    jsonStr = jsonencode(args.operatingCondition);
+                    msg = sprintf(...
+                        'Operating condition missing in RFGFs: %s', ...
+                        jsonStr);
+                    log.severe(msg);
+                end
+                error('sfrfs:SFRFsCompute:MissingFaultBands', ...
+                      'Operating condition missing in RFGRs.');
+            end
+
+            selectedBands = gainTable(idxs, :);
+            
+            % Compute or use provided FFT
+            if isempty(args.spectrumSnapshot)
+                X = fft(args.temporalSnapshot, [], 1);
+            else
+                X = args.spectrumSnapshot;
+            end
+            
+            nFFT = size(X, 1);
+
+
+            % Calculate SFRF responses per fault mode
+            SFRF = cell(height(selectedBands), 1);
+            for i = 1:height(selectedBands)
+
+                masks = selectedBands.FrequencyBankMasks{i};
+                % Ensure mask lengths match FFT length
+                if length(masks.CenterFrequencyBankMask) ~= nFFT || ...
+                        length(masks.SurroundFrequencyBankMask) ~= nFFT
+                    error('sfrfs:SFRFsCompute:MaskLength', ...
+                        'Mask length does not match FFT length.');
+                end
+
+                % Extract fault type for current row (example)
+                faultGroup = selectedBands.FaultGroup(i);
+                faultType = ...
+                    obj.rfgfs.frequencyBands.faultGroupToTypeName(...
+                    faultGroup);
+            
+                % Retrieve inhibition factor specific to fault type
+                k = obj.sfrfsParams.(faultType).inhibitionFactor;
+
+                SFRF{i} = obj.computeSingleModeResponse(...
+                    X, ...
+                    masks.CenterFrequencyBankMask, ...
+                    masks.SurroundFrequencyBankMask, ...
+                    f, ...
+                    k);
+            end
+            
+            % Construct response table including SFRF results
+            responseTable = selectedBands;
+            responseTable.SFRFs = SFRF;
+        end
+    end
+    
+    methods (Access = private)
+        function response = computeSingleModeResponse(...
+                ~, X, centerMask, surroundMask, f, k)
+            % Compute SFRF response for one fault mode over all signals
+            
+            spectrumCenter = X .* centerMask;
+            spectrumSurround = X .* surroundMask;
+            
+            magCenter = abs(spectrumCenter) / length(centerMask);
+            magSurround = abs(spectrumSurround) / length(surroundMask);
+            
+            integralCenter = trapz(f, magCenter, 1);
+            integralSurround = trapz(f, magSurround, 1);
+            
+            response = integralCenter - k * integralSurround;
+        end
+    end
+
+    methods (Static, Access = private)
+        function mustBeOneRowTable(tbl)
+            if ~(istable(tbl) && size(tbl, 1) == 1)
+                error('Input must be a table with exactly one row.');
+            end
+        end
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

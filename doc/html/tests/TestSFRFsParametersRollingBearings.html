@@ -1,0 +1,453 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestSFRFsParametersRollingBearings</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="TestSFRFsParametersRollingBearings.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestSFRFsParametersRollingBearings &lt; matlab.unittest.TestCase
+    <span class="comment">% Test suite for the SFRFsParametersRollingBearings class.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Covers:</span>
+    <span class="comment">%   - Construction in Mode 1 (all faults specified)</span>
+    <span class="comment">%   - Construction in Mode 2 (SameForAllFaultTypes specified)</span>
+    <span class="comment">%   - Validation errors for missing required fields</span>
+    <span class="comment">%   - Validation errors for mode conflict</span>
+
+    <span class="keyword">properties</span>
+        completeParams
+        paramsNoSidebands
+        partialParams
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestMethodSetup)
+        <span class="keyword">function</span> prepareParameters(testCase)
+            <span class="comment">% Fully specified valid SFRFs parameters</span>
+            testCase.completeParams = <span class="keyword">...</span>
+                SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+            testCase.paramsNoSidebands = <span class="keyword">...</span>
+                SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 0, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            <span class="comment">% Partially specified (missing required fields) for error tests</span>
+            testCase.partialParams = struct(<span class="string">'order'</span>, 1);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testMode1ValidConstruction(testCase)
+            <span class="comment">% All four faults specified with valid structs</span>
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, testCase.paramsNoSidebands, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      testCase.paramsNoSidebands);
+
+            <span class="comment">% Verify all properties were assigned correctly</span>
+            testCase.verifyEqual(<span class="keyword">...</span>
+                obj.outerRace, testCase.paramsNoSidebands);
+            testCase.verifyEqual(obj.innerRace, testCase.completeParams);
+            testCase.verifyEqual(obj.ball, testCase.completeParams);
+            testCase.verifyEqual(obj.cage, testCase.paramsNoSidebands);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMode2ValidConstruction(testCase)
+            <span class="comment">% Only SameForAllFaultTypes specified</span>
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, testCase.completeParams);
+
+            <span class="comment">% All four should match the shared struct, but for sidebands</span>
+            testCase.verifyEqual(<span class="keyword">...</span>
+                obj.outerRace, testCase.paramsNoSidebands);
+            testCase.verifyEqual(obj.innerRace, testCase.completeParams);
+            testCase.verifyEqual(obj.ball, testCase.completeParams);
+            testCase.verifyEqual(obj.cage, testCase.paramsNoSidebands);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMissingFieldsError(testCase)
+            <span class="comment">% Missing required fields in one fault type should error</span>
+            testCase.verifyError(@() <span class="keyword">...</span>
+                SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                    <span class="string">'outerRace'</span>, testCase.partialParams, <span class="keyword">...</span>
+                    <span class="string">'innerRace'</span>, testCase.completeParams, <span class="keyword">...</span>
+                    <span class="string">'ball'</span>,      testCase.completeParams, <span class="keyword">...</span>
+                    <span class="string">'cage'</span>,      testCase.completeParams), <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:validateInputs:'</span> <span class="keyword">...</span>
+                <span class="string">'MissingSFRFsParameters'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMutualExclusivityError(testCase)
+            <span class="comment">% Providing both SameForAllFaultTypes and others should error</span>
+            testCase.verifyError(@() <span class="keyword">...</span>
+                SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                    <span class="string">'SameForAllFaultTypes'</span>, testCase.completeParams, <span class="keyword">...</span>
+                    <span class="string">'outerRace'</span>, testCase.completeParams), <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:validateInputs:'</span><span class="keyword">...</span>
+                <span class="string">'ConflictingArguments'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMissingFaultTypeError(testCase)
+            <span class="comment">% innerRace missing entirely, cage empty</span>
+            complete = testCase.completeParams; <span class="comment">% from TestMethodSetup</span>
+
+            testCase.verifyError(@() <span class="keyword">...</span>
+                SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, complete, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      complete, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      struct() ), <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:validateInputs:'</span><span class="keyword">...</span>
+                <span class="string">'MissingArguments'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testOrderValidation(testCase)
+            <span class="comment">% Negative order should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'order'</span>, -1);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBeNonnegative'</span>);
+
+            <span class="comment">% Non-integer order should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'order'</span>, 2.5);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBeInteger'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testNumSidebandsValidation(testCase)
+            <span class="comment">% Negative numSidebands should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, -1);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBeNonnegative'</span>);
+
+            <span class="comment">% Non-integer numSidebands should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 1.5);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBeInteger'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testNumHarmonicsValidation(testCase)
+            <span class="comment">% Zero or less numHarmonics should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 0);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBePositive'</span>);
+
+            <span class="comment">% Non-integer numHarmonics should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 2.2);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBeInteger'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testSigmaCenterValidation(testCase)
+            <span class="comment">% Negative element in sigmaCenter should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [-1 6]);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBePositive'</span>);
+
+            <span class="comment">% Wrong size for sigmaCenter should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [4 6 8]);
+            testCase.verifyError(f, <span class="string">'MATLAB:validation:IncompatibleSize'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testSigmaSurroundValidation(testCase)
+            <span class="comment">% Zero or negative element in sigmaSurround should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [0 1]);
+            testCase.verifyError(f, <span class="string">'MATLAB:validators:mustBePositive'</span>);
+
+            <span class="comment">% Wrong size for sigmaSurround should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12 1 2]);
+            testCase.verifyError(f, <span class="string">'MATLAB:validation:IncompatibleSize'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testInhibitionFactorValidation(testCase)
+            <span class="comment">% Inhibition factor below zero should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, -0.1);
+            testCase.verifyError(f, <span class="keyword">...</span>
+                <span class="string">'MATLAB:validators:mustBeGreaterThanOrEqual'</span>);
+
+            <span class="comment">% Inhibition factor above one should error</span>
+            f = @()SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 1.1);
+            testCase.verifyError(f, <span class="keyword">...</span>
+                <span class="string">'MATLAB:validators:mustBeLessThanOrEqual'</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestSFRFsParametersRollingBearings < matlab.unittest.TestCase
+    % Test suite for the SFRFsParametersRollingBearings class.
+    %
+    % Covers:
+    %   - Construction in Mode 1 (all faults specified)
+    %   - Construction in Mode 2 (SameForAllFaultTypes specified)
+    %   - Validation errors for missing required fields
+    %   - Validation errors for mode conflict
+
+    properties
+        completeParams
+        paramsNoSidebands
+        partialParams
+    end
+
+    methods (TestMethodSetup)
+        function prepareParameters(testCase)
+            % Fully specified valid SFRFs parameters
+            testCase.completeParams = ...
+                SFRFsParameters.createSFRFsParameters(...
+                'order', 3, ...
+                'numSidebands', 4, ...
+                'numHarmonics', 8, ...
+                'sigmaCenter', [5, 7], ...
+                'sigmaSurround', [12, 3], ...
+                'inhibitionFactor', 0.6);
+            testCase.paramsNoSidebands = ...
+                SFRFsParameters.createSFRFsParameters( ...
+                'order', 3, ...
+                'numSidebands', 0, ...
+                'numHarmonics', 8, ...
+                'sigmaCenter', [5, 7], ...
+                'sigmaSurround', [12, 3], ...
+                'inhibitionFactor', 0.6);
+
+            % Partially specified (missing required fields) for error tests
+            testCase.partialParams = struct('order', 1);
+        end
+    end
+
+    methods (Test)
+        function testMode1ValidConstruction(testCase)
+            % All four faults specified with valid structs
+            obj = SFRFsParametersRollingBearings( ...
+                'outerRace', testCase.paramsNoSidebands, ...
+                'innerRace', testCase.completeParams, ...
+                'ball',      testCase.completeParams, ...
+                'cage',      testCase.paramsNoSidebands);
+
+            % Verify all properties were assigned correctly
+            testCase.verifyEqual(...
+                obj.outerRace, testCase.paramsNoSidebands);
+            testCase.verifyEqual(obj.innerRace, testCase.completeParams);
+            testCase.verifyEqual(obj.ball, testCase.completeParams);
+            testCase.verifyEqual(obj.cage, testCase.paramsNoSidebands);
+        end
+
+        function testMode2ValidConstruction(testCase)
+            % Only SameForAllFaultTypes specified
+            obj = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', testCase.completeParams);
+
+            % All four should match the shared struct, but for sidebands
+            testCase.verifyEqual(...
+                obj.outerRace, testCase.paramsNoSidebands);
+            testCase.verifyEqual(obj.innerRace, testCase.completeParams);
+            testCase.verifyEqual(obj.ball, testCase.completeParams);
+            testCase.verifyEqual(obj.cage, testCase.paramsNoSidebands);
+        end
+
+        function testMissingFieldsError(testCase)
+            % Missing required fields in one fault type should error
+            testCase.verifyError(@() ...
+                SFRFsParametersRollingBearings( ...
+                    'outerRace', testCase.partialParams, ...
+                    'innerRace', testCase.completeParams, ...
+                    'ball',      testCase.completeParams, ...
+                    'cage',      testCase.completeParams), ...
+                ['sfrfs:SFRFsParametersRollingBearings:validateInputs:' ...
+                'MissingSFRFsParameters']);
+        end
+
+        function testMutualExclusivityError(testCase)
+            % Providing both SameForAllFaultTypes and others should error
+            testCase.verifyError(@() ...
+                SFRFsParametersRollingBearings( ...
+                    'SameForAllFaultTypes', testCase.completeParams, ...
+                    'outerRace', testCase.completeParams), ...
+                ['sfrfs:SFRFsParametersRollingBearings:validateInputs:'...
+                'ConflictingArguments']);
+        end
+
+        function testMissingFaultTypeError(testCase)
+            % innerRace missing entirely, cage empty
+            complete = testCase.completeParams; % from TestMethodSetup
+
+            testCase.verifyError(@() ...
+                SFRFsParametersRollingBearings( ...
+                'outerRace', complete, ...
+                'ball',      complete, ...
+                'cage',      struct() ), ...
+                ['sfrfs:SFRFsParametersRollingBearings:validateInputs:'...
+                'MissingArguments']);
+        end
+
+        function testOrderValidation(testCase)
+            % Negative order should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'order', -1);
+            testCase.verifyError(f, 'MATLAB:validators:mustBeNonnegative');
+    
+            % Non-integer order should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'order', 2.5);
+            testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
+        end
+    
+        function testNumSidebandsValidation(testCase)
+            % Negative numSidebands should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'numSidebands', -1);
+            testCase.verifyError(f, 'MATLAB:validators:mustBeNonnegative');
+    
+            % Non-integer numSidebands should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'numSidebands', 1.5);
+            testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
+        end
+    
+        function testNumHarmonicsValidation(testCase)
+            % Zero or less numHarmonics should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'numHarmonics', 0);
+            testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
+    
+            % Non-integer numHarmonics should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'numHarmonics', 2.2);
+            testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
+        end
+    
+        function testSigmaCenterValidation(testCase)
+            % Negative element in sigmaCenter should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'sigmaCenter', [-1 6]);
+            testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
+    
+            % Wrong size for sigmaCenter should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'sigmaCenter', [4 6 8]);
+            testCase.verifyError(f, 'MATLAB:validation:IncompatibleSize');
+        end
+    
+        function testSigmaSurroundValidation(testCase)
+            % Zero or negative element in sigmaSurround should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'sigmaSurround', [0 1]);
+            testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
+    
+            % Wrong size for sigmaSurround should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'sigmaSurround', [12 1 2]);
+            testCase.verifyError(f, 'MATLAB:validation:IncompatibleSize');
+        end
+    
+        function testInhibitionFactorValidation(testCase)
+            % Inhibition factor below zero should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'inhibitionFactor', -0.1);
+            testCase.verifyError(f, ...
+                'MATLAB:validators:mustBeGreaterThanOrEqual');
+    
+            % Inhibition factor above one should error
+            f = @()SFRFsParameters.createSFRFsParameters(...
+                'inhibitionFactor', 1.1);
+            testCase.verifyError(f, ...
+                'MATLAB:validators:mustBeLessThanOrEqual');
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

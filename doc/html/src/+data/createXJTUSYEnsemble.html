@@ -1,0 +1,549 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>createXJTUSYEnsemble</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="createXJTUSYEnsemble.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">function</span> ensemble = createXJTUSYEnsemble(args)
+<span class="comment">%CREATEXJTUSYENSEMBLE Create a fileEnsembleDatastore for the XJTU-SY</span>
+<span class="comment">% dataset.</span>
+<span class="comment">%</span>
+<span class="comment">%   ensemble = data.createXJTUSYEnsemble(Name,Value)</span>
+<span class="comment">%</span>
+<span class="comment">%   Loads the XJTU-SY run-to-failure bearing dataset, processes each</span>
+<span class="comment">%   bearing's vibration snapshots, and creates a fileEnsembleDatastore</span>
+<span class="comment">%   compatible with MATLAB's Predictive Maintenance Toolbox.</span>
+<span class="comment">%</span>
+<span class="comment">%   Name-Value Pair Arguments:</span>
+<span class="comment">%     "datasetFolder" - Path to the root of the unzipped XJTU-SY dataset.</span>
+<span class="comment">%                       If not specified, a dialog will prompt the user.</span>
+<span class="comment">%     "outputFolder"  - Path where .mat files for each ensemble member will</span>
+<span class="comment">%                       be saved. If not specified, a dialog will prompt.</span>
+<span class="comment">%     "progressMode"  - Progress indicator mode. Options:</span>
+<span class="comment">%                         "text" (default) - Text progress bar in</span>
+<span class="comment">%                                            MATLAB interpreter.</span>
+<span class="comment">%                         "gui"            - Graphical waitbar</span>
+<span class="comment">%                                            (for GUIs/Live Scripts).</span>
+<span class="comment">%                         "none"           - No progress updates.</span>
+<span class="comment">%</span>
+<span class="comment">%   OUTPUT:</span>
+<span class="comment">%     ensemble      - fileEnsembleDatastore object referencing the</span>
+<span class="comment">%                    processed data.</span>
+<span class="comment">%</span>
+<span class="comment">%   REFERENCE:</span>
+<span class="comment">%     This dataset is available thanks to the following work:</span>
+<span class="comment">%     Biao Wang, Yaguo Lei, Naipeng Li, Ningbo Li,</span>
+<span class="comment">%     "A Hybrid Prognostics Approach for Estimating Remaining Useful Life</span>
+<span class="comment">%     of Rolling Element Bearings",</span>
+<span class="comment">%     IEEE Trans. Reliability, vol. 69, no. 1, pp. 401-412, 2020.</span>
+<span class="comment">%     DOI: &lt;a href="https://doi.org/10.1109/TR.2018.2882682"&gt;10.1109/TR.2018.2882682&lt;/a&gt;.</span>
+<span class="comment">%     Dataset: &lt;a href="https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets"&gt;</span>
+<span class="comment">%     https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets&lt;/a&gt;</span>
+<span class="comment">%</span>
+<span class="comment">%   EXAMPLE:</span>
+<span class="comment">%     % Create an ensemble with dialogs for folders and GUI progress bar</span>
+<span class="comment">%     ensemble = data.createXJTUSYEnsemble("progressMode","gui");</span>
+<span class="comment">%     % Or specify folders directly</span>
+<span class="comment">%     ensemble = data.createXJTUSYEnsemble(...</span>
+<span class="comment">%       "datasetFolder","XJTU-SY_Bearing_Datasets", ...</span>
+<span class="comment">%       "outputFolder","ensemble_datastore");</span>
+<span class="comment">%     % Preview the first few rows</span>
+<span class="comment">%     preview(ensemble)</span>
+<span class="comment">%</span>
+<span class="comment">%   SEE ALSO:</span>
+<span class="comment">%     fileEnsembleDatastore, readtable, save, load</span>
+<span class="comment">%</span>
+
+    <span class="keyword">arguments</span>
+        args.datasetFolder <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+        args.outputFolder <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+        args.progressMode <span class="typesection">(1,1) string </span><span class="keyword">...</span>
+            <span class="typesection">{mustBeMember( </span><span class="keyword">...</span>
+            <span class="typesection">args.progressMode, {'text', 'none', 'gui'})}</span> = <span class="string">"text"</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> args.datasetFolder == <span class="string">""</span>
+        folder = uigetdir(pwd, <span class="string">'Select input dataset folder'</span>);
+        <span class="keyword">if</span> folder == 0
+            error(<span class="keyword">...</span>
+            <span class="string">'sfrfs:data:createXJTUSYEnsemble:InputFolderNotSelected'</span>, <span class="keyword">...</span>
+            <span class="string">'No input folder selected.'</span>);
+        <span class="keyword">end</span>
+        datasetFolder = string(folder);
+    <span class="keyword">elseif</span> ~isfolder(args.datasetFolder)
+        error(<span class="keyword">...</span>
+            <span class="string">'sfrfs:data:createXJTUSYEnsemble:InputFolderDoesNotExist'</span>, <span class="keyword">...</span>
+            <span class="string">'The input folder "%s" does not exist.'</span>, args.datasetFolder);
+    <span class="keyword">else</span>
+        datasetFolder = args.datasetFolder;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> args.outputFolder == <span class="string">""</span>
+        folder = uigetdir(pwd, <span class="string">'Select output folder'</span>);
+        <span class="keyword">if</span> folder == 0
+            error(<span class="keyword">...</span>
+            <span class="string">'sfrfs:data:createXJTUSYEnsemble:OutputFolderNotSelected'</span>, <span class="keyword">...</span>
+            <span class="string">'No output folder selected.'</span>);
+        <span class="keyword">end</span>
+        outputFolder = string(folder);
+    <span class="keyword">else</span>
+        outputFolder = args.outputFolder;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ~isfolder(outputFolder)
+        mkdir(outputFolder);
+    <span class="keyword">end</span>
+
+    <span class="comment">% XJTU-SY parameters</span>
+    speeds = [35.0, 37.5, 40.0];
+    loads = [12.0, 11.0, 10.0];
+    operating_conditions = [<span class="string">"35Hz12kN"</span>, <span class="string">"37.5Hz11kN"</span>, <span class="string">"40Hz10kN"</span>];
+    bearing_labels = compose(<span class="keyword">...</span>
+        <span class="string">"Bearing%d_%d"</span>, repelem(1:3,5)', repmat((1:5)',3,1));
+
+    paths = strings(size(bearing_labels));
+    conditions = strings(size(bearing_labels));
+    <span class="keyword">for</span> i = 1:3
+        <span class="keyword">for</span> j = 1:5
+            idx = (i-1)*5 + j;
+            paths(idx) = fullfile(<span class="keyword">...</span>
+                datasetFolder, <span class="keyword">...</span>
+                operating_conditions(i), <span class="keyword">...</span>
+                bearing_labels(idx));
+            conditions(idx) = operating_conditions(i);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Dictionaries for speed/load per condition</span>
+    conditions_speeds = dictionary(operating_conditions, speeds);
+    conditions_loads = dictionary(operating_conditions, loads);
+    bearings_paths = dictionary(bearing_labels, paths);
+    bearings_conditions = dictionary(bearing_labels, conditions);
+
+    <span class="comment">% Ensemble vars</span>
+    dataVariables = [<span class="string">"HorizontalAcceleration"</span>, <span class="string">"VerticalAcceleration"</span>];
+    independentVariables = [<span class="string">"Label"</span>, <span class="string">"SnapshotIndex"</span>];
+    conditionVariables = [<span class="string">"Speed"</span>, <span class="string">"Load"</span>, <span class="string">"Lifetime"</span>];
+    allVars = [independentVariables, conditionVariables, dataVariables];
+    varTypes = repmat({<span class="string">'double'</span>}, 1, numel(allVars));
+    varTypes(strcmp(allVars, <span class="string">"Label"</span>)) = {<span class="string">'string'</span>};
+    varTypes(ismember(allVars, dataVariables)) = {<span class="string">'cell'</span>};
+
+    counts = countSnapshotFiles(bearing_labels, bearings_paths);
+    totalFiles = sum(counts);
+    currentFile = 0;
+    <span class="keyword">if</span> strcmp(args.progressMode, <span class="string">'gui'</span>)
+        h = waitbar(0,<span class="string">'Processing...             '</span>,<span class="string">'WindowStyle'</span>,<span class="string">'normal'</span>);
+        <span class="comment">% Increase waitbar width and height slightly to avoid cropping</span>
+        figPos = get(h,<span class="string">'Position'</span>);  <span class="comment">% [left bottom width height]</span>
+        figPos(3) = max(600, figPos(3));  <span class="comment">% width</span>
+        figPos(4) = max(100, figPos(4));  <span class="comment">% height</span>
+        set(h,<span class="string">'Position'</span>,figPos)
+
+    <span class="keyword">elseif</span> strcmp(args.progressMode, <span class="string">'text'</span>)
+        lastLen = 0;
+    <span class="keyword">end</span>
+
+    <span class="comment">% process each member (individual bearing)</span>
+    <span class="comment">% processing is episodic we don't sort the table to save computation</span>
+    <span class="keyword">for</span> bearing_label = bearing_labels'
+        speed = conditions_speeds(bearings_conditions(bearing_label));
+        load = conditions_loads(bearings_conditions(bearing_label));
+        bearing_path = bearings_paths(bearing_label);
+        snapshot_files = dir(fullfile(bearing_path, <span class="string">'*.csv'</span>));
+        lifetime = numel(snapshot_files);
+
+        nSnapshots = length(snapshot_files);
+        ensembleMemberTable = table(<span class="keyword">...</span>
+            <span class="string">'Size'</span>, [nSnapshots, numel(allVars)], <span class="keyword">...</span>
+            <span class="string">'VariableTypes'</span>, varTypes,<span class="keyword">...</span>
+            <span class="string">'VariableNames'</span>, allVars);
+
+        <span class="keyword">for</span> k = 1:nSnapshots
+            file = snapshot_files(k);
+            snapshot_index = <span class="keyword">...</span>
+                str2double(regexp(file.name, <span class="string">'\d+'</span>, <span class="string">'match'</span>, <span class="string">'once'</span>));
+            snapshot_table = readtable(fullfile(bearing_path, file.name));
+            acc_horizontal = snapshot_table.Horizontal_vibration_signals;
+            acc_vertical = snapshot_table.Vertical_vibration_signals;
+
+            ensembleMemberTable.Label(k) = bearing_label;
+            ensembleMemberTable.SnapshotIndex(k) = snapshot_index;
+            ensembleMemberTable.Speed(k) = speed;
+            ensembleMemberTable.Load(k) = load;
+            ensembleMemberTable.Lifetime(k) = lifetime;
+            ensembleMemberTable.HorizontalAcceleration{k} = acc_horizontal;
+            ensembleMemberTable.VerticalAcceleration{k} = acc_vertical;
+
+            currentFile = currentFile + 1;
+            <span class="keyword">if</span> strcmp(args.progressMode, <span class="string">'gui'</span>)
+                message = sprintf(<span class="keyword">...</span>
+                    <span class="string">'Processing... %.1f%%'</span>, currentFile/totalFiles*100);
+                waitbar(currentFile/totalFiles, h,message);
+            <span class="keyword">elseif</span> strcmp(args.progressMode, <span class="string">'text'</span>)
+                lastLen = printProgressBar(<span class="keyword">...</span>
+                    currentFile, totalFiles, 60, lastLen);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        save(fullfile(outputFolder, bearing_label + <span class="string">".mat"</span>), <span class="keyword">...</span>
+            <span class="string">'ensembleMemberTable'</span>, <span class="string">'-v7.3'</span>);
+    <span class="keyword">end</span>
+
+    ensemble = data.getXJTUSYEnsemble(outputFolder);
+
+<span class="keyword">end</span>
+
+<span class="comment">% progress bar</span>
+<span class="keyword">function</span> lastLen = printProgressBar(current, total, barWidth, lastLen)
+    <span class="keyword">if</span> nargin &lt; 3, barWidth = 40; <span class="keyword">end</span>
+    <span class="keyword">if</span> nargin &lt; 4, lastLen = 0; <span class="keyword">end</span>
+    progress = min(max(current / total, 0), 1);
+    numBars = min(barWidth, max(0, round(barWidth * progress)));
+    <span class="keyword">if</span> current &gt; 0 &amp;&amp; numBars == 0
+        numBars = 1;
+    <span class="keyword">end</span>
+    numSpaces = barWidth - numBars;
+    <span class="comment">% Use Unicode blocks for filled and empty</span>
+    filledChar = <span class="string">'█'</span>;
+    emptyChar = <span class="string">'░'</span>;
+    barStr = [<span class="keyword">...</span>
+        repmat(filledChar, 1, numBars), repmat(emptyChar, 1, numSpaces)];
+    msg = sprintf(<span class="keyword">...</span>
+        <span class="string">'[%s] %d/%d (%.1f%%)'</span>, barStr, current, total, 100*progress);
+
+    <span class="keyword">if</span> lastLen &gt; 0
+        fprintf(repmat(<span class="string">'\b'</span>, 1, lastLen));
+    <span class="keyword">end</span>
+    fprintf(<span class="string">'%s'</span>, msg);
+    lastLen = length(msg);
+    <span class="keyword">if</span> current &gt;= total
+        fprintf(<span class="string">'\n'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% helper to count files</span>
+<span class="keyword">function</span> counts = countSnapshotFiles(bearing_labels, bearings_paths)
+    counts = zeros(size(bearing_labels));
+    <span class="keyword">for</span> i = 1:length(bearing_labels)
+        pattern = fullfile(bearings_paths(bearing_labels(i)), <span class="string">'*.csv'</span>);
+        files = dir(pattern);
+        counts(i) = numel(files);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+function ensemble = createXJTUSYEnsemble(args)
+%CREATEXJTUSYENSEMBLE Create a fileEnsembleDatastore for the XJTU-SY 
+% dataset.
+%
+%   ensemble = data.createXJTUSYEnsemble(Name,Value)
+%
+%   Loads the XJTU-SY run-to-failure bearing dataset, processes each 
+%   bearing's vibration snapshots, and creates a fileEnsembleDatastore 
+%   compatible with MATLAB's Predictive Maintenance Toolbox.
+%
+%   Name-Value Pair Arguments:
+%     "datasetFolder" - Path to the root of the unzipped XJTU-SY dataset. 
+%                       If not specified, a dialog will prompt the user.
+%     "outputFolder"  - Path where .mat files for each ensemble member will 
+%                       be saved. If not specified, a dialog will prompt.
+%     "progressMode"  - Progress indicator mode. Options:
+%                         "text" (default) - Text progress bar in 
+%                                            MATLAB interpreter.
+%                         "gui"            - Graphical waitbar 
+%                                            (for GUIs/Live Scripts).
+%                         "none"           - No progress updates.
+%
+%   OUTPUT:
+%     ensemble      - fileEnsembleDatastore object referencing the 
+%                    processed data.
+%
+%   REFERENCE:
+%     This dataset is available thanks to the following work:
+%     Biao Wang, Yaguo Lei, Naipeng Li, Ningbo Li,
+%     "A Hybrid Prognostics Approach for Estimating Remaining Useful Life
+%     of Rolling Element Bearings",
+%     IEEE Trans. Reliability, vol. 69, no. 1, pp. 401-412, 2020.
+%     DOI: <a href="https://doi.org/10.1109/TR.2018.2882682">10.1109/TR.2018.2882682</a>.
+%     Dataset: <a href="https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets">
+%     https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets</a>
+%
+%   EXAMPLE:
+%     % Create an ensemble with dialogs for folders and GUI progress bar
+%     ensemble = data.createXJTUSYEnsemble("progressMode","gui");
+%     % Or specify folders directly
+%     ensemble = data.createXJTUSYEnsemble(...
+%       "datasetFolder","XJTU-SY_Bearing_Datasets", ...
+%       "outputFolder","ensemble_datastore");
+%     % Preview the first few rows
+%     preview(ensemble)
+%
+%   SEE ALSO:
+%     fileEnsembleDatastore, readtable, save, load
+%
+
+    arguments
+        args.datasetFolder (1,1) string = ""
+        args.outputFolder (1,1) string = ""
+        args.progressMode (1,1) string ...
+            {mustBeMember( ...
+            args.progressMode, {'text', 'none', 'gui'})} = "text"
+    end
+
+    if args.datasetFolder == ""
+        folder = uigetdir(pwd, 'Select input dataset folder');
+        if folder == 0
+            error(...
+            'sfrfs:data:createXJTUSYEnsemble:InputFolderNotSelected', ...
+            'No input folder selected.');
+        end
+        datasetFolder = string(folder);
+    elseif ~isfolder(args.datasetFolder)
+        error(...
+            'sfrfs:data:createXJTUSYEnsemble:InputFolderDoesNotExist', ...
+            'The input folder "%s" does not exist.', args.datasetFolder);
+    else
+        datasetFolder = args.datasetFolder;
+    end
+    
+    if args.outputFolder == ""
+        folder = uigetdir(pwd, 'Select output folder');
+        if folder == 0
+            error(...
+            'sfrfs:data:createXJTUSYEnsemble:OutputFolderNotSelected', ...
+            'No output folder selected.');
+        end
+        outputFolder = string(folder);
+    else
+        outputFolder = args.outputFolder;
+    end
+
+    if ~isfolder(outputFolder)
+        mkdir(outputFolder);
+    end
+
+    % XJTU-SY parameters
+    speeds = [35.0, 37.5, 40.0];
+    loads = [12.0, 11.0, 10.0];
+    operating_conditions = ["35Hz12kN", "37.5Hz11kN", "40Hz10kN"];
+    bearing_labels = compose(...
+        "Bearing%d_%d", repelem(1:3,5)', repmat((1:5)',3,1));
+
+    paths = strings(size(bearing_labels));
+    conditions = strings(size(bearing_labels));
+    for i = 1:3
+        for j = 1:5
+            idx = (i-1)*5 + j;
+            paths(idx) = fullfile(...
+                datasetFolder, ...
+                operating_conditions(i), ...
+                bearing_labels(idx));
+            conditions(idx) = operating_conditions(i);
+        end
+    end
+
+    % Dictionaries for speed/load per condition
+    conditions_speeds = dictionary(operating_conditions, speeds);
+    conditions_loads = dictionary(operating_conditions, loads);
+    bearings_paths = dictionary(bearing_labels, paths);
+    bearings_conditions = dictionary(bearing_labels, conditions);
+
+    % Ensemble vars
+    dataVariables = ["HorizontalAcceleration", "VerticalAcceleration"];
+    independentVariables = ["Label", "SnapshotIndex"];
+    conditionVariables = ["Speed", "Load", "Lifetime"];
+    allVars = [independentVariables, conditionVariables, dataVariables];
+    varTypes = repmat({'double'}, 1, numel(allVars));
+    varTypes(strcmp(allVars, "Label")) = {'string'};
+    varTypes(ismember(allVars, dataVariables)) = {'cell'};
+
+    counts = countSnapshotFiles(bearing_labels, bearings_paths);
+    totalFiles = sum(counts);
+    currentFile = 0;
+    if strcmp(args.progressMode, 'gui')
+        h = waitbar(0,'Processing...             ','WindowStyle','normal');
+        % Increase waitbar width and height slightly to avoid cropping
+        figPos = get(h,'Position');  % [left bottom width height]
+        figPos(3) = max(600, figPos(3));  % width
+        figPos(4) = max(100, figPos(4));  % height
+        set(h,'Position',figPos)
+        
+    elseif strcmp(args.progressMode, 'text')
+        lastLen = 0;
+    end
+
+    % process each member (individual bearing)
+    % processing is episodic we don't sort the table to save computation
+    for bearing_label = bearing_labels'
+        speed = conditions_speeds(bearings_conditions(bearing_label));
+        load = conditions_loads(bearings_conditions(bearing_label));
+        bearing_path = bearings_paths(bearing_label);
+        snapshot_files = dir(fullfile(bearing_path, '*.csv'));
+        lifetime = numel(snapshot_files);
+
+        nSnapshots = length(snapshot_files);
+        ensembleMemberTable = table(...
+            'Size', [nSnapshots, numel(allVars)], ...
+            'VariableTypes', varTypes,...
+            'VariableNames', allVars);
+
+        for k = 1:nSnapshots
+            file = snapshot_files(k);
+            snapshot_index = ...
+                str2double(regexp(file.name, '\d+', 'match', 'once'));
+            snapshot_table = readtable(fullfile(bearing_path, file.name));
+            acc_horizontal = snapshot_table.Horizontal_vibration_signals;
+            acc_vertical = snapshot_table.Vertical_vibration_signals;
+
+            ensembleMemberTable.Label(k) = bearing_label;
+            ensembleMemberTable.SnapshotIndex(k) = snapshot_index;
+            ensembleMemberTable.Speed(k) = speed;
+            ensembleMemberTable.Load(k) = load;
+            ensembleMemberTable.Lifetime(k) = lifetime;
+            ensembleMemberTable.HorizontalAcceleration{k} = acc_horizontal;
+            ensembleMemberTable.VerticalAcceleration{k} = acc_vertical;
+
+            currentFile = currentFile + 1;
+            if strcmp(args.progressMode, 'gui')
+                message = sprintf(...
+                    'Processing... %.1f%%', currentFile/totalFiles*100);
+                waitbar(currentFile/totalFiles, h,message);
+            elseif strcmp(args.progressMode, 'text')
+                lastLen = printProgressBar(...
+                    currentFile, totalFiles, 60, lastLen);
+            end
+        end
+
+        save(fullfile(outputFolder, bearing_label + ".mat"), ...
+            'ensembleMemberTable', '-v7.3');
+    end
+
+    ensemble = data.getXJTUSYEnsemble(outputFolder);
+
+end
+
+% progress bar
+function lastLen = printProgressBar(current, total, barWidth, lastLen)
+    if nargin < 3, barWidth = 40; end
+    if nargin < 4, lastLen = 0; end
+    progress = min(max(current / total, 0), 1);
+    numBars = min(barWidth, max(0, round(barWidth * progress)));
+    if current > 0 && numBars == 0
+        numBars = 1;
+    end
+    numSpaces = barWidth - numBars;
+    % Use Unicode blocks for filled and empty
+    filledChar = '█';
+    emptyChar = '░';
+    barStr = [...
+        repmat(filledChar, 1, numBars), repmat(emptyChar, 1, numSpaces)];
+    msg = sprintf(...
+        '[%s] %d/%d (%.1f%%)', barStr, current, total, 100*progress);
+
+    if lastLen > 0
+        fprintf(repmat('\b', 1, lastLen));
+    end
+    fprintf('%s', msg);
+    lastLen = length(msg);
+    if current >= total
+        fprintf('\n');
+    end
+end
+
+% helper to count files
+function counts = countSnapshotFiles(bearing_labels, bearings_paths)
+    counts = zeros(size(bearing_labels));
+    for i = 1:length(bearing_labels)
+        pattern = fullfile(bearings_paths(bearing_labels(i)), '*.csv');
+        files = dir(pattern);
+        counts(i) = numel(files);
+    end
+end
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

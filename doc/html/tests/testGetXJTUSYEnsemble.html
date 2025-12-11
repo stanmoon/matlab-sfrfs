@@ -1,0 +1,289 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>testGetXJTUSYEnsemble</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="testGetXJTUSYEnsemble.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> testGetXJTUSYEnsemble &lt; matlab.unittest.TestCase
+<span class="comment">%TESTGETXJTUSYENSEMBLE Unit tests for the getXJTUSYEnsemble function.</span>
+<span class="comment">%</span>
+<span class="comment">%   Verifies correct construction, configuration, and error handling</span>
+<span class="comment">%   of the data.getXJTUSYEnsemble function.</span>
+
+    <span class="keyword">properties</span>
+        TempFolder
+        MemberFiles
+        MemberData
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestClassSetup)
+        <span class="keyword">function</span> setupOnce(testCase)
+            <span class="comment">% Create a temporary folder for ensemble members</span>
+            testCase.TempFolder = tempname;
+            mkdir(testCase.TempFolder);
+
+            <span class="comment">% Create dummy data for 3 members</span>
+            testCase.MemberFiles = strings(3,1);
+            testCase.MemberData = cell(3,1);
+            <span class="keyword">for</span> k = 1:3
+                tbl = table( <span class="keyword">...</span>
+                    categorical(<span class="string">"Label"</span> + k), <span class="keyword">...</span>
+                    k, <span class="keyword">...</span><span class="comment"> % SnapshotIndex</span>
+                    rand()*100, <span class="keyword">...</span><span class="comment"> % Speed</span>
+                    rand()*10, <span class="keyword">...</span><span class="comment">  % Load</span>
+                    randi(100), <span class="keyword">...</span><span class="comment"> % Lifetime</span>
+                    {randn(5,1)}, <span class="keyword">...</span><span class="comment"> % HorizontalAcceleration</span>
+                    {randn(5,1)}, <span class="keyword">...</span><span class="comment"> % VerticalAcceleration</span>
+                    <span class="string">'VariableNames'</span>, <span class="keyword">...</span>
+                    {<span class="string">'Label'</span>,<span class="string">'SnapshotIndex'</span>,<span class="string">'Speed'</span>,<span class="string">'Load'</span>,<span class="string">'Lifetime'</span>, <span class="keyword">...</span>
+                     <span class="string">'HorizontalAcceleration'</span>,<span class="string">'VerticalAcceleration'</span>} <span class="keyword">...</span>
+                );
+                filename = fullfile(<span class="keyword">...</span>
+                    testCase.TempFolder, sprintf(<span class="string">'member_%d.mat'</span>, k));
+                ensembleMemberTable = tbl; <span class="comment">%#ok&lt;NASGU&gt;</span>
+                save(filename, <span class="string">'ensembleMemberTable'</span>);
+                testCase.MemberFiles(k) = filename;
+                testCase.MemberData{k} = tbl;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>(TestClassTeardown)
+        <span class="keyword">function</span> teardownOnce(testCase)
+            <span class="comment">% Clean up temp folder</span>
+            <span class="keyword">if</span> isfolder(testCase.TempFolder)
+                rmdir(testCase.TempFolder, <span class="string">'s'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testReturnsDatastore(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            testCase.verifyClass(ensemble, <span class="string">'fileEnsembleDatastore'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testVariablesAreConfigured(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            expectedVars = [
+                <span class="string">"Label"</span>,<span class="string">"Speed"</span>,<span class="string">"Load"</span>,<span class="string">"Lifetime"</span>,<span class="string">"SnapshotIndex"</span>, <span class="keyword">...</span>
+                <span class="string">"HorizontalAcceleration"</span>,<span class="string">"VerticalAcceleration"</span>
+            ];
+            testCase.verifyEqual(<span class="keyword">...</span>
+                sort(ensemble.SelectedVariables(:)), <span class="keyword">...</span>
+                sort(expectedVars(:)));
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> testReadAllMatchesOriginal(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            tbl = readall(ensemble);
+
+            <span class="comment">% There should be 3 rows (one per member)</span>
+            testCase.verifyEqual(height(tbl), 3);
+
+            <span class="comment">% Check that each member's data matches what was written</span>
+            <span class="keyword">for</span> k = 1:3
+                orig = testCase.MemberData{k};
+                readRow = tbl(k,:);
+                <span class="comment">% Compare each variable</span>
+                <span class="keyword">for</span> v = orig.Properties.VariableNames
+                    testCase.verifyEqual(readRow.(v{1}), orig.(v{1}));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testErrorOnMissingFolder(testCase)
+            nonexistent = tempname;
+            testCase.verifyError(@() <span class="keyword">...</span>
+                data.getXJTUSYEnsemble(nonexistent), <span class="keyword">...</span>
+                <span class="string">'sfrfs:data:getXJTUSYEnsemble:NotAFolder'</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef testGetXJTUSYEnsemble < matlab.unittest.TestCase
+%TESTGETXJTUSYENSEMBLE Unit tests for the getXJTUSYEnsemble function.
+%
+%   Verifies correct construction, configuration, and error handling
+%   of the data.getXJTUSYEnsemble function.
+
+    properties
+        TempFolder
+        MemberFiles
+        MemberData
+    end
+
+    methods (TestClassSetup)
+        function setupOnce(testCase)
+            % Create a temporary folder for ensemble members
+            testCase.TempFolder = tempname;
+            mkdir(testCase.TempFolder);
+
+            % Create dummy data for 3 members
+            testCase.MemberFiles = strings(3,1);
+            testCase.MemberData = cell(3,1);
+            for k = 1:3
+                tbl = table( ...
+                    categorical("Label" + k), ...
+                    k, ... % SnapshotIndex
+                    rand()*100, ... % Speed
+                    rand()*10, ...  % Load
+                    randi(100), ... % Lifetime
+                    {randn(5,1)}, ... % HorizontalAcceleration
+                    {randn(5,1)}, ... % VerticalAcceleration
+                    'VariableNames', ...
+                    {'Label','SnapshotIndex','Speed','Load','Lifetime', ...
+                     'HorizontalAcceleration','VerticalAcceleration'} ...
+                );
+                filename = fullfile(...
+                    testCase.TempFolder, sprintf('member_%d.mat', k));
+                ensembleMemberTable = tbl; %#ok<NASGU>
+                save(filename, 'ensembleMemberTable');
+                testCase.MemberFiles(k) = filename;
+                testCase.MemberData{k} = tbl;
+            end
+        end
+    end
+
+    methods(TestClassTeardown)
+        function teardownOnce(testCase)
+            % Clean up temp folder
+            if isfolder(testCase.TempFolder)
+                rmdir(testCase.TempFolder, 's');
+            end
+        end
+    end
+
+
+    methods (Test)
+        function testReturnsDatastore(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            testCase.verifyClass(ensemble, 'fileEnsembleDatastore');
+        end
+
+        function testVariablesAreConfigured(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            expectedVars = [
+                "Label","Speed","Load","Lifetime","SnapshotIndex", ...
+                "HorizontalAcceleration","VerticalAcceleration"
+            ];
+            testCase.verifyEqual(...
+                sort(ensemble.SelectedVariables(:)), ...
+                sort(expectedVars(:)));
+        end
+
+
+        function testReadAllMatchesOriginal(testCase)
+            ensemble = data.getXJTUSYEnsemble(testCase.TempFolder);
+            tbl = readall(ensemble);
+
+            % There should be 3 rows (one per member)
+            testCase.verifyEqual(height(tbl), 3);
+
+            % Check that each member's data matches what was written
+            for k = 1:3
+                orig = testCase.MemberData{k};
+                readRow = tbl(k,:);
+                % Compare each variable
+                for v = orig.Properties.VariableNames
+                    testCase.verifyEqual(readRow.(v{1}), orig.(v{1}));
+                end
+            end
+        end
+
+        function testErrorOnMissingFolder(testCase)
+            nonexistent = tempname;
+            testCase.verifyError(@() ...
+                data.getXJTUSYEnsemble(nonexistent), ...
+                'sfrfs:data:getXJTUSYEnsemble:NotAFolder');
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

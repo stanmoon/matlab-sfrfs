@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsParameters</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsParameters.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> (Abstract) SFRFsParameters &lt; handle
+    <span class="comment">% SFRFsParameters Abstract base class to store and validate Spectral</span>
+    <span class="comment">% Fault Receptive Fields (SFRF) parameters.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Stores validated SFRF parameter sets for different fault types</span>
+    <span class="comment">%   having those fault types defined in the concrete extending classes.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Supports:</span>
+    <span class="comment">%     - Definition of fault types via an abstract constant property.</span>
+    <span class="comment">%     - Creation of SFRF parameter structs using a generic fully</span>
+    <span class="comment">%       implemented static method.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Properties:</span>
+    <span class="comment">%   (Concrete subclasses define properties specific to domain.)</span>
+    <span class="comment">%</span>
+    <span class="comment">% Abstract Constant Properties:</span>
+    <span class="comment">%   faultTypes - Cell array of fault type names for a given subclass.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Static Methods:</span>
+    <span class="comment">%   createSFRFsParameters - Create parameter struct for SFRFs.</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">properties</span> (Abstract, Constant)
+        faultTypes <span class="comment">% Cell array of fault type names specific to subclass</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Constant)
+        <span class="comment">% SFRF parameter field names</span>
+        ORDER_PARAM_NAME               = <span class="string">'order'</span>
+        NUM_SIDEBANDS_PARAM_NAME       = <span class="string">'numSidebands'</span>
+        NUM_HARMONICS_PARAM_NAME       = <span class="string">'numHarmonics'</span>
+        SIGMA_CENTER_PARAM_NAME        = <span class="string">'sigmaCenter'</span>
+        SIGMA_SURROUND_PARAM_NAME      = <span class="string">'sigmaSurround'</span>
+        INHIBITION_FACTOR_PARAM_NAME   = <span class="string">'inhibitionFactor'</span>
+
+        <span class="comment">% Collection of all SFRF parameter field names</span>
+        sfrfFields = { <span class="keyword">...</span>
+            SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.NUM_HARMONICS_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.SIGMA_CENTER_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME <span class="keyword">...</span>
+        }
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> sfrfsParams = createSFRFsParameters(args)
+            <span class="comment">% createSFRFsParameters Create parameters for Spectral Fault</span>
+            <span class="comment">% Receptive Fields.</span>
+            <span class="comment">%</span>
+            <span class="comment">% sfrfsParams = createSFRFsParameters('Name',Value,...) creates</span>
+            <span class="comment">% a struct of parameters for SFRFs with specified values.</span>
+            <span class="comment">% Unspecified parameters use default values.</span>
+            <span class="comment">%</span>
+            <span class="comment">% Parameters:</span>
+            <span class="comment">%   'order'           - SFRFS order</span>
+            <span class="comment">%                       (default: 0, integer &gt;= 0)</span>
+            <span class="comment">%   'numSidebands'    - Number of sidebands</span>
+            <span class="comment">%                       (default: 2, integer &gt;= 0)</span>
+            <span class="comment">%   'numHarmonics'    - Number of harmonics</span>
+            <span class="comment">%                       (default: 10, integer &gt;= 1)</span>
+            <span class="comment">%   'sigmaCenter'     - [bandwidth, sigmaRule] vector.</span>
+            <span class="comment">%                       Bandwidth sets the width of the</span>
+            <span class="comment">%                       Gaussian mask. sigmaRule sets how the</span>
+            <span class="comment">%                       frequency band limits are handled; for</span>
+            <span class="comment">%                       example, sigmaRule = 3 means the band</span>
+            <span class="comment">%                       covers &plusmn;3 times the bandwidth,</span>
+            <span class="comment">%                       99.7% of the Gaussian area falls within</span>
+            <span class="comment">%                       the band. (default: [4, 6])</span>
+            <span class="comment">%   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same</span>
+            <span class="comment">%                       structure and meaning as sigmaCenter.</span>
+            <span class="comment">%                       (default: [12, 1])</span>
+            <span class="comment">%   'inhibitionFactor'- Inhibition factor</span>
+            <span class="comment">%                       (default: 0.8, 0 &lt;= value &lt;= 1)</span>
+            <span class="comment">%</span>
+            <span class="comment">% Example:</span>
+            <span class="comment">%   params = ...</span>
+            <span class="comment">%      SFRFsParameters.createSFRFsParameters(...</span>
+            <span class="comment">%      'order', 2, 'sigmaCenter', [5, 7]);</span>
+            <span class="comment">%</span>
+
+            <span class="keyword">arguments</span>
+                args.order <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBeNonnegative}</span> = 0;
+                args.numSidebands <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBeNonnegative}</span> = 2;
+                args.numHarmonics <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBePositive}</span> = 10;
+                args.sigmaCenter <span class="typesection">(1,2) double {mustBePositive}</span> = [4, 6];
+                args.sigmaSurround <span class="typesection">(1,2) double {mustBePositive}</span> = [12, 1];
+                args.inhibitionFactor <span class="typesection">(1,1) double { </span><span class="keyword">...</span>
+                    <span class="typesection">mustBeGreaterThanOrEqual(args.inhibitionFactor,0), </span><span class="keyword">...</span>
+                    <span class="typesection">mustBeLessThanOrEqual(args.inhibitionFactor,1)}</span> = 0.8;
+            <span class="keyword">end</span>
+
+            sfrfsParams = struct(<span class="keyword">...</span>
+                <span class="string">'order'</span>, args.order, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, args.numSidebands, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, args.numHarmonics, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, args.sigmaCenter, <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, args.sigmaSurround, <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, args.inhibitionFactor);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef (Abstract) SFRFsParameters < handle
+    % SFRFsParameters Abstract base class to store and validate Spectral
+    % Fault Receptive Fields (SFRF) parameters.
+    %
+    %   Stores validated SFRF parameter sets for different fault types
+    %   having those fault types defined in the concrete extending classes.
+    %
+    %   Supports:
+    %     - Definition of fault types via an abstract constant property.
+    %     - Creation of SFRF parameter structs using a generic fully 
+    %       implemented static method.
+    %
+    % Properties:
+    %   (Concrete subclasses define properties specific to domain.)
+    %
+    % Abstract Constant Properties:
+    %   faultTypes - Cell array of fault type names for a given subclass.
+    %
+    % Static Methods:
+    %   createSFRFsParameters - Create parameter struct for SFRFs.
+    %
+    
+    properties (Abstract, Constant)
+        faultTypes % Cell array of fault type names specific to subclass
+    end
+
+    properties (Constant)
+        % SFRF parameter field names 
+        ORDER_PARAM_NAME               = 'order'
+        NUM_SIDEBANDS_PARAM_NAME       = 'numSidebands'
+        NUM_HARMONICS_PARAM_NAME       = 'numHarmonics'
+        SIGMA_CENTER_PARAM_NAME        = 'sigmaCenter'
+        SIGMA_SURROUND_PARAM_NAME      = 'sigmaSurround'
+        INHIBITION_FACTOR_PARAM_NAME   = 'inhibitionFactor'
+    
+        % Collection of all SFRF parameter field names
+        sfrfFields = { ...
+            SFRFsParameters.ORDER_PARAM_NAME, ...
+            SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
+            SFRFsParameters.NUM_HARMONICS_PARAM_NAME, ...
+            SFRFsParameters.SIGMA_CENTER_PARAM_NAME, ...
+            SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, ...
+            SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME ...
+        }
+    end
+    
+    methods (Static)
+
+        function sfrfsParams = createSFRFsParameters(args)
+            % createSFRFsParameters Create parameters for Spectral Fault 
+            % Receptive Fields.
+            %
+            % sfrfsParams = createSFRFsParameters('Name',Value,...) creates 
+            % a struct of parameters for SFRFs with specified values. 
+            % Unspecified parameters use default values.
+            %
+            % Parameters:
+            %   'order'           - SFRFS order 
+            %                       (default: 0, integer >= 0)
+            %   'numSidebands'    - Number of sidebands 
+            %                       (default: 2, integer >= 0)
+            %   'numHarmonics'    - Number of harmonics 
+            %                       (default: 10, integer >= 1)
+            %   'sigmaCenter'     - [bandwidth, sigmaRule] vector. 
+            %                       Bandwidth sets the width of the 
+            %                       Gaussian mask. sigmaRule sets how the 
+            %                       frequency band limits are handled; for
+            %                       example, sigmaRule = 3 means the band 
+            %                       covers ±3 times the bandwidth, 
+            %                       99.7% of the Gaussian area falls within 
+            %                       the band. (default: [4, 6])
+            %   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same 
+            %                       structure and meaning as sigmaCenter. 
+            %                       (default: [12, 1])
+            %   'inhibitionFactor'- Inhibition factor 
+            %                       (default: 0.8, 0 <= value <= 1)
+            %
+            % Example:
+            %   params = ...
+            %      SFRFsParameters.createSFRFsParameters(...
+            %      'order', 2, 'sigmaCenter', [5, 7]);
+            %
+            
+            arguments
+                args.order (1,1) ...
+                    {mustBeInteger, mustBeNonnegative} = 0;
+                args.numSidebands (1,1) ...
+                    {mustBeInteger, mustBeNonnegative} = 2;
+                args.numHarmonics (1,1) ...
+                    {mustBeInteger, mustBePositive} = 10;
+                args.sigmaCenter (1,2) double {mustBePositive} = [4, 6];
+                args.sigmaSurround (1,2) double {mustBePositive} = [12, 1];
+                args.inhibitionFactor (1,1) double { ...
+                    mustBeGreaterThanOrEqual(args.inhibitionFactor,0), ...
+                    mustBeLessThanOrEqual(args.inhibitionFactor,1)} = 0.8;
+            end
+            
+            sfrfsParams = struct(...
+                'order', args.order, ...
+                'numSidebands', args.numSidebands, ...
+                'numHarmonics', args.numHarmonics, ...
+                'sigmaCenter', args.sigmaCenter, ...
+                'sigmaSurround', args.sigmaSurround, ...
+                'inhibitionFactor', args.inhibitionFactor);
+        end
+    end
+end
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

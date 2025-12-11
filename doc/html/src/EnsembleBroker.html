@@ -1,0 +1,709 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>EnsembleBroker</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="EnsembleBroker.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> EnsembleBroker &lt; handle
+<span class="comment">% EnsembleBroker Concrete wrapper for ensemble-like objects.</span>
+<span class="comment">%</span>
+<span class="comment">%   Wraps an arbitrary ensemble object and delegates the getFiles call</span>
+<span class="comment">%   to a provided method handle.</span>
+<span class="comment">%   Example:</span>
+<span class="comment">%       broker = SFRFsEnsembleBroker( ...</span>
+<span class="comment">%           'ensembleObject', fileEnsembleDS, ...</span>
+<span class="comment">%           'getFilesFunction', fcnHandle, ...</span>
+<span class="comment">%           'temporalSnapshotColumns', temporalSnapshotColumns)</span>
+<span class="comment">%</span>
+<span class="comment">%   See also: EnsembleBroker/getFiles</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        <span class="comment">% Wrapped ensemble object.</span>
+        ensembleInternal
+        <span class="comment">% Function handle for member files.</span>
+        getFilesFcn <span class="typesection">function_handle</span>
+        <span class="comment">% sortField Field column name in ensemble</span>
+        <span class="comment">% (default: 'SnapshotIndex')</span>
+        sortFieldInternal <span class="typesection">(1,1) string </span>= <span class="string">"SnapshotIndex"</span>
+        <span class="comment">% memberTableVarName Variable name in MAT-files</span>
+        <span class="comment">% (default: 'ensembleMemberTable')</span>
+        memberTableVarNameInternal <span class="typesection">(1,1) string </span>= <span class="string">"ensembleMemberTable"</span>
+        <span class="comment">% Column names containing the snapshots in the time domain.</span>
+        temporalSnapshotColumnsInternal <span class="typesection">(1,:) cell </span>= {}
+        <span class="comment">% Suffix for column names of snapshots' spectra</span>
+        spectralSuffixInternal <span class="typesection">(1,1) string </span>= <span class="string">"_FFT"</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        ensemble <span class="typesection">{mustBeNonempty}</span>
+        sortField <span class="typesection">(1,1) string</span>
+        memberTableVarName <span class="typesection">(1,1) string</span>
+        temporalSnapshotColumns <span class="typesection">(1,:) cell</span>
+        spectralSuffix <span class="typesection">(1,1) string</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = EnsembleBroker(args)
+        <span class="comment">% EnsembleBroker Construct an EnsembleBroker wrapper.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   obj = EnsembleBroker(...</span>
+        <span class="comment">%           'ensembleObject', ensembleObject, ...</span>
+        <span class="comment">%           'getFilesFunction', functionHandle, ...</span>
+        <span class="comment">%           'temporalSnapshotColumns', columns) creates an</span>
+        <span class="comment">%   EnsembleBroker instance wrapping ENSEMBLEOBJ.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%     ensembleObject         -  The underlying ensemble object to</span>
+        <span class="comment">%                               wrap.</span>
+        <span class="comment">%     getFilesFunction       -  Function handle, returns member</span>
+        <span class="comment">%                               files.</span>
+        <span class="comment">%     temporalSnapshotColumns - Cell array of char vectors</span>
+        <span class="comment">%                               specifying</span>
+        <span class="comment">%                               ensemble table column names that</span>
+        <span class="comment">%                               contain temporal signal snapshots.</span>
+        <span class="comment">%     sortField              -  Field name used for sorting the</span>
+        <span class="comment">%                               ensemble tables.</span>
+        <span class="comment">%                               Default is "SnapshotIndex".</span>
+        <span class="comment">%     memberTableVarName     -  Variable name inside MAT-files</span>
+        <span class="comment">%                               storing member table.</span>
+        <span class="comment">%                               Default is "ensembleMemberTable".</span>
+        <span class="comment">%     spectralSuffix          - Suffix for spectral column names.</span>
+        <span class="comment">%                               Default: "_FFT".</span>
+        <span class="comment">%</span>
+        <span class="comment">%   This wrapper delegates file listing to GETFILESFNC and stores</span>
+        <span class="comment">%   metadata about temporal signal snapshot columns.</span>
+        <span class="comment">%</span>
+            <span class="keyword">arguments</span>
+                args.ensembleObject <span class="typesection">{mustBeNonempty}</span>
+                args.getFilesFunction <span class="typesection">function_handle</span>
+                args.temporalSnapshotColumns <span class="typesection">(1,:) cell </span><span class="keyword">...</span>
+                    <span class="typesection">{EnsembleBroker.mustBeCellOfTextScalars}</span>
+                args.sortField <span class="typesection">(1,1) string </span>= <span class="string">"SnapshotIndex"</span>
+                args.memberTableVarName <span class="typesection">(1,1) string </span>= <span class="keyword">...</span>
+                    <span class="string">"ensembleMemberTable"</span>
+                args.spectralSuffix <span class="typesection">(1,1) string </span>= <span class="string">"_FFT"</span>
+            <span class="keyword">end</span>
+            obj.ensembleInternal = args.ensembleObject;
+            obj.getFilesFcn = args.getFilesFunction;
+            obj.temporalSnapshotColumnsInternal = <span class="keyword">...</span>
+                args.temporalSnapshotColumns;
+            obj.sortFieldInternal = args.sortField;
+            obj.memberTableVarNameInternal = args.memberTableVarName;
+            obj.spectralSuffixInternal = string(args.spectralSuffix);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> files = getFiles(obj)
+        <span class="comment">% getFiles Retrieve ensemble member file identifiers.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   files = obj.getFiles() calls the stored function handle</span>
+        <span class="comment">%   'getFilesFcn' on the wrapped ensemble object to obtain a</span>
+        <span class="comment">%   cell array of member file names or identifiers.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%     files - Cell array of strings representing member files.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Usage:</span>
+        <span class="comment">%     memberFiles = obj.getFiles();</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Note:</span>
+        <span class="comment">%     The getFilesFcn function handle must accept the ensemble</span>
+        <span class="comment">%     object as input and return the member files.</span>
+
+            files = obj.getFilesFcn(obj.ensemble);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.ensemble(obj)
+        <span class="comment">% Getter for ensemble property.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   val = obj.ensemble returns the wrapped ensemble object</span>
+        <span class="comment">%   stored internally.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%     val - The ensemble object wrapped by this broker instance.</span>
+
+            val = obj.ensembleInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.sortField(obj)
+            val = obj.sortFieldInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.memberTableVarName(obj)
+            val = obj.memberTableVarNameInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> columns = get.temporalSnapshotColumns(obj)
+        <span class="comment">% Getter for temporalSnapshotColumns property.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   val = obj.temporalSnapshotColumns returns the wrapped</span>
+        <span class="comment">%   cell array with temporal snapshot column names.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%     val - The column names.</span>
+            columns = obj.temporalSnapshotColumnsInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> suffix = get.spectralSuffix(obj)
+        <span class="comment">% Getter for spectralSuffix property.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Returns the suffix string used for spectral column names.</span>
+
+            suffix = obj.spectralSuffixInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> spectralName = mapToSpectralColumn(obj, columnName)
+        <span class="comment">% mapToSpectralColumn Return the spectral column name for a given</span>
+        <span class="comment">%   temporal column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   spectralName = obj.mapToSpectralColumn(columnName)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   columnName - time-domain column name (char or string).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   spectralName - corresponding spectral column name.</span>
+
+            suffix = obj.spectralSuffix;
+            spectralName = EnsembleUtil.appendSuffix(columnName, suffix);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> temporalName = mapToTemporalColumn(obj, spectralName)
+        <span class="comment">% mapToTemporalColumn Return the temporal column name for a given</span>
+        <span class="comment">% spectral column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   temporalName = obj.mapToTemporalColumn(spectralName)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   spectralName - spectral column name (char or string).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   temporalName - corresponding time-domain column name.</span>
+
+            suffix = obj.spectralSuffix;
+            temporalName = EnsembleUtil.removeSuffix(spectralName, suffix);
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> saveEnsembleMember(filename, tableVarName, tbl)
+        <span class="comment">% saveEnsembleMember Save an ensemble member table to a</span>
+        <span class="comment">% MAT-file (.mat).</span>
+        <span class="comment">%</span>
+        <span class="comment">%   EnsembleBroker.saveEnsembleMember(...</span>
+        <span class="comment">%       filename, tableVarName, tbl)</span>
+        <span class="comment">%   saves the input table 'tbl' with the name defined in</span>
+        <span class="comment">%   tableVarName</span>
+        <span class="comment">%   in the MAT-file specified by 'filename',</span>
+        <span class="comment">%   using the -v7.3 format (necessary for big tables).</span>
+        <span class="comment">%ensemble</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%     filename      - String or character vector specifying the</span>
+        <span class="comment">%                     full</span>
+        <span class="comment">%                     path to the MAT-file where the table will</span>
+        <span class="comment">%                     be saved.</span>
+        <span class="comment">%     tableVarName  - Name of the variable under which to save</span>
+        <span class="comment">%                     the table.</span>
+        <span class="comment">%     tbl           - Table to be saved.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   This method centralizes the save logic for ensemble member</span>
+        <span class="comment">%   tables, ensuring consistency and simplifying future</span>
+        <span class="comment">%   maintenance.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%     EnsembleBroker.saveEnsembleMember(...</span>
+        <span class="comment">%         'member_1.mat', 'ensembleMemberTable', tbl);</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: save</span>
+            <span class="keyword">arguments</span>
+                filename <span class="typesection">{mustBeTextScalar}</span>
+                tableVarName <span class="typesection">{mustBeTextScalar}</span>
+                tbl <span class="typesection">table</span>
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~isvarname(tableVarName)
+                error(<span class="keyword">...</span>
+                    <span class="string">'sfrfs:EnsembleBroker:InvalidVarName'</span>, <span class="keyword">...</span>
+                    [<span class="string">'Table variable name "%s" is not a valid MATLAB'''</span><span class="keyword">...</span>
+                     <span class="string">'identifier.'</span>], tableVarName);
+            <span class="keyword">end</span>
+
+            dataToSave = struct();
+            dataToSave.(tableVarName) = tbl;
+            save(filename, <span class="string">'-struct'</span>, <span class="string">'dataToSave'</span>, <span class="string">'-v7.3'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tbl = loadEnsembleMember(args)
+            <span class="comment">% loadEnsembleMember Load (and optionally sort) an ensemble</span>
+            <span class="comment">% member table.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   tbl = EnsembleBroker.loadEnsembleMember(args)</span>
+            <span class="comment">%   loads the variable specified by args.MemberTableVarName</span>
+            <span class="comment">%   from the MAT-file at args.Filename. If args.Sort is true,</span>
+            <span class="comment">%   sorts the table by args.SortField.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Name-Value Arguments:</span>
+            <span class="comment">%     'filename'           - Path to the MAT-file.</span>
+            <span class="comment">%     'memberTableVarName' - Variable name to load (default:</span>
+            <span class="comment">%                            'ensembleMemberTable').</span>
+            <span class="comment">%     'sort'               - Logical flag to sort the table</span>
+            <span class="comment">%                            (default: true).</span>
+            <span class="comment">%     'sortField'          - Field name to sort by (default:</span>
+            <span class="comment">%                            'SnapshotIndex').</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Output:</span>
+            <span class="comment">%     tbl - Table loaded from the file (sorted if requested).</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Example:</span>
+            <span class="comment">%     tbl = EnsembleBroker.loadEnsembleMember(...</span>
+            <span class="comment">%         'filename', 'member.mat', ...</span>
+            <span class="comment">%         'memberTableVarName', 'memberTable', ...</span>
+            <span class="comment">%         'sort', true, ...</span>
+            <span class="comment">%         'sortField', 'SnapshotIdx');</span>
+            <span class="comment">%</span>
+            <span class="comment">%   See also: load, sortrows</span>
+
+            <span class="keyword">arguments</span>
+                args.filename <span class="typesection">(1,:) {mustBeTextScalar}</span>
+                args.memberTableVarName <span class="typesection">(1,:) {mustBeTextScalar}</span> = <span class="keyword">...</span>
+                    <span class="string">'ensembleMemberTable'</span>
+                args.sort <span class="typesection">(1,1) logical </span>= true
+                args.sortField <span class="typesection">(1,:) {mustBeTextScalar}</span> = <span class="string">'SnapshotIndex'</span>
+            <span class="keyword">end</span>
+
+            member = load(args.filename, args.memberTableVarName);
+
+            <span class="keyword">if</span> ~isfield(member, args.memberTableVarName)
+                error(<span class="keyword">...</span>
+                    [<span class="string">'sfrfs:EnsembleBroker:loadEnsembleMember:'</span>,<span class="keyword">...</span>
+                     <span class="string">'MemberTableNotFound'</span>], <span class="keyword">...</span>
+                     <span class="string">'Member table ''%s'' not found in file %s.'</span>, <span class="keyword">...</span>
+                    args.memberTableVarName, args.filename);
+            <span class="keyword">end</span>
+
+            tbl = member.(args.memberTableVarName);
+
+            <span class="keyword">if</span> args.sort
+                <span class="keyword">if</span> ~ismember(args.sortField, tbl.Properties.VariableNames)
+                    error(<span class="keyword">...</span>
+                        [<span class="string">'sfrfs:EnsembleBroker:'</span>,<span class="keyword">...</span>
+                         <span class="string">'loadEnsembleMember:SortingFieldNotFound'</span>], <span class="keyword">...</span>
+                        [<span class="string">'Sort field ''%s'' not found in table'</span>,<span class="keyword">...</span>
+                         <span class="string">' loaded from %s.'</span>],<span class="keyword">...</span>
+                        args.sortField, args.filename);
+                <span class="keyword">end</span>
+                tbl = sortrows(tbl, args.sortField);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+        <span class="keyword">function</span> mustBeCellOfTextScalars(x)
+            <span class="keyword">if</span> ~iscell(x) || <span class="keyword">...</span>
+                    ~all(cellfun(@(c) ischar(c) || isStringScalar(c), x))
+                error(<span class="keyword">...</span>
+                    <span class="string">'sfrfs:EnsembleBroker:InvalidColumnNames'</span>, <span class="keyword">...</span>
+                    <span class="string">'A cell array with column names is expected'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef EnsembleBroker < handle
+% EnsembleBroker Concrete wrapper for ensemble-like objects.
+%
+%   Wraps an arbitrary ensemble object and delegates the getFiles call
+%   to a provided method handle.
+%   Example:
+%       broker = SFRFsEnsembleBroker( ...
+%           'ensembleObject', fileEnsembleDS, ...
+%           'getFilesFunction', fcnHandle, ...
+%           'temporalSnapshotColumns', temporalSnapshotColumns)
+%
+%   See also: EnsembleBroker/getFiles
+    
+    properties (Access = private)
+        % Wrapped ensemble object.
+        ensembleInternal         
+        % Function handle for member files.
+        getFilesFcn function_handle                     
+        % sortField Field column name in ensemble
+        % (default: 'SnapshotIndex')
+        sortFieldInternal (1,1) string = "SnapshotIndex"
+        % memberTableVarName Variable name in MAT-files 
+        % (default: 'ensembleMemberTable')
+        memberTableVarNameInternal (1,1) string = "ensembleMemberTable"
+        % Column names containing the snapshots in the time domain.
+        temporalSnapshotColumnsInternal (1,:) cell = {}
+        % Suffix for column names of snapshots' spectra
+        spectralSuffixInternal (1,1) string = "_FFT"      
+    end
+
+    properties (Dependent)
+        ensemble {mustBeNonempty}
+        sortField (1,1) string
+        memberTableVarName (1,1) string
+        temporalSnapshotColumns (1,:) cell
+        spectralSuffix (1,1) string
+    end
+    
+    methods
+
+        function obj = EnsembleBroker(args)
+        % EnsembleBroker Construct an EnsembleBroker wrapper.
+        %
+        %   obj = EnsembleBroker(...
+        %           'ensembleObject', ensembleObject, ...
+        %           'getFilesFunction', functionHandle, ...
+        %           'temporalSnapshotColumns', columns) creates an 
+        %   EnsembleBroker instance wrapping ENSEMBLEOBJ.
+        %
+        %   Inputs:
+        %     ensembleObject         -  The underlying ensemble object to 
+        %                               wrap.
+        %     getFilesFunction       -  Function handle, returns member 
+        %                               files.
+        %     temporalSnapshotColumns - Cell array of char vectors 
+        %                               specifying 
+        %                               ensemble table column names that 
+        %                               contain temporal signal snapshots. 
+        %     sortField              -  Field name used for sorting the 
+        %                               ensemble tables.
+        %                               Default is "SnapshotIndex".
+        %     memberTableVarName     -  Variable name inside MAT-files 
+        %                               storing member table. 
+        %                               Default is "ensembleMemberTable".
+        %     spectralSuffix          - Suffix for spectral column names.
+        %                               Default: "_FFT".
+        %
+        %   This wrapper delegates file listing to GETFILESFNC and stores 
+        %   metadata about temporal signal snapshot columns.
+        %
+            arguments
+                args.ensembleObject {mustBeNonempty}
+                args.getFilesFunction function_handle
+                args.temporalSnapshotColumns (1,:) cell ...
+                    {EnsembleBroker.mustBeCellOfTextScalars}
+                args.sortField (1,1) string = "SnapshotIndex"
+                args.memberTableVarName (1,1) string = ...
+                    "ensembleMemberTable"
+                args.spectralSuffix (1,1) string = "_FFT"
+            end
+            obj.ensembleInternal = args.ensembleObject;
+            obj.getFilesFcn = args.getFilesFunction;
+            obj.temporalSnapshotColumnsInternal = ...
+                args.temporalSnapshotColumns;
+            obj.sortFieldInternal = args.sortField;
+            obj.memberTableVarNameInternal = args.memberTableVarName;
+            obj.spectralSuffixInternal = string(args.spectralSuffix);
+        end
+
+
+        function files = getFiles(obj)
+        % getFiles Retrieve ensemble member file identifiers.
+        %
+        %   files = obj.getFiles() calls the stored function handle 
+        %   'getFilesFcn' on the wrapped ensemble object to obtain a 
+        %   cell array of member file names or identifiers.
+        %
+        %   Output:
+        %     files - Cell array of strings representing member files.
+        %
+        %   Usage:
+        %     memberFiles = obj.getFiles();
+        %
+        %   Note:
+        %     The getFilesFcn function handle must accept the ensemble 
+        %     object as input and return the member files.
+            
+            files = obj.getFilesFcn(obj.ensemble);
+        end
+        
+        function val = get.ensemble(obj)
+        % Getter for ensemble property.
+        %
+        %   val = obj.ensemble returns the wrapped ensemble object
+        %   stored internally.
+        %
+        %   Output:
+        %     val - The ensemble object wrapped by this broker instance.
+            
+            val = obj.ensembleInternal;
+        end
+
+        function val = get.sortField(obj)
+            val = obj.sortFieldInternal;
+        end
+
+        function val = get.memberTableVarName(obj)
+            val = obj.memberTableVarNameInternal;
+        end
+
+        function columns = get.temporalSnapshotColumns(obj)
+        % Getter for temporalSnapshotColumns property.
+        %
+        %   val = obj.temporalSnapshotColumns returns the wrapped 
+        %   cell array with temporal snapshot column names.
+        %
+        %   Output:
+        %     val - The column names.
+            columns = obj.temporalSnapshotColumnsInternal;
+        end
+
+        function suffix = get.spectralSuffix(obj)
+        % Getter for spectralSuffix property.
+        %
+        % Returns the suffix string used for spectral column names.
+
+            suffix = obj.spectralSuffixInternal;
+        end
+
+        function spectralName = mapToSpectralColumn(obj, columnName) 
+        % mapToSpectralColumn Return the spectral column name for a given 
+        %   temporal column.
+        %
+        %   spectralName = obj.mapToSpectralColumn(columnName)
+        %
+        % Inputs:
+        %   columnName - time-domain column name (char or string).
+        %
+        % Output:
+        %   spectralName - corresponding spectral column name.
+
+            suffix = obj.spectralSuffix;
+            spectralName = EnsembleUtil.appendSuffix(columnName, suffix);
+        end
+
+        function temporalName = mapToTemporalColumn(obj, spectralName)
+        % mapToTemporalColumn Return the temporal column name for a given 
+        % spectral column.
+        %
+        %   temporalName = obj.mapToTemporalColumn(spectralName)
+        %
+        % Inputs:
+        %   spectralName - spectral column name (char or string).
+        %
+        % Output:
+        %   temporalName - corresponding time-domain column name.
+    
+            suffix = obj.spectralSuffix;
+            temporalName = EnsembleUtil.removeSuffix(spectralName, suffix);
+        end
+
+    
+    end
+
+    methods (Static)
+        
+        function saveEnsembleMember(filename, tableVarName, tbl)
+        % saveEnsembleMember Save an ensemble member table to a  
+        % MAT-file (.mat).
+        %
+        %   EnsembleBroker.saveEnsembleMember(...
+        %       filename, tableVarName, tbl)
+        %   saves the input table 'tbl' with the name defined in 
+        %   tableVarName
+        %   in the MAT-file specified by 'filename', 
+        %   using the -v7.3 format (necessary for big tables).
+        %ensemble
+        %   Inputs:
+        %     filename      - String or character vector specifying the 
+        %                     full
+        %                     path to the MAT-file where the table will 
+        %                     be saved.
+        %     tableVarName  - Name of the variable under which to save 
+        %                     the table.
+        %     tbl           - Table to be saved.
+        %
+        %   This method centralizes the save logic for ensemble member 
+        %   tables, ensuring consistency and simplifying future 
+        %   maintenance.
+        %
+        %   Example:
+        %     EnsembleBroker.saveEnsembleMember(...
+        %         'member_1.mat', 'ensembleMemberTable', tbl);
+        %
+        %   See also: save
+            arguments
+                filename {mustBeTextScalar}
+                tableVarName {mustBeTextScalar}
+                tbl table
+            end
+            if ~isvarname(tableVarName)
+                error(...
+                    'sfrfs:EnsembleBroker:InvalidVarName', ...
+                    ['Table variable name "%s" is not a valid MATLAB'''...
+                     'identifier.'], tableVarName);
+            end
+
+            dataToSave = struct();
+            dataToSave.(tableVarName) = tbl;
+            save(filename, '-struct', 'dataToSave', '-v7.3');
+        end
+        
+        function tbl = loadEnsembleMember(args)
+            % loadEnsembleMember Load (and optionally sort) an ensemble 
+            % member table.
+            %
+            %   tbl = EnsembleBroker.loadEnsembleMember(args)
+            %   loads the variable specified by args.MemberTableVarName 
+            %   from the MAT-file at args.Filename. If args.Sort is true, 
+            %   sorts the table by args.SortField.
+            %
+            %   Name-Value Arguments:
+            %     'filename'           - Path to the MAT-file.
+            %     'memberTableVarName' - Variable name to load (default: 
+            %                            'ensembleMemberTable').
+            %     'sort'               - Logical flag to sort the table 
+            %                            (default: true).
+            %     'sortField'          - Field name to sort by (default: 
+            %                            'SnapshotIndex').
+            %
+            %   Output:
+            %     tbl - Table loaded from the file (sorted if requested).
+            %
+            %   Example:
+            %     tbl = EnsembleBroker.loadEnsembleMember(...
+            %         'filename', 'member.mat', ...
+            %         'memberTableVarName', 'memberTable', ...
+            %         'sort', true, ...
+            %         'sortField', 'SnapshotIdx');
+            %
+            %   See also: load, sortrows
+        
+            arguments
+                args.filename (1,:) {mustBeTextScalar}
+                args.memberTableVarName (1,:) {mustBeTextScalar} = ...
+                    'ensembleMemberTable'
+                args.sort (1,1) logical = true
+                args.sortField (1,:) {mustBeTextScalar} = 'SnapshotIndex'
+            end
+        
+            member = load(args.filename, args.memberTableVarName);
+        
+            if ~isfield(member, args.memberTableVarName)
+                error(...
+                    ['sfrfs:EnsembleBroker:loadEnsembleMember:',...
+                     'MemberTableNotFound'], ...
+                     'Member table ''%s'' not found in file %s.', ...
+                    args.memberTableVarName, args.filename);
+            end
+
+            tbl = member.(args.memberTableVarName);
+
+            if args.sort
+                if ~ismember(args.sortField, tbl.Properties.VariableNames)
+                    error(...
+                        ['sfrfs:EnsembleBroker:',...
+                         'loadEnsembleMember:SortingFieldNotFound'], ...
+                        ['Sort field ''%s'' not found in table',...
+                         ' loaded from %s.'],...
+                        args.sortField, args.filename);
+                end
+                tbl = sortrows(tbl, args.sortField);
+            end
+        end
+
+    end
+
+    methods (Static, Access = private)
+        function mustBeCellOfTextScalars(x)
+            if ~iscell(x) || ...
+                    ~all(cellfun(@(c) ischar(c) || isStringScalar(c), x))
+                error(...
+                    'sfrfs:EnsembleBroker:InvalidColumnNames', ...
+                    'A cell array with column names is expected')
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

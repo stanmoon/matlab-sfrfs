@@ -1,0 +1,971 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>EnsembleDatastoreRegistry</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="EnsembleDatastoreRegistry.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> (Sealed) EnsembleDatastoreRegistry &lt; handle
+    <span class="comment">% EnsembleDatastoreRegistry</span>
+    <span class="comment">%   Static factory for registering, retrieving, reconfiguring, and</span>
+    <span class="comment">%   managing fileEnsembleDatastore objects. Supports persistence,</span>
+    <span class="comment">%   logging, and ensures that ensembles are globally accessible</span>
+    <span class="comment">%   across MATLAB sessions.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   This class is sealed and provides only static methods; it does</span>
+    <span class="comment">%   not need to be instantiated.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Features:</span>
+    <span class="comment">%     - Register new ensembles with addEnsemble</span>
+    <span class="comment">%     - Retrieve ensembles by name with getEnsemble</span>
+    <span class="comment">%     - Check existence with hasEnsemble</span>
+    <span class="comment">%     - List all registered ensemble names with getAllEnsembleNames</span>
+    <span class="comment">%     - Reconfigure ensemble variables with reconfigureEnsemble</span>
+    <span class="comment">%     - Remove individual ensembles with removeEnsemble</span>
+    <span class="comment">%     - Reset all registered ensembles with factoryReset</span>
+    <span class="comment">%</span>
+    <span class="comment">%   All registered ensembles are persisted to a MAT-file in the</span>
+    <span class="comment">%   user preferences directory and loaded automatically when needed.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Usage:</span>
+    <span class="comment">%       % Add a new ensemble</span>
+    <span class="comment">%       EnsembleDatastoreRegistry.addEnsemble( ...</span>
+    <span class="comment">%           name = "myEnsemble", ...</span>
+    <span class="comment">%           datastore = myFileEnsembleDatastore);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % Retrieve a registered ensemble</span>
+    <span class="comment">%       ds = EnsembleDatastoreRegistry.getEnsemble("myEnsemble");</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % Reconfigure variable sets</span>
+    <span class="comment">%       ds = EnsembleDatastoreRegistry.reconfigureEnsemble( ...</span>
+    <span class="comment">%           name = "myEnsemble", ...</span>
+    <span class="comment">%           DataVariables = ["Signal1", "Signal2"], ...</span>
+    <span class="comment">%           SelectedVariables = ["Signal1"]);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % Check if an ensemble exists</span>
+    <span class="comment">%       tf = EnsembleDatastoreRegistry.hasEnsemble("myEnsemble");</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % List all ensemble names</span>
+    <span class="comment">%       names = EnsembleDatastoreRegistry.getAllEnsembleNames();</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % Remove an ensemble</span>
+    <span class="comment">%       EnsembleDatastoreRegistry.removeEnsemble("myEnsemble");</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % Reset all ensembles</span>
+    <span class="comment">%       EnsembleDatastoreRegistry.factoryReset();</span>
+    <span class="comment">%</span>
+    <span class="comment">%   See also: fileEnsembleDatastore, SFRFsLogger</span>
+
+
+    <span class="keyword">properties</span> (Constant, Access = private)
+        ENSEMBLE_FOLDER = fullfile(prefdir, <span class="string">'sfrfs'</span>);
+        ENSEMBLE_MAP_FILE = fullfile( <span class="keyword">...</span>
+            prefdir, <span class="string">'sfrfs'</span>, <span class="string">'sfrfs-ensembles-map.mat'</span>);
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> addEnsemble(args)
+        <span class="comment">% addEnsemble Register a new fileEnsembleDatastore</span>
+        <span class="comment">%</span>
+        <span class="comment">%   EnsembleDatastoreRegistry.addEnsemble(Name, Datastore)</span>
+        <span class="comment">%   registers a new ensemble with the factory. If an ensemble</span>
+        <span class="comment">%   with the same name already exists, it will be overwritten</span>
+        <span class="comment">%   and a log message is issued.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs (as Name-Value pairs):</span>
+        <span class="comment">%       'name'      - Text scalar specifying the ensemble name.</span>
+        <span class="comment">%       'datastore' - A fileEnsembleDatastore object to register.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   The method persists the updated registry to disk and updates</span>
+        <span class="comment">%   the in-memory map, making the ensemble available for</span>
+        <span class="comment">%   retrieval in the current and future MATLAB sessions.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       ds = fileEnsembleDatastore(...); % construct datastore</span>
+        <span class="comment">%       EnsembleDatastoreRegistry.addEnsemble( ...</span>
+        <span class="comment">%           name = "myEnsemble", ...</span>
+        <span class="comment">%           datastore = ds);</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: getEnsemble, reconfigureEnsemble, removeEnsemble,</span>
+        <span class="comment">%   factoryReset</span>
+
+            <span class="keyword">arguments</span>
+                args.name <span class="typesection">{mustBeTextScalar}</span>
+                args.datastore <span class="typesection">fileEnsembleDatastore</span>
+            <span class="keyword">end</span>
+
+            logger = SFRFsLogger.getLogger();
+            name = string(args.name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            <span class="keyword">if</span> isKey(m, name)
+                logger.info(sprintf( <span class="keyword">...</span>
+                    <span class="string">'Overwriting ensemble "%s". Previous class: %s'</span>, <span class="keyword">...</span>
+                    char(name), class(m(name))));
+            <span class="keyword">end</span>
+
+            m(name) = args.datastore;
+            <span class="comment">% update persistent in-memory dictionary</span>
+            EnsembleDatastoreRegistry.MAP(m);
+            EnsembleDatastoreRegistry.persistMap(m);
+            logger.info(sprintf(<span class="string">'Ensemble "%s"added.'</span>,char(name)));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> names = getAllEnsembleNames()
+        <span class="comment">% getAllEnsembleNames Return names of all registered ensembles</span>
+        <span class="comment">%</span>
+        <span class="comment">%   names = EnsembleDatastoreRegistry.getAllEnsembleNames()</span>
+        <span class="comment">%   returns a string array containing the names of all</span>
+        <span class="comment">%   ensembles currently registered in the factory.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       names - String array of ensemble names.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       allNames = ...</span>
+        <span class="comment">%           EnsembleDatastoreRegistry.getAllEnsembleNames();</span>
+        <span class="comment">%       disp(allNames);</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: hasEnsemble, getEnsemble, addEnsemble</span>
+
+            m = EnsembleDatastoreRegistry.MAP;
+            names = string(keys(m));
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> datastore = getEnsemble(name)
+        <span class="comment">% getEnsemble Retrieve a registered ensemble by name</span>
+        <span class="comment">%</span>
+        <span class="comment">%   datastore = EnsembleDatastoreRegistry.getEnsemble(name)</span>
+        <span class="comment">%   returns the fileEnsembleDatastore object registered under</span>
+        <span class="comment">%   the specified name. Throws an error if no ensemble with</span>
+        <span class="comment">%   that name exists.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Input:</span>
+        <span class="comment">%       name - Text scalar specifying the ensemble name.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       datastore - The registered fileEnsembleDatastore.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       ds = ...</span>
+        <span class="comment">%          EnsembleDatastoreRegistry.getEnsemble("myEnsemble");</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: hasEnsemble, addEnsemble, getAllEnsembleNames</span>
+
+            <span class="keyword">arguments</span>
+                name <span class="typesection">{mustBeTextScalar}</span>
+            <span class="keyword">end</span>
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            <span class="keyword">if</span> ~isKey(m, name)
+                error(<span class="string">'sfrfs:EnsembleFactory:NotFound'</span>, <span class="keyword">...</span>
+                    <span class="string">'No ensemble registered with name "%s".'</span>, <span class="keyword">...</span>
+                    char(name));
+            <span class="keyword">end</span>
+
+            datastore = m(name);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> tf = hasEnsemble(name)
+        <span class="comment">% hasEnsemble Check if an ensemble is registered</span>
+        <span class="comment">%</span>
+        <span class="comment">%   tf = EnsembleDatastoreRegistry.hasEnsemble(name) returns a</span>
+        <span class="comment">%   logical true if an ensemble with the specified name is</span>
+        <span class="comment">%   registered in the factory, and false otherwise.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Input:</span>
+        <span class="comment">%       name - Text scalar specifying the ensemble name.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       tf - Logical scalar: true if ensemble exists, false if not.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       if EnsembleDatastoreRegistry.hasEnsemble("myEnsemble")</span>
+        <span class="comment">%           disp("Ensemble exists!");</span>
+        <span class="comment">%       else</span>
+        <span class="comment">%           disp("Ensemble not found.");</span>
+        <span class="comment">%       end</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: getEnsemble, getAllEnsembleNames, addEnsemble</span>
+
+            <span class="keyword">arguments</span>
+                name <span class="typesection">{mustBeTextScalar}</span>
+            <span class="keyword">end</span>
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+            tf = isKey(m, name);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> ds = reconfigureEnsemble(args)
+        <span class="comment">% reconfigureEnsemble Update configuration of a registered ensemble</span>
+        <span class="comment">%</span>
+        <span class="comment">%   ds = EnsembleDatastoreRegistry.reconfigureEnsemble(Name, ...)</span>
+        <span class="comment">%   updates the properties of an existing registered</span>
+        <span class="comment">%   fileEnsembleDatastore, including DataVariables,</span>
+        <span class="comment">%   IndependentVariables, ConditionVariables, and</span>
+        <span class="comment">%   SelectedVariables.</span>
+        <span class="comment">%   Any property not specified remains unchanged. After updating,</span>
+        <span class="comment">%   the ensemble is reset and persisted.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs (Name-Value pairs):</span>
+        <span class="comment">%       'name'                 - Text scalar specifying the</span>
+        <span class="comment">%                                ensemble name.</span>
+        <span class="comment">%       'DataVariables'        - Cell array of char or string array</span>
+        <span class="comment">%                              of variable names for data columns.</span>
+        <span class="comment">%       'IndependentVariables' - Cell array or string array of</span>
+        <span class="comment">%                              independent variable names.</span>
+        <span class="comment">%       'ConditionVariables'   - Cell array or string array of</span>
+        <span class="comment">%                              condition variable names.</span>
+        <span class="comment">%       'SelectedVariables'    - Cell array or string array of</span>
+        <span class="comment">%                              variables to select for processing.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       ds - The updated fileEnsembleDatastore object.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Behavior:</span>
+        <span class="comment">%       - Logs before/after values for each updated property.</span>
+        <span class="comment">%       - Resets the ensemble after updates.</span>
+        <span class="comment">%       - Updates in-memory map and persists changes to disk.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       ds = EnsembleDatastoreRegistry.reconfigureEnsemble( ...</span>
+        <span class="comment">%           name = "myEnsemble", ...</span>
+        <span class="comment">%           DataVariables = ["Signal1", "Signal2"], ...</span>
+        <span class="comment">%           SelectedVariables = ["Signal1"]);</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: addEnsemble, removeEnsemble, getEnsemble, hasEnsemble</span>
+
+            <span class="keyword">arguments</span>
+                args.name <span class="typesection">{mustBeTextScalar}</span>
+                args.DataVariables <span class="keyword">...</span>
+                    <span class="typesection">{EnsembleDatastoreRegistry.mustBeCellOrString}</span> = {}
+                args.IndependentVariables <span class="keyword">...</span>
+                    <span class="typesection">{EnsembleDatastoreRegistry.mustBeCellOrString}</span> = {}
+                args.ConditionVariables <span class="keyword">...</span>
+                    <span class="typesection">{EnsembleDatastoreRegistry.mustBeCellOrString}</span> = {}
+                args.SelectedVariables <span class="keyword">...</span>
+                    <span class="typesection">{EnsembleDatastoreRegistry.mustBeCellOrString}</span> = {}
+            <span class="keyword">end</span>
+
+            name = string(args.name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            <span class="keyword">if</span> ~isKey(m, name)
+                error(<span class="string">'sfrfs:EnsembleFactory:NotFound'</span>, <span class="keyword">...</span>
+                    <span class="string">'No ensemble registered with name "%s".'</span>, char(name));
+            <span class="keyword">end</span>
+
+            ds = m(name);  <span class="comment">% Retrieve actual datastore object</span>
+            logger = SFRFsLogger.getLogger();
+
+            <span class="comment">% Update DataVariables</span>
+            <span class="keyword">if</span> ~isempty(args.DataVariables)
+                oldVal = ds.DataVariables;
+                ds.DataVariables = string(args.DataVariables);
+                logger.info(sprintf(<span class="keyword">...</span>
+                    [<span class="string">'Ensemble "%s": DataVariables updated.\n'</span> <span class="keyword">...</span>
+                    <span class="string">'Before: [%s]\nAfter : [%s]'</span>], <span class="keyword">...</span>
+                    char(name), strjoin(oldVal, <span class="string">', '</span>), <span class="keyword">...</span>
+                    strjoin(ds.DataVariables, <span class="string">', '</span>)));
+            <span class="keyword">end</span>
+
+            <span class="comment">% Update IndependentVariables</span>
+            <span class="keyword">if</span> ~isempty(args.IndependentVariables)
+                oldVal = ds.IndependentVariables;
+                ds.IndependentVariables = <span class="keyword">...</span>
+                    string(args.IndependentVariables);
+                logger.info(sprintf(<span class="keyword">...</span>
+                    [<span class="string">'Ensemble "%s": IndependentVariables updated.\n'</span> <span class="keyword">...</span>
+                    <span class="string">'Before: [%s]\nAfter : [%s]'</span>], <span class="keyword">...</span>
+                    char(name), strjoin(oldVal, <span class="string">', '</span>), <span class="keyword">...</span>
+                    strjoin(ds.IndependentVariables, <span class="string">', '</span>)));
+            <span class="keyword">end</span>
+
+            <span class="comment">% Update ConditionVariables</span>
+            <span class="keyword">if</span> ~isempty(args.ConditionVariables)
+                oldVal = ds.ConditionVariables;
+                ds.ConditionVariables = string(args.ConditionVariables);
+                logger.info(sprintf(<span class="keyword">...</span>
+                    [<span class="string">'Ensemble "%s": ConditionVariables updated.\n'</span> <span class="keyword">...</span>
+                    <span class="string">'Before: [%s]\nAfter : [%s]'</span>], <span class="keyword">...</span>
+                    char(name), strjoin(oldVal, <span class="string">', '</span>), <span class="keyword">...</span>
+                    strjoin(ds.ConditionVariables, <span class="string">', '</span>)));
+            <span class="keyword">end</span>
+
+            <span class="comment">% Update SelectedVariables</span>
+            <span class="keyword">if</span> ~isempty(args.SelectedVariables)
+                oldVal = ds.SelectedVariables;
+                ds.SelectedVariables = string(args.SelectedVariables);
+                logger.info(sprintf(<span class="keyword">...</span>
+                    [<span class="string">'Ensemble "%s": SelectedVariables updated.\n'</span> <span class="keyword">...</span>
+                    <span class="string">'Before: [%s]\nAfter : [%s]'</span>], <span class="keyword">...</span>
+                    char(name), strjoin(oldVal, <span class="string">', '</span>), <span class="keyword">...</span>
+                    strjoin(ds.SelectedVariables, <span class="string">', '</span>)));
+            <span class="keyword">end</span>
+
+            <span class="comment">% Reset the ensemble</span>
+            logger.info(sprintf(<span class="string">'Resetting ensemble %s'</span>, char(name)));
+            reset(ds);
+
+            <span class="comment">% Store updated datastore</span>
+            m(name) = ds;
+
+            <span class="comment">% update persistent in-memory dictionary</span>
+            EnsembleDatastoreRegistry.MAP(m);
+            <span class="comment">% Persist updated dictionary</span>
+            EnsembleDatastoreRegistry.persistMap(m);
+
+            logger.info(<span class="keyword">...</span>
+                sprintf(<span class="string">'Reconfigured ensemble "%s".'</span>, char(name)));
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> removeEnsemble(name)
+        <span class="comment">% removeEnsemble Delete a registered ensemble by name</span>
+        <span class="comment">%</span>
+        <span class="comment">%   EnsembleDatastoreRegistry.removeEnsemble(name) removes the</span>
+        <span class="comment">%   ensemble with the specified name from the factory. If the</span>
+        <span class="comment">%   ensemble exists, it is removed from the in-memory map and</span>
+        <span class="comment">%   changes are persisted to disk. If the ensemble does not</span>
+        <span class="comment">%   exist, the function does nothing.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Input:</span>
+        <span class="comment">%       name - Text scalar specifying the ensemble name to remove.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       EnsembleDatastoreRegistry.removeEnsemble("myEnsemble");</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: addEnsemble, getEnsemble, hasEnsemble, factoryReset</span>
+
+            <span class="keyword">arguments</span>
+                name <span class="typesection">{mustBeTextScalar}</span>
+            <span class="keyword">end</span>
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            <span class="keyword">if</span> isKey(m, name)
+                <span class="comment">% since m is no handle</span>
+                m = remove(m, name);
+                EnsembleDatastoreRegistry.persistMap(m);
+                <span class="comment">% update persistent in-memory dictionary</span>
+                EnsembleDatastoreRegistry.MAP(m);
+
+                logger = SFRFsLogger.getLogger();
+                logger.info(sprintf( <span class="keyword">...</span>
+                    <span class="string">'Removed ensemble "%s".'</span>, char(name)));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> factoryReset()
+        <span class="comment">% factoryReset Remove all registered ensembles from the factory</span>
+        <span class="comment">%</span>
+        <span class="comment">%   EnsembleDatastoreRegistry.factoryReset() deletes all</span>
+        <span class="comment">%   ensembles currently registered in the factory. The in-memory</span>
+        <span class="comment">%   map is cleared and the changes are persisted to disk. Logs the</span>
+        <span class="comment">%   number of ensembles removed.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       EnsembleDatastoreRegistry.factoryReset();</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: removeEnsemble, addEnsemble, getAllEnsembleNames</span>
+
+            m = EnsembleDatastoreRegistry.MAP;
+
+            removedKeys = keys(m);
+            m = remove(m, removedKeys);
+            EnsembleDatastoreRegistry.persistMap(m);
+            <span class="comment">% update persistent in-memory dictionary</span>
+            EnsembleDatastoreRegistry.MAP(m);
+
+            logger = SFRFsLogger.getLogger();
+            logger.info(sprintf( <span class="keyword">...</span>
+                <span class="string">'EnsembleFactory reset: removed %d ensembles.'</span>, <span class="keyword">...</span>
+                numel(removedKeys)));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> m = MAP(newMap)
+            <span class="keyword">persistent</span> MAPobj
+
+            <span class="keyword">if</span> ~isfolder(EnsembleDatastoreRegistry.ENSEMBLE_FOLDER)
+                mkdir(EnsembleDatastoreRegistry.ENSEMBLE_FOLDER);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> nargin &gt; 0
+                MAPobj = newMap;   <span class="comment">% update persistent variable</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isempty(MAPobj)
+                mapFile = EnsembleDatastoreRegistry.ENSEMBLE_MAP_FILE;
+                <span class="keyword">if</span> isfile(mapFile)
+                    S = load(mapFile, <span class="string">'m'</span>);
+                    MAPobj = S.m;
+                <span class="keyword">else</span>
+                    MAPobj = <span class="keyword">...</span>
+                        configureDictionary(<span class="keyword">...</span>
+                        <span class="string">"string"</span>, <span class="string">"fileEnsembleDatastore"</span>);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            m = MAPobj;
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> persistMap(m)
+            mapFile = EnsembleDatastoreRegistry.ENSEMBLE_MAP_FILE;
+            logger = SFRFsLogger.getLogger();
+
+            <span class="keyword">try</span>
+                save(mapFile, <span class="string">'m'</span>, <span class="string">'-v7.3'</span>);
+                logger.info(<span class="string">'Ensemble factory saved.'</span>);
+            <span class="keyword">catch</span> ME
+                logger.severe(sprintf( <span class="keyword">...</span>
+                    <span class="string">'Failed to persist EnsembleFactory map: %s'</span>, <span class="keyword">...</span>
+                    ME.message));
+                rethrow(ME);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> mustBeCellOrString(x)
+            <span class="keyword">if</span> ~(iscellstr(x) || isstring(x))
+                error(<span class="keyword">...</span>
+                    <span class="string">'Expected string array or cell array of char.'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef (Sealed) EnsembleDatastoreRegistry < handle
+    % EnsembleDatastoreRegistry
+    %   Static factory for registering, retrieving, reconfiguring, and
+    %   managing fileEnsembleDatastore objects. Supports persistence,
+    %   logging, and ensures that ensembles are globally accessible
+    %   across MATLAB sessions.
+    %
+    %   This class is sealed and provides only static methods; it does
+    %   not need to be instantiated.
+    %
+    %   Features:
+    %     - Register new ensembles with addEnsemble
+    %     - Retrieve ensembles by name with getEnsemble
+    %     - Check existence with hasEnsemble
+    %     - List all registered ensemble names with getAllEnsembleNames
+    %     - Reconfigure ensemble variables with reconfigureEnsemble
+    %     - Remove individual ensembles with removeEnsemble
+    %     - Reset all registered ensembles with factoryReset
+    %
+    %   All registered ensembles are persisted to a MAT-file in the
+    %   user preferences directory and loaded automatically when needed.
+    %
+    %   Usage:
+    %       % Add a new ensemble
+    %       EnsembleDatastoreRegistry.addEnsemble( ...
+    %           name = "myEnsemble", ...
+    %           datastore = myFileEnsembleDatastore);
+    %
+    %       % Retrieve a registered ensemble
+    %       ds = EnsembleDatastoreRegistry.getEnsemble("myEnsemble");
+    %
+    %       % Reconfigure variable sets
+    %       ds = EnsembleDatastoreRegistry.reconfigureEnsemble( ...
+    %           name = "myEnsemble", ...
+    %           DataVariables = ["Signal1", "Signal2"], ...
+    %           SelectedVariables = ["Signal1"]);
+    %
+    %       % Check if an ensemble exists
+    %       tf = EnsembleDatastoreRegistry.hasEnsemble("myEnsemble");
+    %
+    %       % List all ensemble names
+    %       names = EnsembleDatastoreRegistry.getAllEnsembleNames();
+    %
+    %       % Remove an ensemble
+    %       EnsembleDatastoreRegistry.removeEnsemble("myEnsemble");
+    %
+    %       % Reset all ensembles
+    %       EnsembleDatastoreRegistry.factoryReset();
+    %
+    %   See also: fileEnsembleDatastore, SFRFsLogger
+
+
+    properties (Constant, Access = private)
+        ENSEMBLE_FOLDER = fullfile(prefdir, 'sfrfs');
+        ENSEMBLE_MAP_FILE = fullfile( ...
+            prefdir, 'sfrfs', 'sfrfs-ensembles-map.mat');
+    end
+
+    methods (Static)
+
+        function addEnsemble(args)
+        % addEnsemble Register a new fileEnsembleDatastore
+        %
+        %   EnsembleDatastoreRegistry.addEnsemble(Name, Datastore)
+        %   registers a new ensemble with the factory. If an ensemble
+        %   with the same name already exists, it will be overwritten
+        %   and a log message is issued.
+        %
+        %   Inputs (as Name-Value pairs):
+        %       'name'      - Text scalar specifying the ensemble name.
+        %       'datastore' - A fileEnsembleDatastore object to register.
+        %
+        %   The method persists the updated registry to disk and updates
+        %   the in-memory map, making the ensemble available for
+        %   retrieval in the current and future MATLAB sessions.
+        %
+        %   Example:
+        %       ds = fileEnsembleDatastore(...); % construct datastore
+        %       EnsembleDatastoreRegistry.addEnsemble( ...
+        %           name = "myEnsemble", ...
+        %           datastore = ds);
+        %
+        %   See also: getEnsemble, reconfigureEnsemble, removeEnsemble,
+        %   factoryReset
+
+            arguments
+                args.name {mustBeTextScalar}
+                args.datastore fileEnsembleDatastore
+            end
+
+            logger = SFRFsLogger.getLogger();
+            name = string(args.name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            if isKey(m, name)
+                logger.info(sprintf( ...
+                    'Overwriting ensemble "%s". Previous class: %s', ...
+                    char(name), class(m(name))));
+            end
+
+            m(name) = args.datastore;
+            % update persistent in-memory dictionary
+            EnsembleDatastoreRegistry.MAP(m);
+            EnsembleDatastoreRegistry.persistMap(m);
+            logger.info(sprintf('Ensemble "%s"added.',char(name)));
+        end
+
+        function names = getAllEnsembleNames()
+        % getAllEnsembleNames Return names of all registered ensembles
+        %
+        %   names = EnsembleDatastoreRegistry.getAllEnsembleNames()
+        %   returns a string array containing the names of all 
+        %   ensembles currently registered in the factory.
+        %
+        %   Output:
+        %       names - String array of ensemble names.
+        %
+        %   Example:
+        %       allNames = ...
+        %           EnsembleDatastoreRegistry.getAllEnsembleNames();
+        %       disp(allNames);
+        %
+        %   See also: hasEnsemble, getEnsemble, addEnsemble
+
+            m = EnsembleDatastoreRegistry.MAP;
+            names = string(keys(m));
+        end
+
+
+        function datastore = getEnsemble(name)
+        % getEnsemble Retrieve a registered ensemble by name
+        %
+        %   datastore = EnsembleDatastoreRegistry.getEnsemble(name)
+        %   returns the fileEnsembleDatastore object registered under
+        %   the specified name. Throws an error if no ensemble with
+        %   that name exists.
+        %
+        %   Input:
+        %       name - Text scalar specifying the ensemble name.
+        %
+        %   Output:
+        %       datastore - The registered fileEnsembleDatastore.
+        %
+        %   Example:
+        %       ds = ...
+        %          EnsembleDatastoreRegistry.getEnsemble("myEnsemble");
+        %
+        %   See also: hasEnsemble, addEnsemble, getAllEnsembleNames
+
+            arguments
+                name {mustBeTextScalar}
+            end
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            if ~isKey(m, name)
+                error('sfrfs:EnsembleFactory:NotFound', ...
+                    'No ensemble registered with name "%s".', ...
+                    char(name));
+            end
+
+            datastore = m(name);
+        end
+
+
+        function tf = hasEnsemble(name)
+        % hasEnsemble Check if an ensemble is registered
+        %
+        %   tf = EnsembleDatastoreRegistry.hasEnsemble(name) returns a
+        %   logical true if an ensemble with the specified name is
+        %   registered in the factory, and false otherwise.
+        %
+        %   Input:
+        %       name - Text scalar specifying the ensemble name.
+        %
+        %   Output:
+        %       tf - Logical scalar: true if ensemble exists, false if not.
+        %
+        %   Example:
+        %       if EnsembleDatastoreRegistry.hasEnsemble("myEnsemble")
+        %           disp("Ensemble exists!");
+        %       else
+        %           disp("Ensemble not found.");
+        %       end
+        %
+        %   See also: getEnsemble, getAllEnsembleNames, addEnsemble
+
+            arguments
+                name {mustBeTextScalar}
+            end
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+            tf = isKey(m, name);
+        end
+
+
+        function ds = reconfigureEnsemble(args)
+        % reconfigureEnsemble Update configuration of a registered ensemble
+        %
+        %   ds = EnsembleDatastoreRegistry.reconfigureEnsemble(Name, ...)
+        %   updates the properties of an existing registered
+        %   fileEnsembleDatastore, including DataVariables,
+        %   IndependentVariables, ConditionVariables, and 
+        %   SelectedVariables.
+        %   Any property not specified remains unchanged. After updating,
+        %   the ensemble is reset and persisted.
+        %
+        %   Inputs (Name-Value pairs):
+        %       'name'                 - Text scalar specifying the 
+        %                                ensemble name.
+        %       'DataVariables'        - Cell array of char or string array 
+        %                              of variable names for data columns.
+        %       'IndependentVariables' - Cell array or string array of
+        %                              independent variable names.
+        %       'ConditionVariables'   - Cell array or string array of
+        %                              condition variable names.
+        %       'SelectedVariables'    - Cell array or string array of 
+        %                              variables to select for processing.
+        %
+        %   Output:
+        %       ds - The updated fileEnsembleDatastore object.
+        %
+        %   Behavior:
+        %       - Logs before/after values for each updated property.
+        %       - Resets the ensemble after updates.
+        %       - Updates in-memory map and persists changes to disk.
+        %
+        %   Example:
+        %       ds = EnsembleDatastoreRegistry.reconfigureEnsemble( ...
+        %           name = "myEnsemble", ...
+        %           DataVariables = ["Signal1", "Signal2"], ...
+        %           SelectedVariables = ["Signal1"]);
+        %
+        %   See also: addEnsemble, removeEnsemble, getEnsemble, hasEnsemble
+
+            arguments
+                args.name {mustBeTextScalar}
+                args.DataVariables ...
+                    {EnsembleDatastoreRegistry.mustBeCellOrString} = {}
+                args.IndependentVariables ...
+                    {EnsembleDatastoreRegistry.mustBeCellOrString} = {}
+                args.ConditionVariables ...
+                    {EnsembleDatastoreRegistry.mustBeCellOrString} = {}
+                args.SelectedVariables ...
+                    {EnsembleDatastoreRegistry.mustBeCellOrString} = {}
+            end
+        
+            name = string(args.name);
+            m = EnsembleDatastoreRegistry.MAP;
+        
+            if ~isKey(m, name)
+                error('sfrfs:EnsembleFactory:NotFound', ...
+                    'No ensemble registered with name "%s".', char(name));
+            end
+        
+            ds = m(name);  % Retrieve actual datastore object
+            logger = SFRFsLogger.getLogger();
+        
+            % Update DataVariables
+            if ~isempty(args.DataVariables)
+                oldVal = ds.DataVariables;
+                ds.DataVariables = string(args.DataVariables);
+                logger.info(sprintf(...
+                    ['Ensemble "%s": DataVariables updated.\n' ...
+                    'Before: [%s]\nAfter : [%s]'], ...
+                    char(name), strjoin(oldVal, ', '), ...
+                    strjoin(ds.DataVariables, ', ')));
+            end
+        
+            % Update IndependentVariables
+            if ~isempty(args.IndependentVariables)
+                oldVal = ds.IndependentVariables;
+                ds.IndependentVariables = ...
+                    string(args.IndependentVariables);
+                logger.info(sprintf(...
+                    ['Ensemble "%s": IndependentVariables updated.\n' ...
+                    'Before: [%s]\nAfter : [%s]'], ...
+                    char(name), strjoin(oldVal, ', '), ...
+                    strjoin(ds.IndependentVariables, ', ')));
+            end
+        
+            % Update ConditionVariables
+            if ~isempty(args.ConditionVariables)
+                oldVal = ds.ConditionVariables;
+                ds.ConditionVariables = string(args.ConditionVariables);
+                logger.info(sprintf(...
+                    ['Ensemble "%s": ConditionVariables updated.\n' ...
+                    'Before: [%s]\nAfter : [%s]'], ...
+                    char(name), strjoin(oldVal, ', '), ...
+                    strjoin(ds.ConditionVariables, ', ')));
+            end
+        
+            % Update SelectedVariables
+            if ~isempty(args.SelectedVariables)
+                oldVal = ds.SelectedVariables;
+                ds.SelectedVariables = string(args.SelectedVariables);
+                logger.info(sprintf(...
+                    ['Ensemble "%s": SelectedVariables updated.\n' ...
+                    'Before: [%s]\nAfter : [%s]'], ...
+                    char(name), strjoin(oldVal, ', '), ...
+                    strjoin(ds.SelectedVariables, ', ')));
+            end
+        
+            % Reset the ensemble
+            logger.info(sprintf('Resetting ensemble %s', char(name)));
+            reset(ds);
+        
+            % Store updated datastore
+            m(name) = ds;
+        
+            % update persistent in-memory dictionary
+            EnsembleDatastoreRegistry.MAP(m);
+            % Persist updated dictionary
+            EnsembleDatastoreRegistry.persistMap(m);
+        
+            logger.info(...
+                sprintf('Reconfigured ensemble "%s".', char(name)));
+        end
+
+
+        function removeEnsemble(name)
+        % removeEnsemble Delete a registered ensemble by name
+        %
+        %   EnsembleDatastoreRegistry.removeEnsemble(name) removes the
+        %   ensemble with the specified name from the factory. If the
+        %   ensemble exists, it is removed from the in-memory map and
+        %   changes are persisted to disk. If the ensemble does not
+        %   exist, the function does nothing.
+        %
+        %   Input:
+        %       name - Text scalar specifying the ensemble name to remove.
+        %
+        %   Example:
+        %       EnsembleDatastoreRegistry.removeEnsemble("myEnsemble");
+        %
+        %   See also: addEnsemble, getEnsemble, hasEnsemble, factoryReset
+
+            arguments
+                name {mustBeTextScalar}
+            end
+
+            name = string(name);
+            m = EnsembleDatastoreRegistry.MAP;
+
+            if isKey(m, name)
+                % since m is no handle
+                m = remove(m, name);
+                EnsembleDatastoreRegistry.persistMap(m);
+                % update persistent in-memory dictionary
+                EnsembleDatastoreRegistry.MAP(m);
+
+                logger = SFRFsLogger.getLogger();
+                logger.info(sprintf( ...
+                    'Removed ensemble "%s".', char(name)));
+            end
+        end
+
+        function factoryReset()
+        % factoryReset Remove all registered ensembles from the factory
+        %
+        %   EnsembleDatastoreRegistry.factoryReset() deletes all
+        %   ensembles currently registered in the factory. The in-memory
+        %   map is cleared and the changes are persisted to disk. Logs the
+        %   number of ensembles removed.
+        %
+        %   Example:
+        %       EnsembleDatastoreRegistry.factoryReset();
+        %
+        %   See also: removeEnsemble, addEnsemble, getAllEnsembleNames
+
+            m = EnsembleDatastoreRegistry.MAP;
+
+            removedKeys = keys(m);
+            m = remove(m, removedKeys);
+            EnsembleDatastoreRegistry.persistMap(m);
+            % update persistent in-memory dictionary
+            EnsembleDatastoreRegistry.MAP(m);
+
+            logger = SFRFsLogger.getLogger();
+            logger.info(sprintf( ...
+                'EnsembleFactory reset: removed %d ensembles.', ...
+                numel(removedKeys)));
+        end
+    end
+
+    methods (Static, Access = private)
+
+        function m = MAP(newMap)
+            persistent MAPobj
+
+            if ~isfolder(EnsembleDatastoreRegistry.ENSEMBLE_FOLDER)
+                mkdir(EnsembleDatastoreRegistry.ENSEMBLE_FOLDER);
+            end
+
+            if nargin > 0
+                MAPobj = newMap;   % update persistent variable
+            end
+
+            if isempty(MAPobj)
+                mapFile = EnsembleDatastoreRegistry.ENSEMBLE_MAP_FILE;
+                if isfile(mapFile)
+                    S = load(mapFile, 'm');
+                    MAPobj = S.m;
+                else
+                    MAPobj = ...
+                        configureDictionary(...
+                        "string", "fileEnsembleDatastore");
+                end
+            end
+
+            m = MAPobj;
+        end
+
+
+        function persistMap(m)
+            mapFile = EnsembleDatastoreRegistry.ENSEMBLE_MAP_FILE;
+            logger = SFRFsLogger.getLogger();
+
+            try
+                save(mapFile, 'm', '-v7.3');
+                logger.info('Ensemble factory saved.');
+            catch ME
+                logger.severe(sprintf( ...
+                    'Failed to persist EnsembleFactory map: %s', ...
+                    ME.message));
+                rethrow(ME);
+            end
+        end
+
+        function mustBeCellOrString(x)
+            if ~(iscellstr(x) || isstring(x))
+                error(...
+                    'Expected string array or cell array of char.');
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

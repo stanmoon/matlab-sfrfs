@@ -1,0 +1,383 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>FFTEnsembleProcessor</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="FFTEnsembleProcessor.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> FFTEnsembleProcessor &lt; EnsembleProcessor
+<span class="comment">%FFTENSEMBLEPROCESSOR Parallel processor for computing FFTs of ensemble</span>
+<span class="comment">%   signals.</span>
+<span class="comment">%</span>
+<span class="comment">%   Efficiently computes and stores FFTs of temporal signal columns in</span>
+<span class="comment">%   ensemble member tables. Uses the ensemble's configured temporal</span>
+<span class="comment">%   snapshot  columns and spectral suffix to dynamically handle</span>
+<span class="comment">%   input/output naming.</span>
+<span class="comment">%   Supports parallel processing with configurable worker count.</span>
+<span class="comment">%</span>
+<span class="comment">%   Properties:</span>
+<span class="comment">%     numWorkers - Number of parallel workers (default: 2)</span>
+<span class="comment">%     ensemble   - EnsembleBroker instance managing file and metadata</span>
+<span class="comment">%                  access</span>
+<span class="comment">%</span>
+<span class="comment">%   Methods:</span>
+<span class="comment">%     FFTEnsembleProcessor(numWorkers, ensemble) - Constructor</span>
+<span class="comment">%     process(computeHandle)                     - Computes FFT on ensemble</span>
+<span class="comment">%</span>
+<span class="comment">%   Notes:</span>
+<span class="comment">%     - The static method compute performs FFT on all temporal snapshot</span>
+<span class="comment">%       columns using ensemble broker configuration.</span>
+<span class="comment">%     - Designed as a lightweight, extensible spectral preprocessing step.</span>
+<span class="comment">%</span>
+<span class="comment">%   Example:</span>
+<span class="comment">%       ensembleStruct = struct('Files', {fileList});</span>
+<span class="comment">%       testEnsemble = EnsembleBroker(...</span>
+<span class="comment">%           ensembleObject = ensembleStruct, ...</span>
+<span class="comment">%           getFilesFunction = @(obj) obj.Files, ...</span>
+<span class="comment">%           temporalSnapshotColumns = ...</span>
+<span class="comment">%               {'HorizontalAcceleration','VerticalAcceleration'};);</span>
+<span class="comment">%       processor = FFTEnsembleProcessor(...</span>
+<span class="comment">%                 numWorkers = 2, ...</span>
+<span class="comment">%                 ensemble = testCase.testEnsemble);</span>
+<span class="comment">%     proc.process();</span>
+<span class="comment">%</span>
+<span class="comment">%   See also: EnsembleProcessor, EnsembleBroker, fft</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = FFTEnsembleProcessor(args)
+            <span class="keyword">arguments</span>
+                args.numWorkers <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 2
+                args.ensemble <span class="typesection">EnsembleBroker </span>= EnsembleBroker.empty
+            <span class="keyword">end</span>
+            <span class="comment">% explicit forwarding required given named parameters</span>
+            obj = obj@EnsembleProcessor( <span class="keyword">...</span>
+                numWorkers=args.numWorkers, <span class="keyword">...</span>
+                ensemble=args.ensemble);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> params = getProcessParams(obj)
+            <span class="comment">%getProcessParams Get parameters for ensemble processing.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Returns an empty struct because no parameters are needed</span>
+            <span class="comment">%   for computing FFTs in this subclass.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Output:</span>
+            <span class="comment">%     params - (struct) Empty parameter structure.</span>
+            <span class="comment">%</span>
+
+            params = struct();
+            params.ensemble = obj.ensemble;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> process(obj,computeHandle)
+        <span class="comment">%PROCESS Compute FFTs for all ensemble members.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%     obj           - FFTEnsembleProcessor instance</span>
+        <span class="comment">%     computeHandle - Optional function handle to process each</span>
+        <span class="comment">%                     member.</span>
+        <span class="comment">%                     Default the static method compute of this</span>
+        <span class="comment">%                     class.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   This method is typically called internally and not directly by</span>
+        <span class="comment">%   users.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: FFTEnsembleProcessor.compute</span>
+
+
+            <span class="keyword">arguments</span>
+                obj
+                computeHandle <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= @(memberTable, params) <span class="keyword">...</span>
+                    FFTEnsembleProcessor.compute(memberTable, params)
+            <span class="keyword">end</span>
+            process@EnsembleProcessor(obj, computeHandle);
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span>
+    <span class="keyword">methods</span> (Static, Access = protected)
+
+        <span class="keyword">function</span> updatedMember = compute(memberTable, params)
+        <span class="comment">% compute Perform FFT on ensemble member signal columns.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   updatedMember = compute(memberTable, params) computes the FFT</span>
+        <span class="comment">%   of each temporal snapshot column in the ensemble provided via</span>
+        <span class="comment">%   params. The spectral results are stored in new columns with</span>
+        <span class="comment">%   names generated by appending the ensemble's configured spectral</span>
+        <span class="comment">%   suffix.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Input Arguments:</span>
+        <span class="comment">%     memberTable - Table representing one ensemble member.</span>
+        <span class="comment">%     params      - Struct containing processing parameters,</span>
+        <span class="comment">%                   must include:</span>
+        <span class="comment">%                       .ensemble - EnsembleBroker instance.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output Arguments:</span>
+        <span class="comment">%     updatedMember - Member updated with spectral FFT columns.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   This method dynamically uses ensemble.temporalSnapshotColumns</span>
+        <span class="comment">%   for input columns and ensemble.mapToSpectralColumn()</span>
+        <span class="comment">%   for output column names, ensuring consistency with ensemble</span>
+        <span class="comment">%   configuration.</span>
+
+            ensemble = params.ensemble;
+            temporalCols = ensemble.temporalSnapshotColumns;
+            log = SFRFsLogger.getLogger();
+            <span class="keyword">for</span> i = 1:numel(temporalCols)
+                colName = temporalCols{i};
+                spectralColName = ensemble.mapToSpectralColumn(colName);
+                <span class="keyword">if</span> log.isFineEnabled()
+                    log.fine(<span class="keyword">...</span>
+                        sprintf(<span class="keyword">...</span>
+                        <span class="string">"Computing FFT for column %s..."</span> + colName));
+                <span class="keyword">end</span>
+                <span class="comment">% Concatenate all snapshots</span>
+                x = [memberTable.(colName){:}];
+                X = fft(x, [], 1);
+                nSnapshots = size(x, 2);
+                memberTable.(spectralColName) = <span class="keyword">...</span>
+                    mat2cell(X, size(X,1), ones(1,nSnapshots)).';
+                <span class="keyword">if</span> log.isFineEnabled()
+                    log.fine( sprintf( <span class="keyword">...</span>
+                        <span class="string">"FFT for column %s stored in column %s."</span>, <span class="keyword">...</span>
+                        colName,spectralColName));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            updatedMember = memberTable;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef FFTEnsembleProcessor < EnsembleProcessor
+%FFTENSEMBLEPROCESSOR Parallel processor for computing FFTs of ensemble 
+%   signals.
+%
+%   Efficiently computes and stores FFTs of temporal signal columns in 
+%   ensemble member tables. Uses the ensemble's configured temporal 
+%   snapshot  columns and spectral suffix to dynamically handle 
+%   input/output naming.
+%   Supports parallel processing with configurable worker count.
+%
+%   Properties:
+%     numWorkers - Number of parallel workers (default: 2)
+%     ensemble   - EnsembleBroker instance managing file and metadata 
+%                  access
+%
+%   Methods:
+%     FFTEnsembleProcessor(numWorkers, ensemble) - Constructor
+%     process(computeHandle)                     - Computes FFT on ensemble
+%
+%   Notes:
+%     - The static method compute performs FFT on all temporal snapshot 
+%       columns using ensemble broker configuration.
+%     - Designed as a lightweight, extensible spectral preprocessing step.
+%
+%   Example:
+%       ensembleStruct = struct('Files', {fileList});
+%       testEnsemble = EnsembleBroker(...
+%           ensembleObject = ensembleStruct, ...
+%           getFilesFunction = @(obj) obj.Files, ...
+%           temporalSnapshotColumns = ...
+%               {'HorizontalAcceleration','VerticalAcceleration'};);
+%       processor = FFTEnsembleProcessor(...
+%                 numWorkers = 2, ...
+%                 ensemble = testCase.testEnsemble);
+%     proc.process();
+%
+%   See also: EnsembleProcessor, EnsembleBroker, fft
+
+    methods
+        
+        function obj = FFTEnsembleProcessor(args)
+            arguments
+                args.numWorkers (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 2
+                args.ensemble EnsembleBroker = EnsembleBroker.empty
+            end
+            % explicit forwarding required given named parameters 
+            obj = obj@EnsembleProcessor( ...
+                numWorkers=args.numWorkers, ...
+                ensemble=args.ensemble);
+        end
+
+        function params = getProcessParams(obj)
+            %getProcessParams Get parameters for ensemble processing.
+            %
+            %   Returns an empty struct because no parameters are needed 
+            %   for computing FFTs in this subclass. 
+            %
+            %   Output:
+            %     params - (struct) Empty parameter structure.
+            %
+        
+            params = struct();
+            params.ensemble = obj.ensemble;
+        end
+
+        function process(obj,computeHandle)
+        %PROCESS Compute FFTs for all ensemble members.
+        %
+        %   Inputs:
+        %     obj           - FFTEnsembleProcessor instance
+        %     computeHandle - Optional function handle to process each 
+        %                     member.
+        %                     Default the static method compute of this 
+        %                     class.
+        %
+        %   This method is typically called internally and not directly by 
+        %   users.
+        %
+        %   See also: FFTEnsembleProcessor.compute
+
+
+            arguments
+                obj
+                computeHandle (1,1) ...
+                    function_handle = @(memberTable, params) ...
+                    FFTEnsembleProcessor.compute(memberTable, params)
+            end
+            process@EnsembleProcessor(obj, computeHandle);
+        end
+
+        
+    end
+    methods (Static, Access = protected)
+
+        function updatedMember = compute(memberTable, params)
+        % compute Perform FFT on ensemble member signal columns.
+        %
+        %   updatedMember = compute(memberTable, params) computes the FFT 
+        %   of each temporal snapshot column in the ensemble provided via 
+        %   params. The spectral results are stored in new columns with 
+        %   names generated by appending the ensemble's configured spectral 
+        %   suffix.
+        %
+        %   Input Arguments:
+        %     memberTable - Table representing one ensemble member.
+        %     params      - Struct containing processing parameters, 
+        %                   must include:
+        %                       .ensemble - EnsembleBroker instance.
+        %
+        %   Output Arguments:
+        %     updatedMember - Member updated with spectral FFT columns.
+        %
+        %   This method dynamically uses ensemble.temporalSnapshotColumns 
+        %   for input columns and ensemble.mapToSpectralColumn() 
+        %   for output column names, ensuring consistency with ensemble 
+        %   configuration.
+
+            ensemble = params.ensemble;
+            temporalCols = ensemble.temporalSnapshotColumns;
+            log = SFRFsLogger.getLogger();
+            for i = 1:numel(temporalCols)
+                colName = temporalCols{i};
+                spectralColName = ensemble.mapToSpectralColumn(colName);
+                if log.isFineEnabled()
+                    log.fine(...
+                        sprintf(...
+                        "Computing FFT for column %s..." + colName));
+                end
+                % Concatenate all snapshots
+                x = [memberTable.(colName){:}]; 
+                X = fft(x, [], 1);
+                nSnapshots = size(x, 2);
+                memberTable.(spectralColName) = ...
+                    mat2cell(X, size(X,1), ones(1,nSnapshots)).';
+                if log.isFineEnabled()
+                    log.fine( sprintf( ...
+                        "FFT for column %s stored in column %s.", ... 
+                        colName,spectralColName));
+                end
+            end
+            updatedMember = memberTable;
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

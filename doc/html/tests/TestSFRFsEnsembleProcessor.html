@@ -1,0 +1,535 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestSFRFsEnsembleProcessor</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="TestSFRFsEnsembleProcessor.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestSFRFsEnsembleProcessor &lt; matlab .unittest.TestCase
+    <span class="keyword">properties</span>
+        snapshotParams <span class="typesection">ParametersSnapshot</span>
+        operatingConditions <span class="typesection">OperatingConditions</span>
+        bearingParams <span class="typesection">ParametersRollingBearings</span>
+        sfrfsParams <span class="typesection">SFRFsParametersRollingBearings</span>
+        sfrfsProcessorNoFFT <span class="typesection">SFRFsEnsembleProcessor</span>
+        sfrfsProcessorFFT <span class="typesection">SFRFsEnsembleProcessor</span>
+        bearingFrequencyBands <span class="typesection">BearingFrequencyBands</span>
+        temporalSnapshotColumns <span class="typesection">cell</span>
+        brokerNoFFT <span class="typesection">EnsembleBroker</span>
+        brokerFFT <span class="typesection">EnsembleBroker</span>
+        ensembleMockNoFFT <span class="typesection">EnsembleMock</span>
+        ensembleMockFFT <span class="typesection">EnsembleMock</span>
+        speeds <span class="typesection">double</span>
+        loads <span class="typesection">double</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestMethodSetup)
+        <span class="keyword">function</span> prepareData(testCase)
+            <span class="comment">% Setup standard parameters</span>
+            testCase.snapshotParams = ParametersSnapshot( <span class="keyword">...</span>
+                <span class="string">'samplingFrequency'</span>, 25600, <span class="keyword">...</span>
+                <span class="string">'duration'</span>, 1.28, <span class="keyword">...</span>
+                <span class="string">'stride'</span>, 60);
+
+            testCase.speeds = [35; 37.5; 40];
+            testCase.loads  = [12; 11; 10];
+            testCase.operatingConditions = OperatingConditions( <span class="keyword">...</span>
+                testCase.speeds, testCase.loads);
+
+            testCase.bearingParams = ParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'numRollingElements'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'ballDiameter'</span>, 7.92, <span class="keyword">...</span>
+                <span class="string">'pitchDiameter'</span>, 34.55, <span class="keyword">...</span>
+                <span class="string">'contactAngle'</span>, 0);
+
+            sharedParams = <span class="keyword">...</span>
+                SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                    <span class="string">'order'</span>, 3, <span class="keyword">...</span>
+                    <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
+                    <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                    <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
+                    <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
+                    <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            testCase.sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
+
+            testCase.bearingFrequencyBands = BearingFrequencyBands( <span class="keyword">...</span>
+                <span class="string">'bearingParams'</span>, testCase.bearingParams, <span class="keyword">...</span>
+                <span class="string">'sfrfsParams'</span>, testCase.sfrfsParams, <span class="keyword">...</span>
+                <span class="string">'operatingConditions'</span>, testCase.operatingConditions);
+
+            <span class="comment">% Ensembles missing spectra</span>
+            <span class="comment">% Initialize and prepare EnsembleMockNoFFT</span>
+            testCase.ensembleMockNoFFT = EnsembleMock( <span class="keyword">...</span>
+                <span class="string">'numMembers'</span>, 3, <span class="keyword">...</span>
+                <span class="string">'nSamples'</span>, testCase.snapshotParams.getTotalSamples(), <span class="keyword">...</span>
+                <span class="string">'speeds'</span>, testCase.speeds, <span class="keyword">...</span>
+                <span class="string">'loads'</span>, testCase.loads);
+            testCase.ensembleMockNoFFT.prepare();
+
+            <span class="comment">% Use EnsembleMockNoFFT's column names</span>
+            testCase.temporalSnapshotColumns = <span class="keyword">...</span>
+                testCase.ensembleMockNoFFT.temporalSnapshotColumns;
+
+            <span class="comment">% Broker with no spectra</span>
+            testCase.brokerNoFFT = SFRFsEnsembleBroker( <span class="keyword">...</span>
+                <span class="string">'ensembleObject'</span>, <span class="keyword">...</span>
+                testCase.ensembleMockNoFFT.fileEnsembleDS, <span class="keyword">...</span>
+                <span class="string">'getFilesFunction'</span>, @(obj) obj.Files, <span class="keyword">...</span>
+                <span class="string">'temporalSnapshotColumns'</span>, <span class="keyword">...</span>
+                    testCase.temporalSnapshotColumns);
+
+            <span class="comment">% Create SFRFs processor case no spectra</span>
+            testCase.sfrfsProcessorNoFFT = SFRFsEnsembleProcessor( <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, testCase.ensembleMockNoFFT.numMembers, <span class="keyword">...</span>
+                <span class="string">'ensemble'</span>, testCase.brokerNoFFT, <span class="keyword">...</span>
+                <span class="string">'frequencyBands'</span>, testCase.bearingFrequencyBands, <span class="keyword">...</span>
+                <span class="string">'snapshotParameters'</span>, testCase.snapshotParams);
+
+            <span class="comment">% Ensembles with spectra</span>
+            <span class="comment">% Initialize and prepare EnsembleMock with FFT precomputed</span>
+            testCase.ensembleMockFFT = EnsembleMock( <span class="keyword">...</span>
+                <span class="string">'numMembers'</span>, 15, <span class="keyword">...</span>
+                <span class="string">'nSamples'</span>, testCase.snapshotParams.getTotalSamples(), <span class="keyword">...</span>
+                <span class="string">'speeds'</span>, testCase.speeds, <span class="keyword">...</span>
+                <span class="string">'loads'</span>, testCase.loads);
+            testCase.ensembleMockFFT.prepare();
+
+            <span class="comment">% broker with spectra</span>
+            testCase.brokerFFT = SFRFsEnsembleBroker( <span class="keyword">...</span>
+                <span class="string">'ensembleObject'</span>, <span class="keyword">...</span>
+                testCase.ensembleMockFFT.fileEnsembleDS, <span class="keyword">...</span>
+                <span class="string">'getFilesFunction'</span>, @(obj) obj.Files, <span class="keyword">...</span>
+                <span class="string">'temporalSnapshotColumns'</span>, <span class="keyword">...</span>
+                    testCase.temporalSnapshotColumns);
+
+            <span class="comment">% Compute spectra</span>
+            fftProcessor = FFTEnsembleProcessor(<span class="keyword">...</span>
+                ensemble=testCase.brokerFFT,numWorkers=5);
+            fftProcessor.process();
+
+            <span class="comment">% Create SFRFs processor case spectra</span>
+            testCase.sfrfsProcessorFFT = SFRFsEnsembleProcessor( <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, testCase.ensembleMockFFT.numMembers, <span class="keyword">...</span>
+                <span class="string">'ensemble'</span>, testCase.brokerFFT, <span class="keyword">...</span>
+                <span class="string">'frequencyBands'</span>, testCase.bearingFrequencyBands, <span class="keyword">...</span>
+                <span class="string">'snapshotParameters'</span>, testCase.snapshotParams);
+
+            <span class="comment">% Register cleanup automatically</span>
+            testCase.addTeardown(@() testCase.ensembleMockNoFFT.cleanup());
+            testCase.addTeardown(@() testCase.ensembleMockFFT.cleanup());
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testProcessFailsWithoutFFT(testCase)
+            <span class="comment">% Load one member table manually</span>
+            t = read(testCase.ensembleMockNoFFT.fileEnsembleDS);
+
+            <span class="comment">% Confirm that the table does NOT have FFT data yet</span>
+            testCase.assertFalse(<span class="keyword">...</span>
+                any(contains(t.Properties.VariableNames, <span class="string">'FFT'</span>)), <span class="keyword">...</span>
+                <span class="string">'Precondition failed: table should not contain FFT data'</span>);
+
+            <span class="keyword">try</span>
+                testCase.sfrfsProcessorNoFFT.process();
+                testCase.verifyFail(<span class="string">'Expected exception was not thrown.'</span>);
+            <span class="keyword">catch</span> ME
+                <span class="comment">% Verify top-level aggregate exception ID</span>
+                testCase.verifyEqual(<span class="keyword">...</span>
+                    ME.identifier, <span class="string">'SFRFsProcessor:ProcessingError'</span>);
+
+                <span class="comment">% Verify nested causes contain the expected exception ID</span>
+                causeIds = cellfun(@(c) c.identifier, <span class="keyword">...</span>
+                    ME.cause, <span class="string">'UniformOutput'</span>, false);
+                hasExpected = any(strcmp( <span class="keyword">...</span>
+                    <span class="string">'sfrfs:EnsembleProcessor:MissingFFTColumn'</span>, causeIds));
+                testCase.verifyTrue(hasExpected, <span class="keyword">...</span>
+                    <span class="string">'Expected MissingFFTColumn exception not in causes.'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testProcessSucceedsWithFFT(testCase)
+            EnsembleDatastoreRegistry.factoryReset();
+            EnsembleDatastoreRegistry.addEnsemble( <span class="keyword">...</span>
+                name=<span class="string">"ensembleWithFFT"</span>, <span class="keyword">...</span>
+                datastore=testCase.ensembleMockFFT.fileEnsembleDS);
+
+            EnsembleDatastoreRegistry.reconfigureEnsemble( <span class="keyword">...</span>
+                name=<span class="string">"ensembleWithFFT"</span>, <span class="keyword">...</span>
+                DataVariables=testCase.temporalSnapshotColumns);
+
+            dsReg = EnsembleDatastoreRegistry.getEnsemble(<span class="string">"ensembleWithFFT"</span>);
+
+            broker = SFRFsEnsembleBroker( <span class="keyword">...</span>
+                ensembleObject=dsReg, <span class="keyword">...</span>
+                getFilesFunction=@(obj) obj.Files, <span class="keyword">...</span>
+                temporalSnapshotColumns=testCase.temporalSnapshotColumns);
+
+            sfrfsProcessor = SFRFsEnsembleProcessor( <span class="keyword">...</span>
+                numWorkers=testCase.ensembleMockFFT.numMembers, <span class="keyword">...</span>
+                ensemble=broker, <span class="keyword">...</span>
+                frequencyBands=testCase.bearingFrequencyBands, <span class="keyword">...</span>
+                snapshotParameters=testCase.snapshotParams);
+
+            testCase.verifyWarningFree(@() sfrfsProcessor.process());
+
+            sfrfCols = string(cellfun(@(c) broker.mapToSpectralColumn(c), <span class="keyword">...</span>
+                testCase.temporalSnapshotColumns, <span class="string">'UniformOutput'</span>, false)).';
+            sfrfCols = sfrfCols(contains(sfrfCols, <span class="string">"SFRFs"</span>));
+
+            <span class="comment">% Apply your updated concatenation fix</span>
+            newDataVars = [
+                testCase.temporalSnapshotColumns(:);
+                sfrfCols(:)];
+            newSelectedVars = [
+                dsReg.SelectedVariables(:);
+                sfrfCols(:)];
+
+            EnsembleDatastoreRegistry.reconfigureEnsemble( <span class="keyword">...</span>
+                name=<span class="string">"ensembleWithFFT"</span>, <span class="keyword">...</span>
+                DataVariables=newDataVars, <span class="keyword">...</span>
+                SelectedVariables=newSelectedVars);
+
+            dsReg = <span class="keyword">...</span>
+                EnsembleDatastoreRegistry.getEnsemble(<span class="string">"ensembleWithFFT"</span>);
+            reset(dsReg);
+            tAfter = read(dsReg);
+
+            actualVars = tAfter.Properties.VariableNames;
+            testCase.verifyTrue(all(ismember(sfrfCols, actualVars)), <span class="keyword">...</span>
+                <span class="string">"Not all expected SFRFs variables were found in output."</span>);
+
+            numFaults = numel(<span class="keyword">...</span>
+                testCase.bearingFrequencyBands.faultFrequencyCodes);
+
+            <span class="keyword">for</span> v = sfrfCols(:)'
+                col = tAfter.(v{1});
+                testCase.verifyClass(col, <span class="string">'cell'</span>, <span class="keyword">...</span>
+                    sprintf(<span class="keyword">...</span>
+                    <span class="string">'SFRFs variable %s must be a cell array.'</span>, v{1}));
+                <span class="keyword">for</span> i = 1:height(tAfter)
+                    entry = col{i};
+                    testCase.verifyClass(entry, <span class="string">'double'</span>, <span class="keyword">...</span>
+                        sprintf(<span class="keyword">...</span>
+                        <span class="string">'Entry %d of %s is not double.'</span>, i, v{1}));
+                    testCase.verifySize(entry, [1, numFaults], <span class="keyword">...</span>
+                        sprintf(<span class="keyword">...</span>
+                        <span class="string">'Entry %d of %s has wrong size.'</span>, i, v{1}));
+                    testCase.verifyTrue(all(isfinite(entry)), <span class="keyword">...</span>
+                        sprintf(<span class="keyword">...</span>
+                        <span class="string">'Entry %d of %s contains NaN or Inf.'</span>, i, v{1}));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
+    properties
+        snapshotParams ParametersSnapshot
+        operatingConditions OperatingConditions
+        bearingParams ParametersRollingBearings
+        sfrfsParams SFRFsParametersRollingBearings
+        sfrfsProcessorNoFFT SFRFsEnsembleProcessor
+        sfrfsProcessorFFT SFRFsEnsembleProcessor
+        bearingFrequencyBands BearingFrequencyBands
+        temporalSnapshotColumns cell
+        brokerNoFFT EnsembleBroker
+        brokerFFT EnsembleBroker
+        ensembleMockNoFFT EnsembleMock
+        ensembleMockFFT EnsembleMock
+        speeds double
+        loads double
+    end
+    
+    methods (TestMethodSetup)
+        function prepareData(testCase)
+            % Setup standard parameters
+            testCase.snapshotParams = ParametersSnapshot( ...
+                'samplingFrequency', 25600, ...
+                'duration', 1.28, ...
+                'stride', 60);
+            
+            testCase.speeds = [35; 37.5; 40];
+            testCase.loads  = [12; 11; 10];
+            testCase.operatingConditions = OperatingConditions( ...
+                testCase.speeds, testCase.loads);
+            
+            testCase.bearingParams = ParametersRollingBearings( ...
+                'numRollingElements', 8, ...
+                'ballDiameter', 7.92, ...
+                'pitchDiameter', 34.55, ...
+                'contactAngle', 0);
+            
+            sharedParams = ...
+                SFRFsParameters.createSFRFsParameters( ...
+                    'order', 3, ...
+                    'numSidebands', 4, ...
+                    'numHarmonics', 8, ...
+                    'sigmaCenter', [5, 7], ...
+                    'sigmaSurround', [12, 3], ...
+                    'inhibitionFactor', 0.6);
+
+            testCase.sfrfsParams = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', sharedParams);
+            
+            testCase.bearingFrequencyBands = BearingFrequencyBands( ...
+                'bearingParams', testCase.bearingParams, ...
+                'sfrfsParams', testCase.sfrfsParams, ...
+                'operatingConditions', testCase.operatingConditions);
+
+            % Ensembles missing spectra
+            % Initialize and prepare EnsembleMockNoFFT
+            testCase.ensembleMockNoFFT = EnsembleMock( ...
+                'numMembers', 3, ...
+                'nSamples', testCase.snapshotParams.getTotalSamples(), ...
+                'speeds', testCase.speeds, ...
+                'loads', testCase.loads);
+            testCase.ensembleMockNoFFT.prepare();
+
+            % Use EnsembleMockNoFFT's column names
+            testCase.temporalSnapshotColumns = ...
+                testCase.ensembleMockNoFFT.temporalSnapshotColumns;
+
+            % Broker with no spectra
+            testCase.brokerNoFFT = SFRFsEnsembleBroker( ...
+                'ensembleObject', ...
+                testCase.ensembleMockNoFFT.fileEnsembleDS, ...
+                'getFilesFunction', @(obj) obj.Files, ...
+                'temporalSnapshotColumns', ...
+                    testCase.temporalSnapshotColumns);
+            
+            % Create SFRFs processor case no spectra
+            testCase.sfrfsProcessorNoFFT = SFRFsEnsembleProcessor( ...
+                'numWorkers', testCase.ensembleMockNoFFT.numMembers, ...
+                'ensemble', testCase.brokerNoFFT, ...
+                'frequencyBands', testCase.bearingFrequencyBands, ...
+                'snapshotParameters', testCase.snapshotParams);
+            
+            % Ensembles with spectra
+            % Initialize and prepare EnsembleMock with FFT precomputed
+            testCase.ensembleMockFFT = EnsembleMock( ...
+                'numMembers', 15, ...
+                'nSamples', testCase.snapshotParams.getTotalSamples(), ...
+                'speeds', testCase.speeds, ...
+                'loads', testCase.loads);
+            testCase.ensembleMockFFT.prepare();
+    
+            % broker with spectra
+            testCase.brokerFFT = SFRFsEnsembleBroker( ...
+                'ensembleObject', ...
+                testCase.ensembleMockFFT.fileEnsembleDS, ...
+                'getFilesFunction', @(obj) obj.Files, ...
+                'temporalSnapshotColumns', ...
+                    testCase.temporalSnapshotColumns);
+
+            % Compute spectra 
+            fftProcessor = FFTEnsembleProcessor(...
+                ensemble=testCase.brokerFFT,numWorkers=5);
+            fftProcessor.process();
+            
+            % Create SFRFs processor case spectra
+            testCase.sfrfsProcessorFFT = SFRFsEnsembleProcessor( ...
+                'numWorkers', testCase.ensembleMockFFT.numMembers, ...
+                'ensemble', testCase.brokerFFT, ...
+                'frequencyBands', testCase.bearingFrequencyBands, ...
+                'snapshotParameters', testCase.snapshotParams);
+
+            % Register cleanup automatically
+            testCase.addTeardown(@() testCase.ensembleMockNoFFT.cleanup());
+            testCase.addTeardown(@() testCase.ensembleMockFFT.cleanup());
+        end
+    end
+
+    methods (Test)
+        function testProcessFailsWithoutFFT(testCase)            
+            % Load one member table manually
+            t = read(testCase.ensembleMockNoFFT.fileEnsembleDS);
+            
+            % Confirm that the table does NOT have FFT data yet
+            testCase.assertFalse(...
+                any(contains(t.Properties.VariableNames, 'FFT')), ...
+                'Precondition failed: table should not contain FFT data');
+            
+            try
+                testCase.sfrfsProcessorNoFFT.process();
+                testCase.verifyFail('Expected exception was not thrown.');
+            catch ME
+                % Verify top-level aggregate exception ID
+                testCase.verifyEqual(...
+                    ME.identifier, 'SFRFsProcessor:ProcessingError');
+                
+                % Verify nested causes contain the expected exception ID
+                causeIds = cellfun(@(c) c.identifier, ...
+                    ME.cause, 'UniformOutput', false);
+                hasExpected = any(strcmp( ...
+                    'sfrfs:EnsembleProcessor:MissingFFTColumn', causeIds));
+                testCase.verifyTrue(hasExpected, ...
+                    'Expected MissingFFTColumn exception not in causes.');
+            end
+        end
+
+        function testProcessSucceedsWithFFT(testCase)
+            EnsembleDatastoreRegistry.factoryReset();
+            EnsembleDatastoreRegistry.addEnsemble( ...
+                name="ensembleWithFFT", ...
+                datastore=testCase.ensembleMockFFT.fileEnsembleDS);
+
+            EnsembleDatastoreRegistry.reconfigureEnsemble( ...
+                name="ensembleWithFFT", ...
+                DataVariables=testCase.temporalSnapshotColumns);
+
+            dsReg = EnsembleDatastoreRegistry.getEnsemble("ensembleWithFFT");
+
+            broker = SFRFsEnsembleBroker( ...
+                ensembleObject=dsReg, ...
+                getFilesFunction=@(obj) obj.Files, ...
+                temporalSnapshotColumns=testCase.temporalSnapshotColumns);
+
+            sfrfsProcessor = SFRFsEnsembleProcessor( ...
+                numWorkers=testCase.ensembleMockFFT.numMembers, ...
+                ensemble=broker, ...
+                frequencyBands=testCase.bearingFrequencyBands, ...
+                snapshotParameters=testCase.snapshotParams);
+
+            testCase.verifyWarningFree(@() sfrfsProcessor.process());
+
+            sfrfCols = string(cellfun(@(c) broker.mapToSpectralColumn(c), ...
+                testCase.temporalSnapshotColumns, 'UniformOutput', false)).';
+            sfrfCols = sfrfCols(contains(sfrfCols, "SFRFs"));
+
+            % Apply your updated concatenation fix
+            newDataVars = [
+                testCase.temporalSnapshotColumns(:);
+                sfrfCols(:)];
+            newSelectedVars = [
+                dsReg.SelectedVariables(:);
+                sfrfCols(:)];
+
+            EnsembleDatastoreRegistry.reconfigureEnsemble( ...
+                name="ensembleWithFFT", ...
+                DataVariables=newDataVars, ...
+                SelectedVariables=newSelectedVars);
+
+            dsReg = ...
+                EnsembleDatastoreRegistry.getEnsemble("ensembleWithFFT");
+            reset(dsReg);
+            tAfter = read(dsReg);
+
+            actualVars = tAfter.Properties.VariableNames;
+            testCase.verifyTrue(all(ismember(sfrfCols, actualVars)), ...
+                "Not all expected SFRFs variables were found in output.");
+
+            numFaults = numel(...
+                testCase.bearingFrequencyBands.faultFrequencyCodes);
+
+            for v = sfrfCols(:)'
+                col = tAfter.(v{1});
+                testCase.verifyClass(col, 'cell', ...
+                    sprintf(...
+                    'SFRFs variable %s must be a cell array.', v{1}));
+                for i = 1:height(tAfter)
+                    entry = col{i};
+                    testCase.verifyClass(entry, 'double', ...
+                        sprintf(...
+                        'Entry %d of %s is not double.', i, v{1}));
+                    testCase.verifySize(entry, [1, numFaults], ...
+                        sprintf(...
+                        'Entry %d of %s has wrong size.', i, v{1}));
+                    testCase.verifyTrue(all(isfinite(entry)), ...
+                        sprintf(...
+                        'Entry %d of %s contains NaN or Inf.', i, v{1}));
+                end
+            end
+        end
+
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

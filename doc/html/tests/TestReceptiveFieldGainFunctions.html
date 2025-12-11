@@ -1,0 +1,429 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestReceptiveFieldGainFunctions</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="TestReceptiveFieldGainFunctions.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestReceptiveFieldGainFunctions &lt; matlab.unittest.TestCase
+    <span class="comment">% Test suite for ReceptiveFieldGainFunctions class.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Covers:</span>
+    <span class="comment">% - Valid construction with a BearingFrequencyBands instance</span>
+    <span class="comment">% - computeGainFunctions output correctness and property update</span>
+    <span class="comment">% - Frequency mask fields presence and size</span>
+    <span class="comment">% - Error handling for empty frequencyDomain input</span>
+
+    <span class="keyword">properties</span>
+        bfb                 <span class="comment">% BearingFrequencyBands instance</span>
+        rfgf                <span class="comment">% ReceptiveFieldGainFunctions instance</span>
+        frequencyDomain     <span class="comment">% Frequency axis</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestMethodSetup)
+        <span class="keyword">function</span> createValidObjects(testCase)
+            <span class="comment">% Create valid bearing parameters and SFRF params</span>
+            bearingParams = ParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'NumRollingElements'</span>,8, <span class="keyword">...</span>
+                <span class="string">'BallDiameter'</span>,7.92, <span class="keyword">...</span>
+                <span class="string">'PitchDiameter'</span>,34.55, <span class="keyword">...</span>
+                <span class="string">'ContactAngle'</span>,0);
+
+            sharedParams = <span class="keyword">...</span>
+                SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 2, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 10, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [4, 1], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12, 0.9], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.8);
+
+            sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
+
+            speed = [35; 37.5; 40];
+            load  = [12; 11; 10];
+            oc = OperatingConditions(speed, load);
+
+            <span class="comment">% Assemble BearingFrequencyBands instance</span>
+            testCase.bfb = <span class="keyword">...</span>
+                BearingFrequencyBands(<span class="keyword">...</span>
+                bearingParams = bearingParams, <span class="keyword">...</span>
+                sfrfsParams = sfrfsParams,<span class="keyword">...</span>
+                operatingConditions = oc);
+            testCase.bfb.computeBands();
+
+            <span class="comment">% Create ReceptiveFieldGainFunctions instance</span>
+            testCase.rfgf = ReceptiveFieldGainFunctions(testCase.bfb);
+
+            <span class="comment">% Define frequency domain vector for tests</span>
+            snapshotParams = ParametersSnapshot( <span class="keyword">...</span>
+                <span class="string">'samplingFrequency'</span>, 25600, <span class="keyword">...</span>
+                <span class="string">'duration'</span>, 1.28, <span class="keyword">...</span>
+                <span class="string">'stride'</span>, 60);
+            testCase.frequencyDomain = snapshotParams.getFrequencyDomain();
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testValidConstruction(testCase)
+            testCase.verifyInstanceOf(<span class="keyword">...</span>
+                testCase.rfgf, <span class="string">'ReceptiveFieldGainFunctions'</span>);
+            testCase.verifyEqual( <span class="keyword">...</span>
+                testCase.rfgf.frequencyBands, testCase.bfb);
+            testCase.verifyEmpty( <span class="keyword">...</span>
+                testCase.rfgf.gainFunctionsTable);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testComputeGainFunctionsCreatesTable(testCase)
+            gf = testCase.rfgf;
+            gf.computeGainFunctions(testCase.frequencyDomain);
+            testCase.verifyClass(gf.gainFunctionsTable, <span class="string">'table'</span>);
+            testCase.verifyEqual( <span class="keyword">...</span>
+                height(gf.gainFunctionsTable), <span class="keyword">...</span>
+                height(testCase.bfb.bandsTable));
+            testCase.verifyTrue( <span class="keyword">...</span>
+                any(strcmp(<span class="string">'FrequencyBankMasks'</span>, <span class="keyword">...</span>
+                gf.gainFunctionsTable.Properties.VariableNames)));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testFrequencyMasksFieldsAndSize(testCase)
+            testCase.rfgf.computeGainFunctions( <span class="keyword">...</span>
+                testCase.frequencyDomain);
+            masks = testCase.rfgf.gainFunctionsTable.FrequencyBankMasks;
+
+            <span class="comment">% Check that masks cell array is not empty and fields exist</span>
+            testCase.verifyTrue(all(~cellfun(@isempty, masks)));
+            <span class="keyword">for</span> i = 1:length(masks)
+                maskStruct = masks{i};
+                testCase.verifyTrue(isstruct(maskStruct));
+                testCase.verifyTrue( <span class="keyword">...</span>
+                    isfield(maskStruct, <span class="string">'CenterFrequencyBankMask'</span>));
+                testCase.verifyTrue( <span class="keyword">...</span>
+                    isfield(maskStruct, <span class="string">'SurroundFrequencyBankMask'</span>));
+
+                <span class="comment">% Each mask should match frequencyDomain length</span>
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    length(maskStruct.CenterFrequencyBankMask), <span class="keyword">...</span>
+                    length(testCase.frequencyDomain));
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    length(maskStruct.SurroundFrequencyBankMask), <span class="keyword">...</span>
+                    length(testCase.frequencyDomain));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testEmptyFrequencyDomainError(testCase)
+            f = @() testCase.rfgf.computeGainFunctions([]);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:ReceptiveFieldGainFunctions:'</span><span class="keyword">...</span>
+                <span class="string">'computeGainFunctions:EmptyFrequencyDomain'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testComputeGainFunctionsWithZeroSidebands(testCase)
+
+            <span class="comment">% Rebuild sfrfs with zero sidebands</span>
+            bearingParams = testCase.bfb.bearingParams;
+
+            sharedParams = <span class="keyword">...</span>
+                SFRFsParameters.createSFRFsParameters(<span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 0, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 10, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [4, 1], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12, 0.9], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.8);
+
+            sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
+
+            oc = testCase.bfb.operatingConditions;
+
+            <span class="comment">% Rebuild BFB with sidebands = 0</span>
+            bfbZero = BearingFrequencyBands( <span class="keyword">...</span>
+                bearingParams = bearingParams, <span class="keyword">...</span>
+                sfrfsParams = sfrfsParams, <span class="keyword">...</span>
+                operatingConditions = oc);
+
+            bfbZero.computeBands();
+
+            <span class="comment">% Rebuild rfgf</span>
+            rfgfZero = ReceptiveFieldGainFunctions(bfbZero);
+
+            <span class="comment">% Should not throw</span>
+            rfgfZero.computeGainFunctions(testCase.frequencyDomain);
+
+            <span class="comment">% Structural checks</span>
+            tbl = rfgfZero.gainFunctionsTable;
+
+            testCase.verifyClass(tbl, <span class="string">'table'</span>);
+            testCase.verifyGreaterThan(height(tbl), 0)
+
+            masks = tbl.FrequencyBankMasks;
+
+            testCase.verifyTrue(all(iscell(masks)))
+            testCase.verifyTrue(all(~cellfun(@isempty, masks)))
+
+            <span class="keyword">for</span> i = 1:length(masks)
+                maskStruct = masks{i};
+                testCase.verifyTrue(isstruct(maskStruct))
+                testCase.verifyTrue(<span class="keyword">...</span>
+                    isfield(maskStruct,<span class="string">'CenterFrequencyBankMask'</span>))
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestReceptiveFieldGainFunctions < matlab.unittest.TestCase
+    % Test suite for ReceptiveFieldGainFunctions class.
+    %
+    % Covers:
+    % - Valid construction with a BearingFrequencyBands instance
+    % - computeGainFunctions output correctness and property update
+    % - Frequency mask fields presence and size
+    % - Error handling for empty frequencyDomain input
+    
+    properties
+        bfb                 % BearingFrequencyBands instance
+        rfgf                % ReceptiveFieldGainFunctions instance
+        frequencyDomain     % Frequency axis
+    end
+    
+    methods (TestMethodSetup)
+        function createValidObjects(testCase)
+            % Create valid bearing parameters and SFRF params
+            bearingParams = ParametersRollingBearings( ...
+                'NumRollingElements',8, ...
+                'BallDiameter',7.92, ...
+                'PitchDiameter',34.55, ...
+                'ContactAngle',0);
+
+            sharedParams = ...
+                SFRFsParameters.createSFRFsParameters(...
+                'order', 1, ...
+                'numSidebands', 2, ...
+                'numHarmonics', 10, ...
+                'sigmaCenter', [4, 1], ...
+                'sigmaSurround', [12, 0.9], ...
+                'inhibitionFactor', 0.8);
+        
+            sfrfsParams = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', sharedParams);
+
+            speed = [35; 37.5; 40];
+            load  = [12; 11; 10];
+            oc = OperatingConditions(speed, load);
+            
+            % Assemble BearingFrequencyBands instance
+            testCase.bfb = ...
+                BearingFrequencyBands(...
+                bearingParams = bearingParams, ... 
+                sfrfsParams = sfrfsParams,...
+                operatingConditions = oc);
+            testCase.bfb.computeBands();
+            
+            % Create ReceptiveFieldGainFunctions instance
+            testCase.rfgf = ReceptiveFieldGainFunctions(testCase.bfb);
+            
+            % Define frequency domain vector for tests
+            snapshotParams = ParametersSnapshot( ...
+                'samplingFrequency', 25600, ...
+                'duration', 1.28, ...
+                'stride', 60);
+            testCase.frequencyDomain = snapshotParams.getFrequencyDomain();
+        end
+    end
+    
+    methods (Test)
+        function testValidConstruction(testCase)
+            testCase.verifyInstanceOf(...
+                testCase.rfgf, 'ReceptiveFieldGainFunctions');
+            testCase.verifyEqual( ...
+                testCase.rfgf.frequencyBands, testCase.bfb);
+            testCase.verifyEmpty( ...
+                testCase.rfgf.gainFunctionsTable);
+        end
+        
+        function testComputeGainFunctionsCreatesTable(testCase)
+            gf = testCase.rfgf;
+            gf.computeGainFunctions(testCase.frequencyDomain);
+            testCase.verifyClass(gf.gainFunctionsTable, 'table');
+            testCase.verifyEqual( ...
+                height(gf.gainFunctionsTable), ...
+                height(testCase.bfb.bandsTable));
+            testCase.verifyTrue( ...
+                any(strcmp('FrequencyBankMasks', ...
+                gf.gainFunctionsTable.Properties.VariableNames)));
+        end
+        
+        function testFrequencyMasksFieldsAndSize(testCase)
+            testCase.rfgf.computeGainFunctions( ...
+                testCase.frequencyDomain);
+            masks = testCase.rfgf.gainFunctionsTable.FrequencyBankMasks;
+            
+            % Check that masks cell array is not empty and fields exist
+            testCase.verifyTrue(all(~cellfun(@isempty, masks)));
+            for i = 1:length(masks)
+                maskStruct = masks{i};
+                testCase.verifyTrue(isstruct(maskStruct));
+                testCase.verifyTrue( ...
+                    isfield(maskStruct, 'CenterFrequencyBankMask'));
+                testCase.verifyTrue( ...
+                    isfield(maskStruct, 'SurroundFrequencyBankMask'));
+
+                % Each mask should match frequencyDomain length
+                testCase.verifyEqual( ...
+                    length(maskStruct.CenterFrequencyBankMask), ...
+                    length(testCase.frequencyDomain));
+                testCase.verifyEqual( ...
+                    length(maskStruct.SurroundFrequencyBankMask), ...
+                    length(testCase.frequencyDomain));
+            end
+        end
+
+        function testEmptyFrequencyDomainError(testCase)
+            f = @() testCase.rfgf.computeGainFunctions([]);
+
+            testCase.verifyError(f, ...
+                ['sfrfs:ReceptiveFieldGainFunctions:'...
+                'computeGainFunctions:EmptyFrequencyDomain']);
+        end
+
+        function testComputeGainFunctionsWithZeroSidebands(testCase)
+
+            % Rebuild sfrfs with zero sidebands
+            bearingParams = testCase.bfb.bearingParams;
+
+            sharedParams = ...
+                SFRFsParameters.createSFRFsParameters(...
+                'order', 1, ...
+                'numSidebands', 0, ...   
+                'numHarmonics', 10, ...
+                'sigmaCenter', [4, 1], ...
+                'sigmaSurround', [12, 0.9], ...
+                'inhibitionFactor', 0.8);
+
+            sfrfsParams = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', sharedParams);
+
+            oc = testCase.bfb.operatingConditions;
+
+            % Rebuild BFB with sidebands = 0
+            bfbZero = BearingFrequencyBands( ...
+                bearingParams = bearingParams, ...
+                sfrfsParams = sfrfsParams, ...
+                operatingConditions = oc);
+
+            bfbZero.computeBands();
+
+            % Rebuild rfgf
+            rfgfZero = ReceptiveFieldGainFunctions(bfbZero);
+
+            % Should not throw
+            rfgfZero.computeGainFunctions(testCase.frequencyDomain);
+
+            % Structural checks
+            tbl = rfgfZero.gainFunctionsTable;
+
+            testCase.verifyClass(tbl, 'table');
+            testCase.verifyGreaterThan(height(tbl), 0)
+
+            masks = tbl.FrequencyBankMasks;
+
+            testCase.verifyTrue(all(iscell(masks)))
+            testCase.verifyTrue(all(~cellfun(@isempty, masks)))
+
+            for i = 1:length(masks)
+                maskStruct = masks{i};
+                testCase.verifyTrue(isstruct(maskStruct))
+                testCase.verifyTrue(...
+                    isfield(maskStruct,'CenterFrequencyBankMask'))
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

@@ -1,0 +1,867 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsEnsembleProcessor</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsEnsembleProcessor.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> SFRFsEnsembleProcessor &lt; EnsembleProcessor
+<span class="comment">% SFRFsEnsembleProcessor Processes ensemble data for</span>
+<span class="comment">%   Spectral Fault Receptive Fields (SFRFs).</span>
+<span class="comment">%</span>
+<span class="comment">% This class manages parallel or sequential processing of ensemble members</span>
+<span class="comment">% to compute SFRF responses based on input parameters encapsulating</span>
+<span class="comment">% frequency bands, snapshot parameters, and receptive field gain functions.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">% Properties:</span>
+<span class="comment">%   frequencyBands      - Object specifying frequency band definitions.</span>
+<span class="comment">%   snapshotParameters  - Object specifying sampling and snapshot details.</span>
+<span class="comment">%</span>
+<span class="comment">% Methods:</span>
+<span class="comment">%   compute            - Update a single ensemble member with computed</span>
+<span class="comment">%                        SFRFs.</span>
+<span class="comment">%   process            - Process all ensemble members.</span>
+<span class="comment">%</span>
+<span class="comment">% See also: SFRFsCompute, ReceptiveFieldGainFunctions, EnsembleProcessor</span>
+<span class="comment">%   data.createXJTUSYEnsemble, data.getXJTUSYEnsemble</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        frequencyBandsInternal
+        snapshotParametersInternal <span class="typesection">ParametersSnapshot </span>= <span class="keyword">...</span>
+            ParametersSnapshot.empty
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        frequencyBands <span class="typesection">FaultFrequencyBands</span>
+        snapshotParameters <span class="typesection">ParametersSnapshot</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = SFRFsEnsembleProcessor(args)
+        <span class="comment">% SFRFsEnsembleProcessor Construct an instance of the class.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   obj = SFRFsEnsembleProcessor(Name, Value, ...)</span>
+        <span class="comment">%   creates an SFRFsEnsembleProcessor object configured with the</span>
+        <span class="comment">%   specified input arguments.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs (Name-Value pairs):</span>
+        <span class="comment">%     'numWorkers'         - Number of parallel workers to use</span>
+        <span class="comment">%                            (positive integer, default: 2).</span>
+        <span class="comment">%     'ensemble'           - SFRFsEnsembleBroker object.</span>
+        <span class="comment">%     'frequencyBands'     - FaultFrequencyBands object specifying</span>
+        <span class="comment">%                            frequency band definitions.</span>
+        <span class="comment">%     'snapshotParameters' - ParametersSnapshot object specifying</span>
+        <span class="comment">%                            snapshot details.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%     obj                 Instance of SFRFsEnsembleProcessor class.</span>
+
+            <span class="keyword">arguments</span>
+                args.numWorkers <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 2
+                args.ensemble <span class="typesection">SFRFsEnsembleBroker {mustBeNonempty}</span>
+                args.frequencyBands <span class="typesection">FaultFrequencyBands {mustBeNonempty}</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot {mustBeNonempty}</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Call superclass constructor with validated args</span>
+            obj@EnsembleProcessor(<span class="keyword">...</span>
+                numWorkers = args.numWorkers, <span class="keyword">...</span>
+                ensemble = args.ensemble);
+            obj.frequencyBandsInternal = args.frequencyBands;
+            obj.snapshotParametersInternal = args.snapshotParameters;
+        <span class="keyword">end</span>
+
+        <span class="comment">% Getter for frequencyBands</span>
+        <span class="keyword">function</span> fb = get.frequencyBands(obj)
+            fb = obj.frequencyBandsInternal;
+        <span class="keyword">end</span>
+
+        <span class="comment">% Getter for snapshotParameters</span>
+        <span class="keyword">function</span> sp = get.snapshotParameters(obj)
+            sp = obj.snapshotParametersInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> params = getProcessParams(obj)
+        <span class="comment">% getProcessParams Get parameters for ensemble processing.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   params = getProcessParams() returns a struct with</span>
+        <span class="comment">%   all relevant parameters for the processing workflow.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output Arguments:</span>
+        <span class="comment">%     params - Struct with fields:</span>
+        <span class="comment">%              frequencyBands     - Frequency bands.</span>
+        <span class="comment">%              snapshotParameters - Snapshot parameters.</span>
+        <span class="comment">%              rfgfs              - Receptive Field Gain</span>
+        <span class="comment">%                                   Functions.</span>
+        <span class="comment">%              sfrfsCompute       - SFRFs' Compute object.</span>
+        <span class="comment">%   Note:</span>
+        <span class="comment">%       FrequencyBands object includes SFRFs parameters and</span>
+        <span class="comment">%       operation conditions</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%     params = obj.getProcessParams();</span>
+
+            log = SFRFsLogger.getLogger();
+            params.ensemble = obj.ensemble;
+            params.snapshotParameters = obj.snapshotParameters;
+            params.frequencyBands = obj.frequencyBands;
+            <span class="comment">% check if frequency bands have been computed</span>
+            <span class="keyword">if</span> isempty(params.frequencyBands.bandsTable)
+                <span class="keyword">if</span> log.isInfoEnabled()
+                    log.info(<span class="keyword">...</span>
+                        <span class="string">"Empty frequency bands, computing bands."</span>);
+                <span class="keyword">end</span>
+                params.frequencyBands.computeBands();
+            <span class="keyword">end</span>
+            <span class="comment">% create spectral mask object</span>
+            params.rfgfs = ReceptiveFieldGainFunctions(<span class="keyword">...</span>
+                params.frequencyBands);
+            <span class="comment">% compute masks</span>
+            params.rfgfs.computeGainFunctions(<span class="keyword">...</span>
+                params.snapshotParameters.getFrequencyDomain());
+            <span class="comment">% create SFRFsCompute instance</span>
+            params.sfrfsCompute = SFRFsCompute( <span class="keyword">...</span>
+            snapshotParameters = params.snapshotParameters, <span class="keyword">...</span>
+            rfgfs = params.rfgfs);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> process(obj, computeHandle)
+        <span class="comment">% process Process ensemble members.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   process() computes SFRFs for all members in the ensemble.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   process(computeHandle) overrides the default compute method</span>
+        <span class="comment">%   used during processing with a custom function handle.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   This method injects compute handle but delegates control to</span>
+        <span class="comment">%   parents process method.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   computeHandle - Optional function handle</span>
+        <span class="comment">%                   @(memberTable, params)</span>
+        <span class="comment">%                   Default: @SFRFsEnsembleProcessor.compute</span>
+        <span class="comment">% See also: EnsembleProcessor/process</span>
+
+            <span class="keyword">arguments</span>
+                obj
+                computeHandle <span class="typesection">(1,1) function_handle </span>= <span class="keyword">...</span>
+                    @(memberTable, params) <span class="keyword">...</span>
+                    SFRFsEnsembleProcessor.compute(memberTable, params)
+            <span class="keyword">end</span>
+
+            <span class="comment">% Delegate processing to superclass method</span>
+            process@EnsembleProcessor(obj, computeHandle);
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> responseTable = computeMemberSFRFs(<span class="keyword">...</span>
+                memberTable, params, signalColumn)
+        <span class="comment">% COMPUTEMEMBERSFRFS Compute SFRF responses for a specified signal</span>
+        <span class="comment">%   column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   responseTable = computeMemberSFRFs(...</span>
+        <span class="comment">%       memberTable, params, signalColumn)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   memberTable: Table containing ensemble member data.</span>
+        <span class="comment">%   params     : Struct with fields:</span>
+        <span class="comment">%                 - frequencyBands    : Frequency bands info.</span>
+        <span class="comment">%                 - snapshotParameters: Snapshot parameters.</span>
+        <span class="comment">%                 - rfgfs             : Receptive Field Gain</span>
+        <span class="comment">%                                       Functions.</span>
+        <span class="comment">%                 - sfrfsCompute      : SFRFs' Compute object</span>
+        <span class="comment">%   signalColumn: String, name of the signal column in memberTable</span>
+        <span class="comment">%</span>
+        <span class="comment">% Outputs:</span>
+        <span class="comment">%   responseTable : Table of computed SFRF responses</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   responseTable = computeMemberSFRFs(...</span>
+        <span class="comment">%       tbl, params, 'HorizontalAcceleration');</span>
+        <span class="comment">%</span>
+        <span class="comment">% See also: SFRFsCompute/compute</span>
+
+            <span class="comment">% Extract operating condition(constant in run-to-failure tests)</span>
+            oc = memberTable(1, {<span class="string">'Speed'</span>, <span class="string">'Load'</span>});
+
+            <span class="comment">% Extract FFT spectral column name for the current signal</span>
+            spectralCol = <span class="keyword">...</span>
+                params.ensemble.mapToSpectralColumn(<span class="keyword">...</span>
+                signalColumn);
+
+            <span class="comment">% Extract spectral data</span>
+            x_fft = [memberTable.(spectralCol){:}];
+
+            <span class="comment">% Call the compute method on sfrfsCompute object</span>
+            responseTable = params.sfrfsCompute.compute(<span class="keyword">...</span>
+                operatingCondition = oc, spectrumSnapshot = x_fft);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tbl = extendTableWithSFRFs(<span class="keyword">...</span>
+                tbl, responseTable, sfrfColName)
+        <span class="comment">% EXTENDTABLEWITHSFRFS Add or update SFRF results column for any</span>
+        <span class="comment">%   signal axis.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   tbl = extendTableWithSFRFs(tbl, responseTable, sfrfColName)</span>
+        <span class="comment">%   Adds or updates tbl storing SFRFs in column named sfrfColName.</span>
+        <span class="comment">%   Each cell in the column contains a [1 x nFaultModes] row vector</span>
+        <span class="comment">%   of SFRF responses for each snapshot.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   tbl           - Original ensemble member table.</span>
+        <span class="comment">%   responseTable - Table with SFRF results for the specified axis.</span>
+        <span class="comment">%                   Must include a 'SFRFs' cell column</span>
+        <span class="comment">%                   (cell arrays of row vectors).</span>
+        <span class="comment">%   sfrfColName   - Name for the SFRF result column.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   tbl - Table extended or updated with the specified SFRF column.</span>
+
+            <span class="comment">% Convert SFRF table cell array to matrix for easier handling</span>
+            responseRF = cell2mat(responseTable.SFRFs);
+
+            <span class="comment">% Determine size for cell partitioning</span>
+            nFaultModes = size(responseRF, 1);
+            nSnapshots = size(responseRF, 2);
+
+            <span class="comment">% Create cell column for the table: [nSnapshots x 1] cell,</span>
+            <span class="comment">% each cell is [1 x nFaultModes]</span>
+            <span class="comment">% Transpose because each cell should hold a row vector for that</span>
+            <span class="comment">% snapshot</span>
+            tbl.(sfrfColName) = mat2cell(<span class="keyword">...</span>
+                responseRF.', ones(nSnapshots, 1), nFaultModes);
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = protected)
+
+        <span class="keyword">function</span> updatedMember = compute(memberTable, params)
+        <span class="comment">% COMPUTE: Update ensemble member table with SFRF responses for each</span>
+        <span class="comment">% temporal column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   updatedMember = SFRFsEnsembleProcessor.compute(memberTable, params)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   memberTable - Table of ensemble member data (single condition).</span>
+        <span class="comment">%                 Must include 'Speed' and 'Load' columns.</span>
+        <span class="comment">%   params      - Struct with fields:</span>
+        <span class="comment">%                   - frequencyBands</span>
+        <span class="comment">%                   - snapshotParameters</span>
+        <span class="comment">%                   - rfgfs</span>
+        <span class="comment">%                   - sfrfsCompute</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   updatedMember - table with new SFRF results columns.</span>
+
+
+
+            <span class="comment">% Retrieve temporal signal columns from ensemble context</span>
+            ensemble = params.ensemble;
+            signalColumns = ensemble.temporalSnapshotColumns;
+            log = SFRFsLogger.getLogger();
+
+            <span class="comment">% Validate FFT columns are present and correct</span>
+            SFRFsEnsembleProcessor.validatePrecomputedFFTColumns(<span class="keyword">...</span>
+                memberTable, ensemble);
+
+            <span class="keyword">for</span> i = 1:numel(signalColumns)
+                signalColumn = signalColumns{i};
+                sfrfColName = ensemble.mapToSFRFColumn(signalColumn);
+
+                <span class="keyword">if</span> log.isFineEnabled()
+                    log.fine(sprintf(<span class="keyword">...</span>
+                        <span class="string">'Processing input: "%s", output: "%s"...'</span>, <span class="keyword">...</span>
+                        signalColumn, sfrfColName));
+                <span class="keyword">end</span>
+
+                <span class="comment">% Compute SFRF responses for the signal column</span>
+                responseTable = <span class="keyword">...</span>
+                    SFRFsEnsembleProcessor.computeMemberSFRFs(<span class="keyword">...</span>
+                        memberTable, params, signalColumn);
+
+                <span class="comment">% Extend the table with new SFRF results for this signal</span>
+                memberTable = <span class="keyword">...</span>
+                    SFRFsEnsembleProcessor.extendTableWithSFRFs(<span class="keyword">...</span>
+                        memberTable, responseTable, sfrfColName);
+
+                <span class="keyword">if</span> log.isFineEnabled()
+                    log.fine(sprintf(<span class="string">'Done processing "%s"'</span>, signalColumn));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            updatedMember = memberTable;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validatePrecomputedFFTColumns(memberTable, broker)
+        <span class="comment">% Validate FFT columns exist and have been precomputed</span>
+
+           <span class="keyword">arguments</span>
+               memberTable <span class="typesection">table</span>
+               broker <span class="typesection">SFRFsEnsembleBroker</span>
+           <span class="keyword">end</span>
+
+            <span class="comment">% Helper internal function</span>
+            <span class="keyword">function</span> tf = isValidFFTColumn(col)
+                tf = iscell(col) &amp;&amp; <span class="keyword">...</span>
+                    all(cellfun(@(x) isnumeric(x) &amp;&amp; ~isempty(x), col));
+                <span class="keyword">if</span> tf
+                    sizes = cellfun(@size, col, <span class="string">'UniformOutput'</span>, false);
+                    tf = all(cellfun(@(x) isequal(x, sizes{1}), sizes));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Validate all expected spectral columns are present and valid</span>
+            colList = broker.temporalSnapshotColumns;
+            <span class="keyword">for</span> i = 1:numel(colList)
+                column = broker.mapToSpectralColumn(colList{i});
+                <span class="keyword">if</span> ~ismember(<span class="keyword">...</span>
+                        column, memberTable.Properties.VariableNames) || <span class="keyword">...</span>
+                        ~isValidFFTColumn(memberTable.(column))
+                    error(<span class="string">'sfrfs:EnsembleProcessor:MissingFFTColumn'</span>, <span class="keyword">...</span>
+                        <span class="string">'FFT column "%s" missing or invalid'</span>, column);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access=public)
+        <span class="keyword">function</span> stackedSFRFs = bufferSFRFs(SFRF, Order)
+        <span class="comment">% BUFFERSFRFS Generate higher-order SFRFs for a single axis/sensor.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   STACKEDSFRFS = BUFFERSFRFS(SFRF, ORDER) returns a matrix</span>
+        <span class="comment">%   where each row contains the current and previous ORDER SFRF</span>
+        <span class="comment">%   vectors for a single axis or sensor, stacked for temporal</span>
+        <span class="comment">%   context.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   To indicate insufficient history at the start of the sequence,</span>
+        <span class="comment">%   the initial rows are padded with NaN values. This explicit use</span>
+        <span class="comment">%   of NaN (rather than zero) avoids introducing artificial values</span>
+        <span class="comment">%   that could bias downstream analysis or machine learning models.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   INPUTS:</span>
+        <span class="comment">%       SFRF   - [nFaultModes x nSnapshots] numeric matrix of SFRFs</span>
+        <span class="comment">%                for one axis/sensor.</span>
+        <span class="comment">%       ORDER  - Non-negative integer specifying the number of</span>
+        <span class="comment">%                previous time steps.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   OUTPUT:</span>
+        <span class="comment">%       STACKEDSFRFS - [nSnapshots x nFaultModes*(ORDER+1)] matrix</span>
+        <span class="comment">%                      of stacked SFRFs.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   EXAMPLE:</span>
+        <span class="comment">%       % Suppose SFRF is [4 x 10] (4 fault modes, 10 snapshots)</span>
+        <span class="comment">%       order = 2;</span>
+        <span class="comment">%       stackedSFRFs = SFRFsEnsembleProcessor.bufferSFRFs(SFRF, ...</span>
+        <span class="comment">%                       order);</span>
+        <span class="comment">%       % stackedSFRFs is [10 x 12] (since 4*(2+1) = 12)</span>
+        <span class="comment">%</span>
+        <span class="comment">%   SEE ALSO:</span>
+        <span class="comment">%       SFRFsEnsembleProcessor.computeMemberSFRFs,</span>
+        <span class="comment">%       SFRFsEnsembleProcessor.extendTableWithSFRFs</span>
+
+            <span class="keyword">arguments</span>
+                SFRF <span class="typesection">(:,:) {mustBeNumeric}</span>
+                Order <span class="typesection">(1,1) {mustBeInteger, mustBeNonnegative}</span>
+            <span class="keyword">end</span>
+
+            nFaultModes = size(SFRF,1);
+
+            <span class="keyword">if</span> Order == 0
+                <span class="comment">% No temporal stacking, just transpose</span>
+                stackedSFRFs = SFRF.'; <span class="comment">% [nSnapshots x nFaultModes]</span>
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            SFRF_vec = SFRF(:);
+
+            windowLength = nFaultModes * (Order + 1);
+            overlap = windowLength - nFaultModes;
+
+            pad = NaN(windowLength - nFaultModes, 1);
+            SFRF_padded = [pad; SFRF_vec];
+
+            B = buffer(SFRF_padded, windowLength, overlap, <span class="string">'nodelay'</span>);
+            <span class="comment">% B is [windowLength x nSnapshots]</span>
+
+            stackedSFRFs = B.'; <span class="comment">% [nSnapshots x nFaultModes*(Order+1)]</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef SFRFsEnsembleProcessor < EnsembleProcessor
+% SFRFsEnsembleProcessor Processes ensemble data for 
+%   Spectral Fault Receptive Fields (SFRFs).
+%
+% This class manages parallel or sequential processing of ensemble members 
+% to compute SFRF responses based on input parameters encapsulating 
+% frequency bands, snapshot parameters, and receptive field gain functions.
+%
+%
+% Properties:
+%   frequencyBands      - Object specifying frequency band definitions.
+%   snapshotParameters  - Object specifying sampling and snapshot details.
+%
+% Methods:
+%   compute            - Update a single ensemble member with computed 
+%                        SFRFs.
+%   process            - Process all ensemble members.
+%
+% See also: SFRFsCompute, ReceptiveFieldGainFunctions, EnsembleProcessor
+%   data.createXJTUSYEnsemble, data.getXJTUSYEnsemble
+
+    properties (Access = private)
+        frequencyBandsInternal 
+        snapshotParametersInternal ParametersSnapshot = ...
+            ParametersSnapshot.empty
+    end
+
+    properties (Dependent)
+        frequencyBands FaultFrequencyBands
+        snapshotParameters ParametersSnapshot
+    end
+
+    methods
+        function obj = SFRFsEnsembleProcessor(args)
+        % SFRFsEnsembleProcessor Construct an instance of the class.
+        %
+        %   obj = SFRFsEnsembleProcessor(Name, Value, ...)
+        %   creates an SFRFsEnsembleProcessor object configured with the
+        %   specified input arguments.
+        %
+        %   Inputs (Name-Value pairs):
+        %     'numWorkers'         - Number of parallel workers to use 
+        %                            (positive integer, default: 2).
+        %     'ensemble'           - SFRFsEnsembleBroker object.
+        %     'frequencyBands'     - FaultFrequencyBands object specifying 
+        %                            frequency band definitions.
+        %     'snapshotParameters' - ParametersSnapshot object specifying 
+        %                            snapshot details.
+        %
+        %   Output:
+        %     obj                 Instance of SFRFsEnsembleProcessor class.
+
+            arguments
+                args.numWorkers (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 2
+                args.ensemble SFRFsEnsembleBroker {mustBeNonempty}
+                args.frequencyBands FaultFrequencyBands {mustBeNonempty}
+                args.snapshotParameters ParametersSnapshot {mustBeNonempty}
+            end
+
+            % Call superclass constructor with validated args
+            obj@EnsembleProcessor(...
+                numWorkers = args.numWorkers, ...
+                ensemble = args.ensemble);
+            obj.frequencyBandsInternal = args.frequencyBands;
+            obj.snapshotParametersInternal = args.snapshotParameters;
+        end
+
+        % Getter for frequencyBands
+        function fb = get.frequencyBands(obj)
+            fb = obj.frequencyBandsInternal;
+        end
+    
+        % Getter for snapshotParameters
+        function sp = get.snapshotParameters(obj)
+            sp = obj.snapshotParametersInternal;
+        end
+
+        function params = getProcessParams(obj)
+        % getProcessParams Get parameters for ensemble processing.
+        %
+        %   params = getProcessParams() returns a struct with
+        %   all relevant parameters for the processing workflow.
+        %
+        %   Output Arguments:
+        %     params - Struct with fields:
+        %              frequencyBands     - Frequency bands.
+        %              snapshotParameters - Snapshot parameters.
+        %              rfgfs              - Receptive Field Gain
+        %                                   Functions.
+        %              sfrfsCompute       - SFRFs' Compute object.
+        %   Note:
+        %       FrequencyBands object includes SFRFs parameters and
+        %       operation conditions
+        %   Example:
+        %     params = obj.getProcessParams();
+        
+            log = SFRFsLogger.getLogger();
+            params.ensemble = obj.ensemble;
+            params.snapshotParameters = obj.snapshotParameters;
+            params.frequencyBands = obj.frequencyBands;
+            % check if frequency bands have been computed
+            if isempty(params.frequencyBands.bandsTable)
+                if log.isInfoEnabled()
+                    log.info(...
+                        "Empty frequency bands, computing bands.");
+                end
+                params.frequencyBands.computeBands();
+            end
+            % create spectral mask object
+            params.rfgfs = ReceptiveFieldGainFunctions(...
+                params.frequencyBands);
+            % compute masks
+            params.rfgfs.computeGainFunctions(...
+                params.snapshotParameters.getFrequencyDomain());
+            % create SFRFsCompute instance
+            params.sfrfsCompute = SFRFsCompute( ...
+            snapshotParameters = params.snapshotParameters, ...
+            rfgfs = params.rfgfs);
+        end
+
+        function process(obj, computeHandle)
+        % process Process ensemble members.
+        %
+        %   process() computes SFRFs for all members in the ensemble.
+        %
+        %   process(computeHandle) overrides the default compute method
+        %   used during processing with a custom function handle.
+        %
+        %   This method injects compute handle but delegates control to
+        %   parents process method.
+        %
+        % Inputs:
+        %   computeHandle - Optional function handle 
+        %                   @(memberTable, params)
+        %                   Default: @SFRFsEnsembleProcessor.compute
+        % See also: EnsembleProcessor/process
+
+            arguments
+                obj
+                computeHandle (1,1) function_handle = ...
+                    @(memberTable, params) ...
+                    SFRFsEnsembleProcessor.compute(memberTable, params)
+            end
+            
+            % Delegate processing to superclass method
+            process@EnsembleProcessor(obj, computeHandle);
+        end
+
+    end
+
+    methods (Static, Access = private)
+
+        function responseTable = computeMemberSFRFs(...
+                memberTable, params, signalColumn)
+        % COMPUTEMEMBERSFRFS Compute SFRF responses for a specified signal 
+        %   column.
+        %
+        %   responseTable = computeMemberSFRFs(...
+        %       memberTable, params, signalColumn)
+        %
+        % Inputs:
+        %   memberTable: Table containing ensemble member data.
+        %   params     : Struct with fields:
+        %                 - frequencyBands    : Frequency bands info.
+        %                 - snapshotParameters: Snapshot parameters.
+        %                 - rfgfs             : Receptive Field Gain 
+        %                                       Functions.
+        %                 - sfrfsCompute      : SFRFs' Compute object
+        %   signalColumn: String, name of the signal column in memberTable
+        %
+        % Outputs:
+        %   responseTable : Table of computed SFRF responses
+        %
+        % Example:
+        %   responseTable = computeMemberSFRFs(...
+        %       tbl, params, 'HorizontalAcceleration');
+        %
+        % See also: SFRFsCompute/compute
+        
+            % Extract operating condition(constant in run-to-failure tests)
+            oc = memberTable(1, {'Speed', 'Load'});
+        
+            % Extract FFT spectral column name for the current signal
+            spectralCol = ...
+                params.ensemble.mapToSpectralColumn(...
+                signalColumn);
+        
+            % Extract spectral data
+            x_fft = [memberTable.(spectralCol){:}];
+        
+            % Call the compute method on sfrfsCompute object
+            responseTable = params.sfrfsCompute.compute(...
+                operatingCondition = oc, spectrumSnapshot = x_fft);
+        end
+
+        function tbl = extendTableWithSFRFs(...
+                tbl, responseTable, sfrfColName)
+        % EXTENDTABLEWITHSFRFS Add or update SFRF results column for any 
+        %   signal axis.
+        %
+        %   tbl = extendTableWithSFRFs(tbl, responseTable, sfrfColName)
+        %   Adds or updates tbl storing SFRFs in column named sfrfColName.
+        %   Each cell in the column contains a [1 x nFaultModes] row vector
+        %   of SFRF responses for each snapshot.
+        %
+        % Inputs:
+        %   tbl           - Original ensemble member table.
+        %   responseTable - Table with SFRF results for the specified axis.
+        %                   Must include a 'SFRFs' cell column 
+        %                   (cell arrays of row vectors).
+        %   sfrfColName   - Name for the SFRF result column.
+        %
+        % Output:
+        %   tbl - Table extended or updated with the specified SFRF column.
+        
+            % Convert SFRF table cell array to matrix for easier handling
+            responseRF = cell2mat(responseTable.SFRFs);
+        
+            % Determine size for cell partitioning
+            nFaultModes = size(responseRF, 1);
+            nSnapshots = size(responseRF, 2);
+        
+            % Create cell column for the table: [nSnapshots x 1] cell, 
+            % each cell is [1 x nFaultModes]
+            % Transpose because each cell should hold a row vector for that 
+            % snapshot
+            tbl.(sfrfColName) = mat2cell(...
+                responseRF.', ones(nSnapshots, 1), nFaultModes);
+        end
+
+    end
+
+    methods (Static, Access = protected)
+
+        function updatedMember = compute(memberTable, params)
+        % COMPUTE: Update ensemble member table with SFRF responses for each 
+        % temporal column.
+        %
+        %   updatedMember = SFRFsEnsembleProcessor.compute(memberTable, params)
+        %
+        % Inputs:
+        %   memberTable - Table of ensemble member data (single condition).
+        %                 Must include 'Speed' and 'Load' columns.
+        %   params      - Struct with fields:
+        %                   - frequencyBands
+        %                   - snapshotParameters
+        %                   - rfgfs
+        %                   - sfrfsCompute
+        %
+        % Output:
+        %   updatedMember - table with new SFRF results columns.
+        
+            
+        
+            % Retrieve temporal signal columns from ensemble context
+            ensemble = params.ensemble;  
+            signalColumns = ensemble.temporalSnapshotColumns;
+            log = SFRFsLogger.getLogger();
+
+            % Validate FFT columns are present and correct
+            SFRFsEnsembleProcessor.validatePrecomputedFFTColumns(...
+                memberTable, ensemble);
+            
+            for i = 1:numel(signalColumns)
+                signalColumn = signalColumns{i};
+                sfrfColName = ensemble.mapToSFRFColumn(signalColumn);
+        
+                if log.isFineEnabled()
+                    log.fine(sprintf(...
+                        'Processing input: "%s", output: "%s"...', ...
+                        signalColumn, sfrfColName));
+                end
+        
+                % Compute SFRF responses for the signal column
+                responseTable = ...
+                    SFRFsEnsembleProcessor.computeMemberSFRFs(...
+                        memberTable, params, signalColumn);
+        
+                % Extend the table with new SFRF results for this signal
+                memberTable = ...
+                    SFRFsEnsembleProcessor.extendTableWithSFRFs(...
+                        memberTable, responseTable, sfrfColName);
+        
+                if log.isFineEnabled()
+                    log.fine(sprintf('Done processing "%s"', signalColumn));
+                end
+            end
+        
+            updatedMember = memberTable;
+        end
+
+        function validatePrecomputedFFTColumns(memberTable, broker)
+        % Validate FFT columns exist and have been precomputed
+
+           arguments
+               memberTable table
+               broker SFRFsEnsembleBroker
+           end
+
+            % Helper internal function
+            function tf = isValidFFTColumn(col)
+                tf = iscell(col) && ...
+                    all(cellfun(@(x) isnumeric(x) && ~isempty(x), col));
+                if tf
+                    sizes = cellfun(@size, col, 'UniformOutput', false);
+                    tf = all(cellfun(@(x) isequal(x, sizes{1}), sizes));
+                end
+            end
+    
+            % Validate all expected spectral columns are present and valid
+            colList = broker.temporalSnapshotColumns;
+            for i = 1:numel(colList)
+                column = broker.mapToSpectralColumn(colList{i});
+                if ~ismember(...
+                        column, memberTable.Properties.VariableNames) || ...
+                        ~isValidFFTColumn(memberTable.(column))
+                    error('sfrfs:EnsembleProcessor:MissingFFTColumn', ...
+                        'FFT column "%s" missing or invalid', column);
+                end
+            end
+        end
+    end
+
+    methods (Static, Access=public)
+        function stackedSFRFs = bufferSFRFs(SFRF, Order)
+        % BUFFERSFRFS Generate higher-order SFRFs for a single axis/sensor.
+        %
+        %   STACKEDSFRFS = BUFFERSFRFS(SFRF, ORDER) returns a matrix
+        %   where each row contains the current and previous ORDER SFRF 
+        %   vectors for a single axis or sensor, stacked for temporal 
+        %   context.
+        %
+        %   To indicate insufficient history at the start of the sequence,
+        %   the initial rows are padded with NaN values. This explicit use 
+        %   of NaN (rather than zero) avoids introducing artificial values 
+        %   that could bias downstream analysis or machine learning models.
+        %
+        %   INPUTS:
+        %       SFRF   - [nFaultModes x nSnapshots] numeric matrix of SFRFs 
+        %                for one axis/sensor.
+        %       ORDER  - Non-negative integer specifying the number of 
+        %                previous time steps.
+        %
+        %   OUTPUT:
+        %       STACKEDSFRFS - [nSnapshots x nFaultModes*(ORDER+1)] matrix 
+        %                      of stacked SFRFs.
+        %
+        %   EXAMPLE:
+        %       % Suppose SFRF is [4 x 10] (4 fault modes, 10 snapshots)
+        %       order = 2;
+        %       stackedSFRFs = SFRFsEnsembleProcessor.bufferSFRFs(SFRF, ... 
+        %                       order);
+        %       % stackedSFRFs is [10 x 12] (since 4*(2+1) = 12)
+        %
+        %   SEE ALSO:
+        %       SFRFsEnsembleProcessor.computeMemberSFRFs, 
+        %       SFRFsEnsembleProcessor.extendTableWithSFRFs
+        
+            arguments
+                SFRF (:,:) {mustBeNumeric}
+                Order (1,1) {mustBeInteger, mustBeNonnegative}
+            end
+        
+            nFaultModes = size(SFRF,1);
+        
+            if Order == 0
+                % No temporal stacking, just transpose 
+                stackedSFRFs = SFRF.'; % [nSnapshots x nFaultModes]
+                return
+            end
+        
+            SFRF_vec = SFRF(:);
+        
+            windowLength = nFaultModes * (Order + 1);
+            overlap = windowLength - nFaultModes;
+        
+            pad = NaN(windowLength - nFaultModes, 1);
+            SFRF_padded = [pad; SFRF_vec];
+        
+            B = buffer(SFRF_padded, windowLength, overlap, 'nodelay');
+            % B is [windowLength x nSnapshots]
+
+            stackedSFRFs = B.'; % [nSnapshots x nFaultModes*(Order+1)]
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

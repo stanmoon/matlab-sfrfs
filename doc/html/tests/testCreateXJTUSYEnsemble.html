@@ -1,0 +1,374 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>testCreateXJTUSYEnsemble</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="testCreateXJTUSYEnsemble.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% testCreateXJTUSYEnsemble.m</span>
+<span class="comment">%</span>
+<span class="comment">% Unit tests for the createXJTUSYEnsemble function.</span>
+<span class="comment">% Verifies correct dataset creation, output folder handling,</span>
+<span class="comment">% data structure integrity, and error handling for invalid inputs.</span>
+<span class="comment">%</span>
+<span class="comment">% Uses temporary folders and mock data to isolate tests from</span>
+<span class="comment">% actual dataset dependencies.</span>
+
+<span class="keyword">function</span> tests = testCreateXJTUSYEnsemble
+    tests = functiontests(localfunctions);
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> setupOnce(testCase)
+    rng(<span class="string">'default'</span>);
+    <span class="comment">% Create a temporary dataset structure for testing</span>
+    testCase.TestData.tempRoot = tempname;
+    mkdir(testCase.TestData.tempRoot);
+    testCase.TestData.oc = [<span class="string">"35Hz12kN"</span>, <span class="string">"37.5Hz11kN"</span>, <span class="string">"40Hz10kN"</span>];
+    N = numel(testCase.TestData.oc);
+    testCase.TestData.snapshotCounts = zeros(N, 5);
+
+    <span class="keyword">for</span> i = 1:N
+        <span class="keyword">for</span> j = 1:5
+            bearingFolder = fullfile(<span class="keyword">...</span>
+                testCase.TestData.tempRoot, <span class="keyword">...</span>
+                testCase.TestData.oc(i), <span class="keyword">...</span>
+                sprintf(<span class="string">"Bearing%d_%d"</span>, i, j));
+            mkdir(bearingFolder);
+            <span class="comment">% Random number of snapshots between 5 and 10</span>
+            numSnapshots = randi([5,10]);
+            testCase.TestData.snapshotCounts(i,j) = numSnapshots;
+            <span class="keyword">for</span> k = 1:numSnapshots
+                T = table(randn(2048,1), randn(2048,1), <span class="keyword">...</span>
+                    <span class="string">'VariableNames'</span>, {<span class="keyword">...</span>
+                    <span class="string">'Horizontal_vibration_signals'</span>, <span class="keyword">...</span>
+                    <span class="string">'Vertical_vibration_signals'</span>});
+                writetable(T, <span class="keyword">...</span>
+                    fullfile(bearingFolder, sprintf(<span class="string">'%d.csv'</span>, k)));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> teardownOnce(testCase)
+    <span class="comment">% Remove temporary test data</span>
+    <span class="keyword">if</span> isfolder(testCase.TestData.tempRoot)
+        rmdir(testCase.TestData.tempRoot, <span class="string">'s'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> testCreatesEnsembleDatastore(testCase)
+    import <span class="string">data.createXJTUSYEnsemble</span>
+    outputFolder = tempname;
+   ensemble = createXJTUSYEnsemble( <span class="keyword">...</span>
+       <span class="string">"datasetFolder"</span>, testCase.TestData.tempRoot, <span class="keyword">...</span>
+       <span class="string">"outputFolder"</span>, outputFolder, <span class="keyword">...</span>
+       <span class="string">"progressMode"</span>, <span class="string">"none"</span> <span class="keyword">...</span>
+       );
+    <span class="comment">% Verify output folder exists and .mat files are present</span>
+    files = dir(fullfile(outputFolder, <span class="string">'*.mat'</span>));
+    verifyGreaterThan(testCase, numel(files), 0, <span class="string">'No .mat files created'</span>);
+    <span class="comment">% Verify the ensemble is a fileEnsembleDatastore</span>
+    verifyClass(testCase, ensemble, <span class="string">'fileEnsembleDatastore'</span>);
+    <span class="comment">% Verify the ensemble has the expected variables</span>
+    expectedVars = [<span class="string">"Label"</span>,<span class="string">"SnapshotIndex"</span>,<span class="string">"Speed"</span>,<span class="string">"Load"</span>,<span class="string">"Lifetime"</span>,<span class="keyword">...</span>
+        <span class="string">"HorizontalAcceleration"</span>,<span class="string">"VerticalAcceleration"</span>];
+    verifyEqual(testCase, <span class="keyword">...</span>
+        sort(ensemble.SelectedVariables(:))', <span class="keyword">...</span>
+        sort(expectedVars(:))');
+
+    <span class="comment">% Preview data and check structure</span>
+    tbl = preview(ensemble);
+    verifyTrue(testCase, <span class="keyword">...</span>
+        all(ismember(expectedVars, tbl.Properties.VariableNames)));
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> testMissingInputFolderThrowsError(testCase)
+    import <span class="string">data.createXJTUSYEnsemble</span>
+    verifyError(testCase, <span class="keyword">...</span>
+    @() createXJTUSYEnsemble( <span class="keyword">...</span>
+        <span class="string">"datasetFolder"</span>, <span class="string">"nonexistent_folder"</span>, <span class="keyword">...</span>
+        <span class="string">"outputFolder"</span>, tempname, <span class="keyword">...</span>
+        <span class="string">"progressMode"</span>, <span class="string">"none"</span> <span class="keyword">...</span>
+    ), <span class="keyword">...</span>
+    <span class="string">'sfrfs:data:createXJTUSYEnsemble:InputFolderDoesNotExist'</span>);
+
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> testOutputFolderCreated(testCase)
+    import <span class="string">data.createXJTUSYEnsemble</span>
+    outputFolder = fullfile(tempname, <span class="string">'newoutput'</span>);
+    createXJTUSYEnsemble( <span class="keyword">...</span>
+        datasetFolder = testCase.TestData.tempRoot, <span class="keyword">...</span>
+        outputFolder = outputFolder, <span class="keyword">...</span>
+        progressMode = <span class="string">"none"</span> <span class="keyword">...</span>
+        );
+    verifyTrue(testCase, isfolder(outputFolder), <span class="keyword">...</span>
+        <span class="string">'Output folder was not created'</span>);
+
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> testMatFileCountEqualsBearings(testCase)
+    import <span class="string">data.createXJTUSYEnsemble</span>
+    outputFolder = tempname;
+    createXJTUSYEnsemble(<span class="keyword">...</span>
+        datasetFolder = testCase.TestData.tempRoot, <span class="keyword">...</span>
+        outputFolder = outputFolder, <span class="keyword">...</span>
+        progressMode = <span class="string">"none"</span>);
+
+    N = numel(testCase.TestData.oc);
+    bearingsPerOC = 5;
+    expectedNumBearings = N * bearingsPerOC;
+
+    <span class="comment">% Count .mat files in the output folder</span>
+    matFiles = dir(fullfile(outputFolder, <span class="string">'*.mat'</span>));
+    actualNumMatFiles = numel(matFiles);
+
+    verifyEqual(testCase, actualNumMatFiles, expectedNumBearings, <span class="keyword">...</span>
+        <span class="string">'The number of .mat files does not match the number of bearings.'</span>);
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> testEnsembleRowCount(testCase)
+    import <span class="string">data.createXJTUSYEnsemble</span>
+    ensemble = createXJTUSYEnsemble(<span class="keyword">...</span>
+        datasetFolder = testCase.TestData.tempRoot, <span class="keyword">...</span>
+        outputFolder = tempname, <span class="keyword">...</span>
+        progressMode = <span class="string">"none"</span>);
+
+    <span class="comment">% Calculate expected number of snapshots</span>
+    expectedTotalSnapshots = sum(testCase.TestData.snapshotCounts, <span class="string">'all'</span>);
+
+    <span class="comment">% Read all rows from the ensemble</span>
+    tbl = readall(ensemble);
+
+    <span class="comment">% Verify the count</span>
+    verifyEqual(testCase, height(tbl), expectedTotalSnapshots, <span class="keyword">...</span>
+        [<span class="string">'The number of rows in the ensemble does not match the '</span>, <span class="keyword">...</span>
+        <span class="string">'expected number of snapshots.'</span>]);
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% testCreateXJTUSYEnsemble.m
+%
+% Unit tests for the createXJTUSYEnsemble function.
+% Verifies correct dataset creation, output folder handling,
+% data structure integrity, and error handling for invalid inputs.
+%
+% Uses temporary folders and mock data to isolate tests from
+% actual dataset dependencies.
+
+function tests = testCreateXJTUSYEnsemble
+    tests = functiontests(localfunctions);
+end
+
+function setupOnce(testCase)
+    rng('default'); 
+    % Create a temporary dataset structure for testing
+    testCase.TestData.tempRoot = tempname;
+    mkdir(testCase.TestData.tempRoot);
+    testCase.TestData.oc = ["35Hz12kN", "37.5Hz11kN", "40Hz10kN"];
+    N = numel(testCase.TestData.oc);
+    testCase.TestData.snapshotCounts = zeros(N, 5); 
+
+    for i = 1:N
+        for j = 1:5
+            bearingFolder = fullfile(...
+                testCase.TestData.tempRoot, ...
+                testCase.TestData.oc(i), ...
+                sprintf("Bearing%d_%d", i, j));
+            mkdir(bearingFolder);
+            % Random number of snapshots between 5 and 10
+            numSnapshots = randi([5,10]);
+            testCase.TestData.snapshotCounts(i,j) = numSnapshots;
+            for k = 1:numSnapshots
+                T = table(randn(2048,1), randn(2048,1), ...
+                    'VariableNames', {...
+                    'Horizontal_vibration_signals', ...
+                    'Vertical_vibration_signals'});
+                writetable(T, ...
+                    fullfile(bearingFolder, sprintf('%d.csv', k)));
+            end
+        end
+    end
+end
+
+function teardownOnce(testCase)
+    % Remove temporary test data
+    if isfolder(testCase.TestData.tempRoot)
+        rmdir(testCase.TestData.tempRoot, 's');
+    end
+end
+
+function testCreatesEnsembleDatastore(testCase)
+    import data.createXJTUSYEnsemble
+    outputFolder = tempname;
+   ensemble = createXJTUSYEnsemble( ...
+       "datasetFolder", testCase.TestData.tempRoot, ...
+       "outputFolder", outputFolder, ...
+       "progressMode", "none" ...
+       );
+    % Verify output folder exists and .mat files are present
+    files = dir(fullfile(outputFolder, '*.mat'));
+    verifyGreaterThan(testCase, numel(files), 0, 'No .mat files created');
+    % Verify the ensemble is a fileEnsembleDatastore
+    verifyClass(testCase, ensemble, 'fileEnsembleDatastore');
+    % Verify the ensemble has the expected variables
+    expectedVars = ["Label","SnapshotIndex","Speed","Load","Lifetime",...
+        "HorizontalAcceleration","VerticalAcceleration"];
+    verifyEqual(testCase, ...
+        sort(ensemble.SelectedVariables(:))', ...
+        sort(expectedVars(:))');
+
+    % Preview data and check structure
+    tbl = preview(ensemble);
+    verifyTrue(testCase, ...
+        all(ismember(expectedVars, tbl.Properties.VariableNames)));
+end
+
+function testMissingInputFolderThrowsError(testCase)
+    import data.createXJTUSYEnsemble
+    verifyError(testCase, ...
+    @() createXJTUSYEnsemble( ...
+        "datasetFolder", "nonexistent_folder", ...
+        "outputFolder", tempname, ...
+        "progressMode", "none" ...
+    ), ...
+    'sfrfs:data:createXJTUSYEnsemble:InputFolderDoesNotExist');
+
+end
+
+function testOutputFolderCreated(testCase)
+    import data.createXJTUSYEnsemble
+    outputFolder = fullfile(tempname, 'newoutput');
+    createXJTUSYEnsemble( ...
+        datasetFolder = testCase.TestData.tempRoot, ...
+        outputFolder = outputFolder, ...
+        progressMode = "none" ...
+        );
+    verifyTrue(testCase, isfolder(outputFolder), ...
+        'Output folder was not created');
+
+end
+
+function testMatFileCountEqualsBearings(testCase)
+    import data.createXJTUSYEnsemble
+    outputFolder = tempname;
+    createXJTUSYEnsemble(...
+        datasetFolder = testCase.TestData.tempRoot, ...
+        outputFolder = outputFolder, ...
+        progressMode = "none");
+
+    N = numel(testCase.TestData.oc);
+    bearingsPerOC = 5; 
+    expectedNumBearings = N * bearingsPerOC;
+
+    % Count .mat files in the output folder
+    matFiles = dir(fullfile(outputFolder, '*.mat'));
+    actualNumMatFiles = numel(matFiles);
+
+    verifyEqual(testCase, actualNumMatFiles, expectedNumBearings, ...
+        'The number of .mat files does not match the number of bearings.');
+end
+
+function testEnsembleRowCount(testCase)
+    import data.createXJTUSYEnsemble
+    ensemble = createXJTUSYEnsemble(...
+        datasetFolder = testCase.TestData.tempRoot, ...
+        outputFolder = tempname, ...
+        progressMode = "none");
+
+    % Calculate expected number of snapshots
+    expectedTotalSnapshots = sum(testCase.TestData.snapshotCounts, 'all');
+
+    % Read all rows from the ensemble
+    tbl = readall(ensemble);
+
+    % Verify the count
+    verifyEqual(testCase, height(tbl), expectedTotalSnapshots, ...
+        ['The number of rows in the ensemble does not match the ', ...
+        'expected number of snapshots.']);
+end
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

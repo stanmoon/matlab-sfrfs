@@ -1,0 +1,72 @@
+{
+    "_schemaVersion": "1.0.0",
+    "data.createXJTUSYEnsemble": {
+        "inputs": [
+            {
+                "name": "datasetFolder",
+                "kind": "namevalue",
+                "type": "string",
+                "default": "XJTU-SY_Bearing_Datasets",
+                "purpose": "Path to the root of the unzipped XJTU-SY dataset. If not specified, a dialog will prompt."
+            },
+            {
+                "name": "outputFolder",
+                "kind": "namevalue",
+                "type": "string",
+                "default": "",
+                "purpose": "Path where .mat files for each ensemble member will be saved. If not specified, a dialog will prompt."
+            },
+            {
+                "name": "progressMode",
+                "kind": "namevalue",
+                "type": "string",
+                "default": "text",
+                "purpose": "Progress indicator mode: 'text' (default), 'gui', or 'none'."
+            }
+        ],
+        "outputs": [
+            {
+                "name": "ensemble",
+                "purpose": "fileEnsembleDatastore object referencing the processed data."
+            }
+        ]
+    },
+    "data.getXJTUSYEnsemble": {
+        "inputs": [
+            {
+                "name": "outputFolder",
+                "kind": "positional",
+                "type": "string",
+                "purpose": "Specifies location of .mat files of members."
+            }
+        ],
+        "outputs": [
+            {
+                "name": "ensemble",
+                "type": "fileEnsembleDatastore",
+                "purpose": "Data ensemble object."
+            }
+        ]
+    },
+    "data.getXJTUSYFilesPerOpCond": {
+        "description": "Retrieve file paths for the XJTU-SY dataset, grouped by operating condition. Returns a table with columns for speed, load, and bearing file paths. If no folder is specified, opens a folder selection dialog.",
+        "inputs": [
+            {
+                "name": "dataEnsembleFolder",
+                "kind": "positional",
+                "type": "string",
+                "default": "",
+                "purpose": "Root folder containing XJTU-SY dataset files. If not provided or empty, prompts user with folder selection dialog."
+            }
+        ],
+        "outputs": [
+            {
+                "name": "ocToFiles",
+                "type": "table",
+                "purpose": "Table with columns 'Speed', 'Load', and 'Files' where 'Files' is a cell array of strings for each operating condition."
+            }
+        ]
+    }
+}
+
+

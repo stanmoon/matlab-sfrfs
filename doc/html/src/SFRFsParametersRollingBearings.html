@@ -1,0 +1,580 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsParametersRollingBearings</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsParametersRollingBearings.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> SFRFsParametersRollingBearings &lt; SFRFsParameters
+<span class="comment">% SFRFsParametersRollingBearings  Store and validate SFRF parameters for</span>
+<span class="comment">% bearing fault types.</span>
+<span class="comment">%</span>
+<span class="comment">%   This value class stores validated Spectral Fault Receptive Field (SFRF)</span>
+<span class="comment">%   parameter sets for:</span>
+<span class="comment">%      - Outer race (BPFO frequency band)</span>
+<span class="comment">%      - Inner race (BPFI frequency band)</span>
+<span class="comment">%      - Ball       (BSF frequency band)</span>
+<span class="comment">%      - Cage       (FTF frequency band)</span>
+<span class="comment">%</span>
+<span class="comment">%   Construction uses named (keyword) arguments and supports two modes:</span>
+<span class="comment">%</span>
+<span class="comment">%   Mode 1: Individual SFRF parameters per fault type</span>
+<span class="comment">%     Mode 1 &ndash; Individual parameters for each fault type:</span>
+<span class="comment">%         paramsOuter = ...</span>
+<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
+<span class="comment">%           'order',2, 'sigmaCenter',[5,7]);</span>
+<span class="comment">%         paramsInner = ...</span>
+<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
+<span class="comment">%           'order',1, 'numHarmonics',8);</span>
+<span class="comment">%         paramsBall  =</span>
+<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
+<span class="comment">%           'order',0, 'sigmaCenter',[4,6]);</span>
+<span class="comment">%         % use defaults</span>
+<span class="comment">%         paramsCage  = ...</span>
+<span class="comment">%           SFRFsParameters.createSFRFsParameters();</span>
+<span class="comment">%</span>
+<span class="comment">%         params = SFRFsParametersRollingBearings( ...</span>
+<span class="comment">%                 'outerRace', paramsOuter, ...</span>
+<span class="comment">%                 'innerRace', paramsInner, ...</span>
+<span class="comment">%                 'ball',      paramsBall, ...</span>
+<span class="comment">%                 'cage',      paramsCage );</span>
+<span class="comment">%</span>
+<span class="comment">%   Mode 2: Shared SFRF parameters for all fault types</span>
+<span class="comment">%     sharedParams = ...</span>
+<span class="comment">%         SFRFsParameters.createSFRFsParameters( ...</span>
+<span class="comment">%         'order', 3, ...</span>
+<span class="comment">%         'numSidebands', 4, ...</span>
+<span class="comment">%         'numHarmonics', 8, ...</span>
+<span class="comment">%         'sigmaCenter', [5, 7], ...</span>
+<span class="comment">%         'sigmaSurround', [12, 3], ...</span>
+<span class="comment">%         'inhibitionFactor', 0.6);</span>
+<span class="comment">%</span>
+<span class="comment">%     obj = SFRFsParametersRollingBearings( ...</span>
+<span class="comment">%         'SameForAllFaultTypes', sharedParams);</span>
+<span class="comment">%</span>
+<span class="comment">%   Reference:</span>
+<span class="comment">%       Stan Mu&ntilde;oz Guti&eacute;rrez and Franz Wotawa. Optimized Spectral Fault</span>
+<span class="comment">%       Receptive Fields for Diagnosis-Informed Prognosis. In 36th</span>
+<span class="comment">%       International Conference on Principles of Diagnosis and Resilient</span>
+<span class="comment">%       Systems (DX 2025). Open Access Series in Informatics (OASIcs),</span>
+<span class="comment">%       Volume 136, pp. 9:1-9:20, Schloss Dagstuhl &ndash; Leibniz-Zentrum f&uuml;r</span>
+<span class="comment">%       Informatik (2025) DOI:10.4230/OASIcs.DX.2025.9.</span>
+<span class="comment">%</span>
+<span class="comment">%   See also: SFRFsParameters</span>
+
+    <span class="keyword">properties</span>
+        outerRace   <span class="comment">% SFRF params for Outer race faults</span>
+        innerRace   <span class="comment">% SFRF params for Inner race faults</span>
+        ball        <span class="comment">% SFRF params for Ball faults</span>
+        cage        <span class="comment">% SFRF params for Cage faults</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Constant)
+        <span class="comment">% Fault type names</span>
+        OUTER_RACE_FAULT_TYPE_NAME = <span class="string">'outerRace'</span>
+        INNER_RACE_FAULT_TYPE_NAME = <span class="string">'innerRace'</span>
+        BALL_FAULT_TYPE_NAME       = <span class="string">'ball'</span>
+        CAGE_FAULT_TYPE_NAME       = <span class="string">'cage'</span>
+
+        <span class="comment">% Collection of all supported fault types</span>
+        faultTypes = { <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME <span class="keyword">...</span>
+        }
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = SFRFsParametersRollingBearings(args)
+            <span class="keyword">arguments</span>
+                args.outerRace <span class="typesection">struct </span>= struct()
+                args.innerRace <span class="typesection">struct </span>= struct()
+                args.ball <span class="typesection">struct </span>= struct()
+                args.cage <span class="typesection">struct </span>= struct()
+                args.SameForAllFaultTypes <span class="typesection">struct </span>= struct()
+            <span class="keyword">end</span>
+
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            valInputs = @SFRFsParametersRollingBearings.validateInputs;
+
+            <span class="comment">% Validate the input arguments</span>
+            valInputs(args);
+
+            <span class="comment">% Assign properties based on validation</span>
+            <span class="keyword">if</span> ~isEmptyStr(args.SameForAllFaultTypes)
+                obj.outerRace = args.SameForAllFaultTypes;
+                obj.innerRace = args.SameForAllFaultTypes;
+                obj.ball = args.SameForAllFaultTypes;
+                obj.cage = args.SameForAllFaultTypes;
+                <span class="comment">% Set consistent values for sidebands</span>
+                <span class="comment">% Force Outer &amp; Cage to have 0 sidebands</span>
+                obj.outerRace.numSidebands = 0;
+                obj.cage.numSidebands      = 0;
+            <span class="keyword">else</span>
+                obj.outerRace = args.outerRace;
+                obj.innerRace = args.innerRace;
+                obj.ball = args.ball;
+                obj.cage = args.cage;
+                <span class="comment">% validate no sidebands for OuterRace and Cage</span>
+                SFRFsParametersRollingBearings.validateNoSidebands(<span class="keyword">...</span>
+                obj.outerRace, <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME);
+                SFRFsParametersRollingBearings.validateNoSidebands(<span class="keyword">...</span>
+                    obj.cage, <span class="keyword">...</span>
+                    SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME);
+
+            <span class="keyword">end</span>
+
+            log = SFRFsLogger.getLogger();
+            <span class="keyword">if</span> log.isFineEnabled()
+                log.fine(obj.toString())
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> str = toString(obj)
+            <span class="comment">% toString Return a formatted string representation of the</span>
+            <span class="comment">% object.</span>
+
+            outerRaceStr = jsonencode(obj.outerRace);
+            innerRaceStr = jsonencode(obj.innerRace);
+            ballStr = jsonencode(obj.ball);
+            cageStr = jsonencode(obj.cage);
+
+            str = sprintf([<span class="string">'[SFRFsParametersRollingBearings:'</span>, <span class="keyword">...</span>
+                <span class="string">' outerRace: %s, innerRace: %s, ball: %s, cage: %s]'</span>], <span class="keyword">...</span>
+                outerRaceStr, innerRaceStr, ballStr, cageStr);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private, Static)
+
+        <span class="keyword">function</span> validateInputs(args)
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            getMissPar = <span class="keyword">...</span>
+                @SFRFsParametersRollingBearings.getMissingParameters;
+
+            <span class="comment">% Validation when SameForAllFaultTypes is provided:</span>
+            <span class="keyword">if</span> ~isEmptyStr(args.SameForAllFaultTypes)
+                <span class="keyword">if</span> ~isEmptyStr(args.outerRace) || <span class="keyword">...</span>
+                        ~isEmptyStr(args.innerRace) || <span class="keyword">...</span>
+                        ~isEmptyStr(args.ball) || <span class="keyword">...</span>
+                        ~isEmptyStr(args.cage)
+                    error(<span class="keyword">...</span>
+                        [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                        <span class="string">'validateInputs:ConflictingArguments'</span>],<span class="keyword">...</span>
+                        [<span class="string">'Not additional arguments allowed for '</span> <span class="keyword">...</span>
+                        <span class="string">'SameForAllFaultTypes option'</span>]);
+                <span class="keyword">end</span>
+                missingSFRFParams = getMissPar(<span class="keyword">...</span>
+                    <span class="string">'SameForAllFaultTypes'</span>, args);
+            <span class="keyword">else</span>
+                missingFaults = <span class="keyword">...</span>
+                    SFRFsParametersRollingBearings.getMissingFaultTypes(<span class="keyword">...</span>
+                    args);
+                <span class="keyword">if</span> ~isempty(missingFaults)
+                    error(<span class="keyword">...</span>
+                        [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                        <span class="string">'validateInputs:MissingArguments'</span>], <span class="keyword">...</span>
+                        <span class="string">'Missing fault type parameters: %s.'</span>, <span class="keyword">...</span>
+                        strjoin(missingFaults, <span class="string">', '</span>));
+                <span class="keyword">end</span>
+                <span class="comment">% validate params of fault types</span>
+                fts = SFRFsParametersRollingBearings.faultTypes;
+                missingSFRFParams = {};
+                <span class="keyword">for</span> i=1:length(fts)
+                    misspars = getMissPar(fts(i), args);
+                    <span class="keyword">if</span> ~isempty(misspars)
+                        missingSFRFParams = <span class="keyword">...</span>
+                            [missingSFRFParams, misspars]; <span class="comment">%#ok&lt;AGROW&gt;</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isempty(missingSFRFParams)
+                error(<span class="keyword">...</span>
+                    [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                    <span class="string">'validateInputs:MissingSFRFsParameters'</span>], <span class="keyword">...</span>
+                    <span class="string">'Missing or incomplete SFRF parameters: %s.'</span>, <span class="keyword">...</span>
+                    strjoin(missingSFRFParams, <span class="string">'; '</span>));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isEmptyStruct(s)
+            <span class="comment">% Helper to check if a struct is empty (no fields)</span>
+            tf = isempty(fieldnames(s));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> missingParams = getMissingParameters(name, args)
+            missingParams = {};
+            fname = string(name);
+            missingFields = <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.missingPars(args.(fname));
+            <span class="keyword">if</span> ~isempty(missingFields)
+                missingParams{end+1} = <span class="keyword">...</span>
+                    sprintf(<span class="string">'%s (missing fields: %s)'</span>, <span class="keyword">...</span>
+                    fname, <span class="keyword">...</span>
+                    strjoin(missingFields, <span class="string">', '</span>));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> missingFaults = getMissingFaultTypes(args)
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            fts = SFRFsParametersRollingBearings.faultTypes;
+            argsStructs = {<span class="keyword">...</span>
+                args.outerRace, args.innerRace, args.ball, args.cage};
+            isMissing = cellfun(isEmptyStr, argsStructs);
+            missingFaults = fts(isMissing);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> missingFields = missingPars(paramStruct)
+
+            fields = SFRFsParametersRollingBearings.sfrfFields;
+
+            <span class="comment">% Check which required fields are missing</span>
+            missingFields = fields(~isfield(paramStruct, fields));
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateNoSidebands(paramStruct, faultTypeName)
+            <span class="keyword">if</span> paramStruct.numSidebands &gt; 0
+                error(<span class="keyword">...</span>
+                    [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span><span class="keyword">...</span>
+                    <span class="string">'InvalidNumSidebands'</span>], <span class="keyword">...</span>
+                    <span class="string">'%s fault type must have NumSidebands = 0.'</span>, <span class="keyword">...</span>
+                    faultTypeName);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef SFRFsParametersRollingBearings < SFRFsParameters
+% SFRFsParametersRollingBearings  Store and validate SFRF parameters for 
+% bearing fault types.
+%
+%   This value class stores validated Spectral Fault Receptive Field (SFRF) 
+%   parameter sets for:
+%      - Outer race (BPFO frequency band)
+%      - Inner race (BPFI frequency band)
+%      - Ball       (BSF frequency band)
+%      - Cage       (FTF frequency band)
+%
+%   Construction uses named (keyword) arguments and supports two modes:
+%
+%   Mode 1: Individual SFRF parameters per fault type
+%     Mode 1 – Individual parameters for each fault type:
+%         paramsOuter = ...
+%           SFRFsParameters.createSFRFsParameters(...
+%           'order',2, 'sigmaCenter',[5,7]);
+%         paramsInner = ...
+%           SFRFsParameters.createSFRFsParameters(...
+%           'order',1, 'numHarmonics',8);
+%         paramsBall  = 
+%           SFRFsParameters.createSFRFsParameters(...
+%           'order',0, 'sigmaCenter',[4,6]);
+%         % use defaults
+%         paramsCage  = ...
+%           SFRFsParameters.createSFRFsParameters();  
+%
+%         params = SFRFsParametersRollingBearings( ...
+%                 'outerRace', paramsOuter, ...
+%                 'innerRace', paramsInner, ...
+%                 'ball',      paramsBall, ...
+%                 'cage',      paramsCage );
+%
+%   Mode 2: Shared SFRF parameters for all fault types
+%     sharedParams = ...
+%         SFRFsParameters.createSFRFsParameters( ...
+%         'order', 3, ...
+%         'numSidebands', 4, ...
+%         'numHarmonics', 8, ...
+%         'sigmaCenter', [5, 7], ...
+%         'sigmaSurround', [12, 3], ...
+%         'inhibitionFactor', 0.6);
+%
+%     obj = SFRFsParametersRollingBearings( ...
+%         'SameForAllFaultTypes', sharedParams);
+%
+%   Reference:
+%       Stan Muñoz Gutiérrez and Franz Wotawa. Optimized Spectral Fault 
+%       Receptive Fields for Diagnosis-Informed Prognosis. In 36th 
+%       International Conference on Principles of Diagnosis and Resilient 
+%       Systems (DX 2025). Open Access Series in Informatics (OASIcs), 
+%       Volume 136, pp. 9:1-9:20, Schloss Dagstuhl – Leibniz-Zentrum für 
+%       Informatik (2025) DOI:10.4230/OASIcs.DX.2025.9.
+%
+%   See also: SFRFsParameters         
+
+    properties
+        outerRace   % SFRF params for Outer race faults
+        innerRace   % SFRF params for Inner race faults
+        ball        % SFRF params for Ball faults
+        cage        % SFRF params for Cage faults
+    end
+
+    properties (Constant)
+        % Fault type names
+        OUTER_RACE_FAULT_TYPE_NAME = 'outerRace'
+        INNER_RACE_FAULT_TYPE_NAME = 'innerRace'
+        BALL_FAULT_TYPE_NAME       = 'ball'
+        CAGE_FAULT_TYPE_NAME       = 'cage'
+    
+        % Collection of all supported fault types
+        faultTypes = { ...
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME ...
+        }
+    
+    end
+
+    methods
+        function obj = SFRFsParametersRollingBearings(args)
+            arguments
+                args.outerRace struct = struct()
+                args.innerRace struct = struct()
+                args.ball struct = struct()
+                args.cage struct = struct()
+                args.SameForAllFaultTypes struct = struct()
+            end
+            
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            valInputs = @SFRFsParametersRollingBearings.validateInputs;
+
+            % Validate the input arguments
+            valInputs(args);
+            
+            % Assign properties based on validation
+            if ~isEmptyStr(args.SameForAllFaultTypes)
+                obj.outerRace = args.SameForAllFaultTypes;
+                obj.innerRace = args.SameForAllFaultTypes;
+                obj.ball = args.SameForAllFaultTypes;
+                obj.cage = args.SameForAllFaultTypes;
+                % Set consistent values for sidebands
+                % Force Outer & Cage to have 0 sidebands
+                obj.outerRace.numSidebands = 0;
+                obj.cage.numSidebands      = 0;
+            else
+                obj.outerRace = args.outerRace;
+                obj.innerRace = args.innerRace;
+                obj.ball = args.ball;
+                obj.cage = args.cage;
+                % validate no sidebands for OuterRace and Cage
+                SFRFsParametersRollingBearings.validateNoSidebands(...
+                obj.outerRace, ...
+                SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME);
+                SFRFsParametersRollingBearings.validateNoSidebands(...
+                    obj.cage, ...
+                    SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME);
+
+            end
+
+            log = SFRFsLogger.getLogger();
+            if log.isFineEnabled()
+                log.fine(obj.toString())
+            end
+        end
+
+        function str = toString(obj)
+            % toString Return a formatted string representation of the 
+            % object.
+            
+            outerRaceStr = jsonencode(obj.outerRace);
+            innerRaceStr = jsonencode(obj.innerRace);
+            ballStr = jsonencode(obj.ball);
+            cageStr = jsonencode(obj.cage);
+            
+            str = sprintf(['[SFRFsParametersRollingBearings:', ...
+                ' outerRace: %s, innerRace: %s, ball: %s, cage: %s]'], ...
+                outerRaceStr, innerRaceStr, ballStr, cageStr);
+        end
+    end
+
+    methods (Access = private, Static)
+
+        function validateInputs(args)
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            getMissPar = ...
+                @SFRFsParametersRollingBearings.getMissingParameters;
+
+            % Validation when SameForAllFaultTypes is provided:
+            if ~isEmptyStr(args.SameForAllFaultTypes)
+                if ~isEmptyStr(args.outerRace) || ...
+                        ~isEmptyStr(args.innerRace) || ...
+                        ~isEmptyStr(args.ball) || ...
+                        ~isEmptyStr(args.cage)
+                    error(...
+                        ['sfrfs:SFRFsParametersRollingBearings:' ...
+                        'validateInputs:ConflictingArguments'],...
+                        ['Not additional arguments allowed for ' ...
+                        'SameForAllFaultTypes option']);
+                end
+                missingSFRFParams = getMissPar(...
+                    'SameForAllFaultTypes', args);
+            else
+                missingFaults = ...
+                    SFRFsParametersRollingBearings.getMissingFaultTypes(...
+                    args);
+                if ~isempty(missingFaults)
+                    error(...
+                        ['sfrfs:SFRFsParametersRollingBearings:' ...
+                        'validateInputs:MissingArguments'], ...
+                        'Missing fault type parameters: %s.', ...
+                        strjoin(missingFaults, ', '));
+                end
+                % validate params of fault types
+                fts = SFRFsParametersRollingBearings.faultTypes;
+                missingSFRFParams = {};
+                for i=1:length(fts)
+                    misspars = getMissPar(fts(i), args);
+                    if ~isempty(misspars)
+                        missingSFRFParams = ...
+                            [missingSFRFParams, misspars]; %#ok<AGROW>
+                    end
+                end
+            end
+            
+            if ~isempty(missingSFRFParams)
+                error(...
+                    ['sfrfs:SFRFsParametersRollingBearings:' ...
+                    'validateInputs:MissingSFRFsParameters'], ...
+                    'Missing or incomplete SFRF parameters: %s.', ...
+                    strjoin(missingSFRFParams, '; '));
+            end
+        end
+
+        function tf = isEmptyStruct(s)
+            % Helper to check if a struct is empty (no fields)
+            tf = isempty(fieldnames(s));
+        end
+
+        function missingParams = getMissingParameters(name, args)
+            missingParams = {};
+            fname = string(name);
+            missingFields = ...
+                SFRFsParametersRollingBearings.missingPars(args.(fname));
+            if ~isempty(missingFields)
+                missingParams{end+1} = ...
+                    sprintf('%s (missing fields: %s)', ...
+                    fname, ...
+                    strjoin(missingFields, ', '));
+            end
+        end
+
+        function missingFaults = getMissingFaultTypes(args)
+            isEmptyStr = @SFRFsParametersRollingBearings.isEmptyStruct;
+            fts = SFRFsParametersRollingBearings.faultTypes;
+            argsStructs = {...
+                args.outerRace, args.innerRace, args.ball, args.cage};
+            isMissing = cellfun(isEmptyStr, argsStructs);
+            missingFaults = fts(isMissing);
+        end
+
+        function missingFields = missingPars(paramStruct)
+
+            fields = SFRFsParametersRollingBearings.sfrfFields; 
+
+            % Check which required fields are missing
+            missingFields = fields(~isfield(paramStruct, fields));
+
+        end
+
+        function validateNoSidebands(paramStruct, faultTypeName)
+            if paramStruct.numSidebands > 0
+                error(...
+                    ['sfrfs:SFRFsParametersRollingBearings:'...
+                    'InvalidNumSidebands'], ...
+                    '%s fault type must have NumSidebands = 0.', ...
+                    faultTypeName);
+            end
+        end
+
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

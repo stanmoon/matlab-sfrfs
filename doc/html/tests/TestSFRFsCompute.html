@@ -1,0 +1,539 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestSFRFsCompute</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="TestSFRFsCompute.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestSFRFsCompute &lt; matlab.unittest.TestCase
+    <span class="keyword">properties</span>
+        x
+        x_multi
+        fs
+        f
+        operatingConditions     <span class="comment">% Operating conditions</span>
+        bearingParams           <span class="comment">% Bearing parameters</span>
+        sfrfsParams             <span class="comment">% SFRF parameters</span>
+        frequencyBands          <span class="comment">% Bearing Frequency Bands</span>
+        rfgfs                   <span class="comment">% Receptive Field Gain Functions</span>
+        paramsSnapshot          <span class="comment">% Parameters of Snapshot</span>
+        sfrfsCompute            <span class="comment">% SFRFs Compute</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestMethodSetup)
+        <span class="keyword">function</span> setupOnce(testCase)
+            <span class="comment">% Signal generation setup</span>
+            testCase.fs = 25.6e3;
+            N = 32768;
+            testCase.x = rand(N,1);
+            testCase.x_multi = [ <span class="keyword">...</span>
+                testCase.x, <span class="keyword">...</span>
+                2*testCase.x, <span class="keyword">...</span>
+                3*testCase.x, <span class="keyword">...</span>
+                log(testCase.x + eps)];
+            testCase.f = (0:N-1)' * (testCase.fs/N);
+
+            <span class="comment">% bearing parameters</span>
+            bp = ParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'NumRollingElements'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'BallDiameter'</span>, 7.92, <span class="keyword">...</span>
+                <span class="string">'PitchDiameter'</span>, 34.55, <span class="keyword">...</span>
+                <span class="string">'ContactAngle'</span>, 0);
+
+            <span class="comment">% SFRFs parameters</span>
+            sharedParams = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            sp = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
+
+            <span class="comment">% Operating conditions</span>
+            speed = [35; 37.5; 40];
+            load = [12; 11; 10];
+            oc = OperatingConditions(speed, load);
+
+            testCase.operatingConditions = oc;
+            testCase.bearingParams = bp;
+            testCase.sfrfsParams = sp;
+
+            <span class="comment">% Create and compute fault bands for bearings</span>
+            bfb = BearingFrequencyBands( <span class="keyword">...</span>
+                bearingParams = bp, <span class="keyword">...</span>
+                sfrfsParams = sp, <span class="keyword">...</span>
+                operatingConditions = oc);
+            bfb.computeBands();
+
+            testCase.frequencyBands = bfb;
+
+            <span class="comment">% Create ReceptiveFieldGainFunctions and compute gain masks</span>
+            gfs = ReceptiveFieldGainFunctions(testCase.frequencyBands);
+            gfs.computeGainFunctions(testCase.f);
+            testCase.rfgfs = gfs;
+
+            <span class="comment">% Create ParametersSnapshot (adjust constructor as needed)</span>
+            testCase.paramsSnapshot = ParametersSnapshot( <span class="keyword">...</span>
+                <span class="string">'samplingFrequency'</span>, testCase.fs, <span class="keyword">...</span>
+                <span class="string">'duration'</span>, N / testCase.fs, <span class="keyword">...</span>
+                <span class="string">'stride'</span>, 1);
+
+            <span class="comment">% Initialize SFRFsCompute instance with named arguments</span>
+            testCase.sfrfsCompute = SFRFsCompute( <span class="keyword">...</span>
+                snapshotParameters = testCase.paramsSnapshot, <span class="keyword">...</span>
+                rfgfs = testCase.rfgfs);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testSingleSignalAgainstDoG(testCase)
+            oc = testCase.operatingConditions.conditionsTable(1,:);
+            k = testCase.sfrfsParams.outerRace.inhibitionFactor;
+
+            responseTableNew = testCase.sfrfsCompute.compute(<span class="keyword">...</span>
+                operatingCondition = oc, temporalSnapshot = testCase.x);
+
+            <span class="comment">% Legacy computeDoGResponse assumed to accept these inputs</span>
+            responseTableDoG = TestSFRFsCompute.computeDoGResponse(<span class="keyword">...</span>
+                testCase.x, testCase.fs, <span class="keyword">...</span>
+                testCase.rfgfs.gainFunctionsTable, <span class="keyword">...</span>
+                <span class="string">'OperatingConditions'</span>, oc, <span class="keyword">...</span>
+                <span class="string">'InhibitionFactor'</span>, k);
+
+            actual = cell2mat(responseTableNew.SFRFs);
+            expected = responseTableDoG.SFRF;
+
+            testCase.verifyEqual(actual, expected, <span class="string">'RelTol'</span>, 1e-10);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMultiSignalAgainstDoG(testCase)
+            oc = testCase.operatingConditions.conditionsTable(1,:);
+            k = testCase.sfrfsParams.outerRace.inhibitionFactor;
+            responseTableNew = <span class="keyword">...</span>
+                testCase.sfrfsCompute.compute(<span class="keyword">...</span>
+                temporalSnapshot = testCase.x_multi, <span class="keyword">...</span>
+                operatingCondition = oc);
+            newResp = cell2mat(responseTableNew.SFRFs);
+
+            numFaults = length(BearingFrequencyBands.faultFrequencyCodes);
+            legacyResp = zeros(numFaults, size(testCase.x_multi, 2));
+            <span class="keyword">for</span> j = 1:size(testCase.x_multi, 2)
+                respLegacy = TestSFRFsCompute.computeDoGResponse(<span class="keyword">...</span>
+                    testCase.x_multi(:, j), <span class="keyword">...</span>
+                    testCase.fs, testCase.rfgfs.gainFunctionsTable, <span class="keyword">...</span>
+                    <span class="string">'OperatingConditions'</span>, oc, <span class="keyword">...</span>
+                    <span class="string">'InhibitionFactor'</span>, k);
+                legacyResp(:, j) = respLegacy.SFRF;
+            <span class="keyword">end</span>
+
+            testCase.verifyEqual(newResp, legacyResp, <span class="string">'RelTol'</span>, 1e-10);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)faultBandsTable
+        <span class="comment">% This is the reference implementation, we test against it</span>
+        <span class="keyword">function</span> responseTable = computeDoGResponse(<span class="keyword">...</span>
+            x, fs, gainFunctionsTable, args)
+        <span class="comment">% COMPUTEDOGRESPONSE Compute center-surround (DoG) response for</span>
+        <span class="comment">%   operating conditions.</span>
+        <span class="comment">%   responseTable = COMPUTEDOGRESPONSE(x, fs, faultBandsTable)</span>
+        <span class="comment">%   computes the difference-of-Gaussians (DoG) response for all</span>
+        <span class="comment">%   operational conditions in faultBandsTable and returns a table</span>
+        <span class="comment">%   with the results.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   responseTable = COMPUTEDOGRESPONSE(...</span>
+        <span class="comment">%                 x, fs, gainFunctionsTable, ...</span>
+        <span class="comment">%                 'OperatingConditions', oc, 'InhibitionFactor', k)</span>
+        <span class="comment">%   computes the DoG response only for the specified operating</span>
+        <span class="comment">%   conditions and specifies the inhibition factor.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Optional name-value pairs:</span>
+        <span class="comment">%       'OperatingConditions' - Table with columns matching those</span>
+        <span class="comment">%                               in faultBandsTable</span>
+        <span class="comment">%                               (e.g., 'Speed', 'Load').</span>
+        <span class="comment">%                               If omitted, computes for all rows.</span>
+        <span class="comment">%       'InhibitionFactor'    - Surround inhibition scale factor</span>
+        <span class="comment">%                               (default: 1/3)</span>
+        <span class="comment">%</span>
+
+            <span class="keyword">arguments</span>
+                x <span class="typesection">(:,1) double</span>
+                fs <span class="typesection">(1,1) double {mustBePositive}</span>
+                gainFunctionsTable <span class="typesection">table</span>
+                args.OperatingConditions <span class="typesection">table </span>= table()
+                args.InhibitionFactor <span class="typesection">(1,1) double </span>= 1/3
+            <span class="keyword">end</span>
+
+            operatingConditions = args.OperatingConditions;
+            k = args.InhibitionFactor;
+
+            opCondVars = operatingConditions.Properties.VariableNames;
+
+            <span class="keyword">if</span> isempty(operatingConditions)
+                idxToUse = 1:height(gainFunctionsTable);
+                condTable = gainFunctionsTable;
+            <span class="keyword">else</span>
+                <span class="comment">% Use only those columns from faultBandsTable for matching</span>
+                mask = ismember(<span class="keyword">...</span>
+                    gainFunctionsTable(:, <span class="keyword">...</span>
+                    opCondVars), operatingConditions);
+                idxToUse = find(mask);  <span class="comment">% All indices where any row matches</span>
+                <span class="keyword">if</span> isempty(idxToUse)
+                    error(<span class="string">'sfrfs:computeDoGResponse:Nomatch'</span>, <span class="keyword">...</span>
+                        <span class="string">'No matching operating condition found.'</span>);
+                <span class="keyword">end</span>
+                condTable = gainFunctionsTable(idxToUse,:);
+            <span class="keyword">end</span>
+
+            responseRFV = zeros(numel(idxToUse),1);
+            <span class="keyword">for</span> n = 1:numel(idxToUse)
+                responseRFV(n) = computeDoGResponseForRow(<span class="keyword">...</span>
+                    x, fs, gainFunctionsTable, idxToUse(n), k);
+            <span class="keyword">end</span>
+
+            responseTable = condTable;
+            responseTable.SFRF = responseRFV;
+
+            <span class="comment">% helper, actual computation</span>
+            <span class="keyword">function</span> responseRF = computeDoGResponseForRow(<span class="keyword">...</span>
+                    x, fs, gainFunctionsTable, idx, k)
+                N = length(x);
+                f = (0:N-1) * (fs / N);
+                X = fft(x);
+
+                masks = gainFunctionsTable.FrequencyBankMasks{idx};
+                centerMask = masks.CenterFrequencyBankMask;
+                surroundMask = masks.SurroundFrequencyBankMask;
+
+                <span class="keyword">if</span> length(centerMask) ~= N || length(surroundMask) ~= N
+                    error(<span class="string">'sfrfs:computeDoGResponse:MaskLength'</span>, <span class="keyword">...</span>
+                        <span class="string">'Mask length does not match FFT length.'</span>);
+                <span class="keyword">end</span>
+
+                spectrumCenter = X .* centerMask;
+                spectrumSurround = X .* surroundMask;
+
+                magspectrumCenter = abs(spectrumCenter) / N;
+                magspectrumSurround = abs(spectrumSurround) / N;
+
+                integralCenter = trapz(f, magspectrumCenter);
+                integralSurround = <span class="keyword">...</span>
+                    trapz(f, magspectrumSurround);
+
+                responseRF = integralCenter - k * integralSurround;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestSFRFsCompute < matlab.unittest.TestCase
+    properties
+        x
+        x_multi
+        fs
+        f
+        operatingConditions     % Operating conditions
+        bearingParams           % Bearing parameters
+        sfrfsParams             % SFRF parameters
+        frequencyBands          % Bearing Frequency Bands 
+        rfgfs                   % Receptive Field Gain Functions 
+        paramsSnapshot          % Parameters of Snapshot
+        sfrfsCompute            % SFRFs Compute
+    end
+    
+    methods (TestMethodSetup)
+        function setupOnce(testCase)
+            % Signal generation setup
+            testCase.fs = 25.6e3;
+            N = 32768;
+            testCase.x = rand(N,1);
+            testCase.x_multi = [ ...
+                testCase.x, ...
+                2*testCase.x, ...
+                3*testCase.x, ...
+                log(testCase.x + eps)];
+            testCase.f = (0:N-1)' * (testCase.fs/N);
+            
+            % bearing parameters
+            bp = ParametersRollingBearings( ...
+                'NumRollingElements', 8, ...
+                'BallDiameter', 7.92, ...
+                'PitchDiameter', 34.55, ...
+                'ContactAngle', 0);
+            
+            % SFRFs parameters
+            sharedParams = SFRFsParameters.createSFRFsParameters( ...
+                'order', 3, ...
+                'numSidebands', 4, ...
+                'numHarmonics', 8, ...
+                'sigmaCenter', [5, 7], ...
+                'sigmaSurround', [12, 3], ...
+                'inhibitionFactor', 0.6);
+            
+            sp = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', sharedParams);
+            
+            % Operating conditions
+            speed = [35; 37.5; 40];
+            load = [12; 11; 10];
+            oc = OperatingConditions(speed, load);
+
+            testCase.operatingConditions = oc;
+            testCase.bearingParams = bp;
+            testCase.sfrfsParams = sp;
+            
+            % Create and compute fault bands for bearings
+            bfb = BearingFrequencyBands( ...
+                bearingParams = bp, ...
+                sfrfsParams = sp, ...
+                operatingConditions = oc);
+            bfb.computeBands();
+
+            testCase.frequencyBands = bfb;
+            
+            % Create ReceptiveFieldGainFunctions and compute gain masks
+            gfs = ReceptiveFieldGainFunctions(testCase.frequencyBands);
+            gfs.computeGainFunctions(testCase.f);
+            testCase.rfgfs = gfs;
+            
+            % Create ParametersSnapshot (adjust constructor as needed)
+            testCase.paramsSnapshot = ParametersSnapshot( ...
+                'samplingFrequency', testCase.fs, ...
+                'duration', N / testCase.fs, ...
+                'stride', 1);
+            
+            % Initialize SFRFsCompute instance with named arguments
+            testCase.sfrfsCompute = SFRFsCompute( ...
+                snapshotParameters = testCase.paramsSnapshot, ...
+                rfgfs = testCase.rfgfs);
+        end
+    end
+    
+    methods (Test)
+        function testSingleSignalAgainstDoG(testCase)
+            oc = testCase.operatingConditions.conditionsTable(1,:);
+            k = testCase.sfrfsParams.outerRace.inhibitionFactor;
+            
+            responseTableNew = testCase.sfrfsCompute.compute(...
+                operatingCondition = oc, temporalSnapshot = testCase.x);
+            
+            % Legacy computeDoGResponse assumed to accept these inputs
+            responseTableDoG = TestSFRFsCompute.computeDoGResponse(...
+                testCase.x, testCase.fs, ...
+                testCase.rfgfs.gainFunctionsTable, ...
+                'OperatingConditions', oc, ...
+                'InhibitionFactor', k);
+            
+            actual = cell2mat(responseTableNew.SFRFs);
+            expected = responseTableDoG.SFRF;
+            
+            testCase.verifyEqual(actual, expected, 'RelTol', 1e-10);
+        end
+        
+        function testMultiSignalAgainstDoG(testCase)
+            oc = testCase.operatingConditions.conditionsTable(1,:);
+            k = testCase.sfrfsParams.outerRace.inhibitionFactor;
+            responseTableNew = ...
+                testCase.sfrfsCompute.compute(...
+                temporalSnapshot = testCase.x_multi, ...
+                operatingCondition = oc);
+            newResp = cell2mat(responseTableNew.SFRFs);
+            
+            numFaults = length(BearingFrequencyBands.faultFrequencyCodes);
+            legacyResp = zeros(numFaults, size(testCase.x_multi, 2));
+            for j = 1:size(testCase.x_multi, 2)
+                respLegacy = TestSFRFsCompute.computeDoGResponse(...
+                    testCase.x_multi(:, j), ...
+                    testCase.fs, testCase.rfgfs.gainFunctionsTable, ...
+                    'OperatingConditions', oc, ...
+                    'InhibitionFactor', k);
+                legacyResp(:, j) = respLegacy.SFRF;
+            end
+            
+            testCase.verifyEqual(newResp, legacyResp, 'RelTol', 1e-10);
+        end
+    end
+
+    methods (Static)faultBandsTable
+        % This is the reference implementation, we test against it
+        function responseTable = computeDoGResponse(...
+            x, fs, gainFunctionsTable, args)
+        % COMPUTEDOGRESPONSE Compute center-surround (DoG) response for 
+        %   operating conditions.
+        %   responseTable = COMPUTEDOGRESPONSE(x, fs, faultBandsTable)
+        %   computes the difference-of-Gaussians (DoG) response for all 
+        %   operational conditions in faultBandsTable and returns a table 
+        %   with the results.
+        %
+        %   responseTable = COMPUTEDOGRESPONSE(...
+        %                 x, fs, gainFunctionsTable, ...
+        %                 'OperatingConditions', oc, 'InhibitionFactor', k)
+        %   computes the DoG response only for the specified operating 
+        %   conditions and specifies the inhibition factor.
+        %
+        %   Optional name-value pairs:
+        %       'OperatingConditions' - Table with columns matching those 
+        %                               in faultBandsTable 
+        %                               (e.g., 'Speed', 'Load'). 
+        %                               If omitted, computes for all rows.
+        %       'InhibitionFactor'    - Surround inhibition scale factor 
+        %                               (default: 1/3)
+        %
+        
+            arguments
+                x (:,1) double
+                fs (1,1) double {mustBePositive}
+                gainFunctionsTable table
+                args.OperatingConditions table = table()
+                args.InhibitionFactor (1,1) double = 1/3
+            end
+        
+            operatingConditions = args.OperatingConditions;
+            k = args.InhibitionFactor;
+        
+            opCondVars = operatingConditions.Properties.VariableNames;
+        
+            if isempty(operatingConditions)
+                idxToUse = 1:height(gainFunctionsTable);
+                condTable = gainFunctionsTable;
+            else
+                % Use only those columns from faultBandsTable for matching
+                mask = ismember(...
+                    gainFunctionsTable(:, ...
+                    opCondVars), operatingConditions);
+                idxToUse = find(mask);  % All indices where any row matches
+                if isempty(idxToUse)
+                    error('sfrfs:computeDoGResponse:Nomatch', ...
+                        'No matching operating condition found.');
+                end
+                condTable = gainFunctionsTable(idxToUse,:);
+            end
+        
+            responseRFV = zeros(numel(idxToUse),1);
+            for n = 1:numel(idxToUse)
+                responseRFV(n) = computeDoGResponseForRow(...
+                    x, fs, gainFunctionsTable, idxToUse(n), k);
+            end
+        
+            responseTable = condTable;
+            responseTable.SFRF = responseRFV;
+        
+            % helper, actual computation
+            function responseRF = computeDoGResponseForRow(...
+                    x, fs, gainFunctionsTable, idx, k)
+                N = length(x);
+                f = (0:N-1) * (fs / N);
+                X = fft(x);
+        
+                masks = gainFunctionsTable.FrequencyBankMasks{idx};
+                centerMask = masks.CenterFrequencyBankMask;
+                surroundMask = masks.SurroundFrequencyBankMask;
+        
+                if length(centerMask) ~= N || length(surroundMask) ~= N
+                    error('sfrfs:computeDoGResponse:MaskLength', ...
+                        'Mask length does not match FFT length.');
+                end
+        
+                spectrumCenter = X .* centerMask;
+                spectrumSurround = X .* surroundMask;
+        
+                magspectrumCenter = abs(spectrumCenter) / N;
+                magspectrumSurround = abs(spectrumSurround) / N;
+        
+                integralCenter = trapz(f, magspectrumCenter);
+                integralSurround = ...
+                    trapz(f, magspectrumSurround);
+        
+                responseRF = integralCenter - k * integralSurround;
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

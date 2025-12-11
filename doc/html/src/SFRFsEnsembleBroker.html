@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>SFRFsEnsembleBroker</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="SFRFsEnsembleBroker.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> SFRFsEnsembleBroker &lt; EnsembleBroker
+<span class="comment">% SFRFSENSEMBLEBROKER  EnsembleBroker specialization for SFRF data.</span>
+<span class="comment">%</span>
+<span class="comment">%   SFRFsEnsembleBroker extends EnsembleBroker by introducing a dedicated</span>
+<span class="comment">%   naming convention for Spectral Fault Receptive Field (SFRF) columns. In</span>
+<span class="comment">%   addition to the temporal and spectral (FFT) mappings provided by the</span>
+<span class="comment">%   superclass, this class defines and manages an SFRF-specific suffix for</span>
+<span class="comment">%   consistent identification of SFRF-derived signals.</span>
+<span class="comment">%</span>
+<span class="comment">%   Key features:</span>
+<span class="comment">%     &bull; Inherits full ensemble management, metadata handling, and file</span>
+<span class="comment">%       retrieval capabilities from EnsembleBroker.</span>
+<span class="comment">%     &bull; Adds a configurable SFRF suffix (default: "_SFRFs").</span>
+<span class="comment">%     &bull; Provides bidirectional mapping between temporal and SFRF column</span>
+<span class="comment">%       names.</span>
+<span class="comment">%</span>
+<span class="comment">%   See also: EnsembleBroker, EnsembleUtil</span>
+
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        <span class="comment">% Suffix for column names of SFRFs</span>
+        sfrfsSuffixInternal <span class="typesection">(1,1) string </span>= <span class="string">"_SFRFs"</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = SFRFsEnsembleBroker(args)
+            <span class="keyword">arguments</span>
+                args.EnsembleObject <span class="typesection">{mustBeNonempty}</span>
+                args.GetFilesFunction <span class="typesection">function_handle</span>
+                args.TemporalSnapshotColumns <span class="typesection">(1,:) cell</span>
+                args.SpectralSuffix <span class="typesection">string </span>= <span class="string">"_FFT"</span>
+                args.sfrfsSuffix <span class="typesection">(1,1) string </span>= <span class="string">"_SFRFs"</span>
+            <span class="keyword">end</span>
+            <span class="comment">% Call to the superclass constructor</span>
+            obj@EnsembleBroker( <span class="keyword">...</span>
+                ensembleObject = args.EnsembleObject, <span class="keyword">...</span>
+                getFilesFunction = args.GetFilesFunction, <span class="keyword">...</span>
+                temporalSnapshotColumns = args.TemporalSnapshotColumns, <span class="keyword">...</span>
+                spectralSuffix = args.SpectralSuffix <span class="keyword">...</span>
+            );
+            obj.sfrfsSuffixInternal = args.sfrfsSuffix;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> sfrfsName = mapToSFRFColumn(obj, columnName)
+        <span class="comment">% mapToSFRFColumn Return the SFRF column name for a given temporal</span>
+        <span class="comment">% column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   sfrfsName = obj.mapToSFRFColumn(columnName)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   columnName - time-domain column name (char or string).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   sfrfsName - corresponding SFRF column name.</span>
+
+            suffix = obj.sfrfsSuffixInternal;
+            sfrfsName = EnsembleUtil.appendSuffix(columnName, suffix);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> temporalName = mapToTemporalFromSFRFColumn(obj, sfrfsName)
+        <span class="comment">% mapToTemporalFromSFRFColumn Return the temporal column name for</span>
+        <span class="comment">% a given SFRF column.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   temporalName = obj.mapToTemporalFromSFRFColumn(sfrfsName)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   sfrfsName - SFRF spectral column name (char or string).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   temporalName - corresponding time-domain column name.</span>
+
+            suffix = obj.sfrfsSuffixInternal;
+            temporalName = EnsembleUtil.removeSuffix(sfrfsName, suffix);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef SFRFsEnsembleBroker < EnsembleBroker
+% SFRFSENSEMBLEBROKER  EnsembleBroker specialization for SFRF data.
+%
+%   SFRFsEnsembleBroker extends EnsembleBroker by introducing a dedicated
+%   naming convention for Spectral Fault Receptive Field (SFRF) columns. In
+%   addition to the temporal and spectral (FFT) mappings provided by the
+%   superclass, this class defines and manages an SFRF-specific suffix for
+%   consistent identification of SFRF-derived signals.
+%
+%   Key features:
+%     • Inherits full ensemble management, metadata handling, and file
+%       retrieval capabilities from EnsembleBroker.
+%     • Adds a configurable SFRF suffix (default: "_SFRFs").
+%     • Provides bidirectional mapping between temporal and SFRF column 
+%       names.
+%
+%   See also: EnsembleBroker, EnsembleUtil
+
+    
+    properties (SetAccess = private)
+        % Suffix for column names of SFRFs
+        sfrfsSuffixInternal (1,1) string = "_SFRFs"
+    end
+    
+    methods
+        function obj = SFRFsEnsembleBroker(args)
+            arguments
+                args.EnsembleObject {mustBeNonempty}
+                args.GetFilesFunction function_handle
+                args.TemporalSnapshotColumns (1,:) cell
+                args.SpectralSuffix string = "_FFT"
+                args.sfrfsSuffix (1,1) string = "_SFRFs"
+            end
+            % Call to the superclass constructor
+            obj@EnsembleBroker( ...
+                ensembleObject = args.EnsembleObject, ...
+                getFilesFunction = args.GetFilesFunction, ...
+                temporalSnapshotColumns = args.TemporalSnapshotColumns, ...
+                spectralSuffix = args.SpectralSuffix ...
+            );
+            obj.sfrfsSuffixInternal = args.sfrfsSuffix;
+        end
+        
+        function sfrfsName = mapToSFRFColumn(obj, columnName)
+        % mapToSFRFColumn Return the SFRF column name for a given temporal 
+        % column.
+        %
+        %   sfrfsName = obj.mapToSFRFColumn(columnName)
+        %
+        % Inputs:
+        %   columnName - time-domain column name (char or string).
+        %
+        % Output:
+        %   sfrfsName - corresponding SFRF column name.
+
+            suffix = obj.sfrfsSuffixInternal;
+            sfrfsName = EnsembleUtil.appendSuffix(columnName, suffix);
+        end
+        
+        function temporalName = mapToTemporalFromSFRFColumn(obj, sfrfsName)
+        % mapToTemporalFromSFRFColumn Return the temporal column name for 
+        % a given SFRF column.
+        %
+        %   temporalName = obj.mapToTemporalFromSFRFColumn(sfrfsName)
+        %
+        % Inputs:
+        %   sfrfsName - SFRF spectral column name (char or string).
+        %
+        % Output:
+        %   temporalName - corresponding time-domain column name.
+        
+            suffix = obj.sfrfsSuffixInternal;
+            temporalName = EnsembleUtil.removeSuffix(sfrfsName, suffix);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

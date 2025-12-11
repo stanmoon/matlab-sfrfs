@@ -1,0 +1,851 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>FaultFrequencyBands</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="FaultFrequencyBands.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> (Abstract) FaultFrequencyBands &lt; handle
+    <span class="comment">% FaultFrequencyBands Abstract frequency bands class agnostic to the</span>
+    <span class="comment">%   system or component.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Provides a contract for classes representing characteristic</span>
+    <span class="comment">%   fault frequency bands, including common properties and abstract</span>
+    <span class="comment">%   interfaces for fault type descriptions and mappings.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Properties (Abstract, Constant):</span>
+    <span class="comment">%   faultFrequencyCodes       - Struct or map of fault frequency codes.</span>
+    <span class="comment">%   faultTypeDescriptions     - Cell array of fault type description</span>
+    <span class="comment">%                               strings.</span>
+    <span class="comment">%   faultTypeGroups           - Numeric or categorical grouping of</span>
+    <span class="comment">%                               fault types.</span>
+    <span class="comment">%   faultGroupToTypeName      - Inverse of faultTypeGroups</span>
+    <span class="comment">%</span>
+    <span class="comment">%</span>
+    <span class="comment">% Concrete Properties:</span>
+    <span class="comment">%   operatingConditions       - OperatingConditions object</span>
+    <span class="comment">%   sfrfsParams               - Parameters for SFRFs computation</span>
+    <span class="comment">%   bandsTable                - Table with computed fault bands.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Methods (Abstract):</span>
+    <span class="comment">%   computeBands</span>
+    <span class="comment">%                             - Abstract signature</span>
+    <span class="comment">%                               the method should build the fault</span>
+    <span class="comment">%                               frequency bands table.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   computeBands( operatingConditions)</span>
+    <span class="comment">%   computes the fault frequency bands for each row in the</span>
+    <span class="comment">%   faultBandsTable table.</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Output table columns:</span>
+    <span class="comment">%       FaultGroup          - numeric index of the fault band entry</span>
+    <span class="comment">%       Description         - human-readable fault type description</span>
+    <span class="comment">%                             (e.g. "Outer Race Fault")</span>
+    <span class="comment">%       Speed                - shaft rotational speed (Hz)</span>
+    <span class="comment">%       Load                - load value from operatingConditions</span>
+    <span class="comment">%       ReceptiveFieldBands - cell containing the bands definition</span>
+    <span class="comment">%                             as a collection of instances of</span>
+    <span class="comment">%                             containers.Map, each map with keys:</span>
+    <span class="comment">%                               'Bands',</span>
+    <span class="comment">%                               'Harmonic',</span>
+    <span class="comment">%                               'Label',</span>
+    <span class="comment">%                               'Sideband'</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Example (usage with rolling bearings, for implementation example</span>
+    <span class="comment">%            see code in BearingFrequencyBands/computeBands):</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % 1. Set the operating conditions</span>
+    <span class="comment">%       speed = [35; 37.5; 40];</span>
+    <span class="comment">%       load  = [12; 11; 10];</span>
+    <span class="comment">%       ocObj = OperatingConditions(speed, load);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % 2. Bearing + SRF params</span>
+    <span class="comment">%       bp = ParametersRollingBearings( ...</span>
+    <span class="comment">%           'numRollingElements',8, ...</span>
+    <span class="comment">%           'ballDiameter',7.92, ...</span>
+    <span class="comment">%           'pitchDiameter',34.55, ...</span>
+    <span class="comment">%           'contactAngle',0);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       sharedParams = ...</span>
+    <span class="comment">%         SFRFsParameters.createSFRFsParameters( ...</span>
+    <span class="comment">%           'order', 3, ...</span>
+    <span class="comment">%           'numSidebands', 4, ...</span>
+    <span class="comment">%           'numHarmonics', 8, ...</span>
+    <span class="comment">%           'sigmaCenter', [5, 7], ...</span>
+    <span class="comment">%           'sigmaSurround', [12, 3], ...</span>
+    <span class="comment">%           'inhibitionFactor', 0.6);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       sp = SFRFsParametersRollingBearings( ...</span>
+    <span class="comment">%           'SameForAllFaultTypes', sharedParams);</span>
+    <span class="comment">%</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % 3. Create object instance</span>
+    <span class="comment">%       bfb = BearingFrequencyBands( ...</span>
+    <span class="comment">%           bearingParams = bp, ...</span>
+    <span class="comment">%           sfrfsParams = sp, ...</span>
+    <span class="comment">%           operatingConditions = ocObj);</span>
+    <span class="comment">%</span>
+    <span class="comment">%       % 4. Compute fault bands</span>
+    <span class="comment">%       bfb.computeBands();</span>
+    <span class="comment">%</span>
+    <span class="comment">%   Notes:</span>
+    <span class="comment">%       FaultGroup numeric index and Label in ReceptiveFieldBands</span>
+    <span class="comment">%       entries  are compatible with MATLAB's function</span>
+    <span class="comment">%       'bearingFaultBands' introduced in</span>
+    <span class="comment">%       Predictive Maintenance Toolbox R2019b</span>
+    <span class="comment">%</span>
+    <span class="comment">% See also: BearingFrequencyBands, ReceptiveFieldGainFunctions</span>
+
+
+    <span class="keyword">properties</span> (Abstract, Constant)
+        faultFrequencyCodes
+        faultTypeDescriptions
+        faultTypeGroups
+        faultGroupToTypeName
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        <span class="comment">% sfrfsParamsInternal stores the actual data internally.</span>
+        <span class="comment">% It bypasses MATLAB limitations on abstract typed properties,</span>
+        <span class="comment">% preventing runtime instantiation errors.</span>
+        <span class="comment">% Type validation is enforced only once in the constructor.</span>
+        sfrfsParamsInternal
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        <span class="comment">% sfrfsParams exposes read-only access to sfrfsParamsInternal.</span>
+        <span class="comment">% Declared as Dependent to avoid internal storage conflicts.</span>
+        <span class="comment">% This pattern avoids MATLAB runtime errors related to abstract</span>
+        <span class="comment">% property validation and allows association visibility in the</span>
+        <span class="comment">% 'Class Diagram Viewer'.</span>
+        <span class="comment">% Clients should access sfrfsParams only; direct assignment is</span>
+        <span class="comment">% prohibited.</span>
+        <span class="comment">%</span>
+        <span class="comment">% A getter method returns sfrfsParamsInternal transparently.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Validation of assigned values is performed only on the private</span>
+        <span class="comment">% property.</span>
+        sfrfsParams <span class="typesection">SFRFsParameters</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        operatingConditions <span class="typesection">OperatingConditions</span>
+        bandsTable <span class="typesection">table </span>= table.empty()
+    <span class="keyword">end</span>
+
+        <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = FaultFrequencyBands(args)
+            <span class="keyword">arguments</span>
+                args.operatingConditions <span class="typesection">(1,1) OperatingConditions</span>
+                args.sfrfsParams <span class="typesection">(1,1) SFRFsParameters</span>
+            <span class="keyword">end</span>
+            obj.operatingConditions = args.operatingConditions;
+            <span class="keyword">if</span> isa(args.sfrfsParams,<span class="string">'SFRFsParameters'</span>)
+                obj.sfrfsParamsInternal = args.sfrfsParams;
+            <span class="keyword">else</span>
+                error( <span class="keyword">...</span>
+                    [<span class="string">'sfrfs:FaultFrequencyBands:'</span><span class="keyword">...</span>
+                     <span class="string">'TypeMismatchError'</span>],<span class="keyword">...</span>
+                    <span class="string">'object must be instance of SFRFsParameters.'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="comment">% Getter only to enforce validation at construction time</span>
+        <span class="comment">% circunventing limitations of abstract classes in properties</span>
+        <span class="keyword">function</span> val = get.sfrfsParams(obj)
+            val = obj.sfrfsParamsInternal;
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Abstract)
+
+        computeBands( obj, operatingConditions)
+        <span class="comment">% computeBands  Abstract signature</span>
+        <span class="comment">%   the method should build the fault frequency bands table.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   computeBands( operatingConditions)</span>
+        <span class="comment">%   computes the fault frequency bands for each row in the</span>
+        <span class="comment">%   faultBandsTable table.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output table columns:</span>
+        <span class="comment">%       FaultGroup          - numeric index of the fault band entry</span>
+        <span class="comment">%       Description         - human-readable fault type description</span>
+        <span class="comment">%                             (e.g. "Outer Race Fault")</span>
+        <span class="comment">%       Speed                - shaft rotational speed (Hz)</span>
+        <span class="comment">%       Load                - load value from operatingConditions</span>
+        <span class="comment">%       ReceptiveFieldBands - cell containing the bands definition</span>
+        <span class="comment">%                             as a collection of instances of</span>
+        <span class="comment">%                             containers.Map, each map with keys:</span>
+        <span class="comment">%                               'Bands',</span>
+        <span class="comment">%                               'Harmonic',</span>
+        <span class="comment">%                               'Label',</span>
+        <span class="comment">%                               'Sideband'</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example (with rolling bearings):</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 1. Set the operating conditions</span>
+        <span class="comment">%       speed = [35; 37.5; 40];</span>
+        <span class="comment">%       load  = [12; 11; 10];</span>
+        <span class="comment">%       ocObj = OperatingConditions(speed, load);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 2. Bearing + SRF params</span>
+        <span class="comment">%       bp = ParametersRollingBearings( ...</span>
+        <span class="comment">%           'numRollingElements',8, ...</span>
+        <span class="comment">%           'ballDiameter',7.92, ...</span>
+        <span class="comment">%           'pitchDiameter',34.55, ...</span>
+        <span class="comment">%           'contactAngle',0);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       sharedParams = ...</span>
+        <span class="comment">%         SFRFsParameters.createSfrfsParameters( ...</span>
+        <span class="comment">%           'order', 3, ...</span>
+        <span class="comment">%           'numSidebands', 4, ...</span>
+        <span class="comment">%           'numHarmonics', 8, ...</span>
+        <span class="comment">%           'sigmaCenter', [5, 7], ...</span>
+        <span class="comment">%           'sigmaSurround', [12, 3], ...</span>
+        <span class="comment">%           'inhibitionFactor', 0.6);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       sp = SFRFsParametersRollingBearings( ...</span>
+        <span class="comment">%           'SameForAllFaultTypes', sharedParams);</span>
+        <span class="comment">%</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 3. Create object instance</span>
+        <span class="comment">%       bfb = BearingFrequencyBands(bp, sp);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 4. Compute fault bands</span>
+        <span class="comment">%       bfb .computeBands(ocObj);</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Notes:</span>
+        <span class="comment">%       FaultGroup numeric index and Label in ReceptiveFieldBands</span>
+        <span class="comment">%       entries  are compatible with MATLAB's function</span>
+        <span class="comment">%       'bearingFaultBands' introduced in</span>
+        <span class="comment">%       Predictive Maintenance Toolbox R2019b</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> bands = extractBands(faultBandsTable, row)
+        <span class="comment">%EXTRACTBANDS Extract and sort band matrices from a table row.</span>
+        <span class="comment">%   bands = extractBands(faultBandsTable, row) extracts band</span>
+        <span class="comment">%   information from the specified row of faultBandsTable and</span>
+        <span class="comment">%   returns a struct with metadata and sorted matrices for center</span>
+        <span class="comment">%   and surround frequency bands.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Parameters:</span>
+        <span class="comment">%       faultBandsTable - Table containing fault band data,</span>
+        <span class="comment">%                         including a 'ReceptiveFieldBands' column</span>
+        <span class="comment">%                         with band definitions.</span>
+        <span class="comment">%       row             - Row index (positive integer) specifying</span>
+        <span class="comment">%                         which row to extract and process.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       bands - Struct with fields:</span>
+        <span class="comment">%           FaultGroup                   - Fault group identifier</span>
+        <span class="comment">%           Speed                        - Operating speed</span>
+        <span class="comment">%           Load                         - Operating load</span>
+        <span class="comment">%           NumberOfBands                - Number of bands in this</span>
+        <span class="comment">%                                          row</span>
+        <span class="comment">%           MinFreqColumn                - Index for minimum</span>
+        <span class="comment">%                                          frequency</span>
+        <span class="comment">%           MaxFreqColumn                - Index for maximum</span>
+        <span class="comment">%                                          frequency</span>
+        <span class="comment">%           HarmonicColumn               - Index for harmonic</span>
+        <span class="comment">%                                          column</span>
+        <span class="comment">%           SidebandColumn               - Index for sideband</span>
+        <span class="comment">%                                          column</span>
+        <span class="comment">%           CharacteristicFrequencyIndex - Index of characteristic</span>
+        <span class="comment">% band</span>
+        <span class="comment">%           CenterBandsMatrix            - Sorted matrix for center</span>
+        <span class="comment">%                                          bands</span>
+        <span class="comment">%           SurroundBandsMatrix          - Sorted matrix for</span>
+        <span class="comment">%                                          surround bands</span>
+        <span class="comment">%</span>
+        <span class="comment">%   The band matrices are sorted lexicographically by minimum</span>
+        <span class="comment">%   frequency, harmonic, and sideband index.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%     speeds = [35; 37.5; 40];</span>
+        <span class="comment">%     loads  = [12; 11; 10];</span>
+        <span class="comment">%     operatingConditions = ...</span>
+        <span class="comment">%       createOperatingConditions(speeds, loads);</span>
+        <span class="comment">%     bearingParams = bearingParameters(...</span>
+        <span class="comment">%       'NumRollingElements',8,...</span>
+        <span class="comment">%       'BallDiameter',7.92,...</span>
+        <span class="comment">%       'PitchDiameter',34.55,...</span>
+        <span class="comment">%       'ContactAngle',0);</span>
+        <span class="comment">%     sfrfsParams = sfrfsParameters(...</span>
+        <span class="comment">%       'NumHarmonics', 10,...</span>
+        <span class="comment">%       'NumSidebands', 2,...</span>
+        <span class="comment">%       'SigmaCenter', [4, 6],...</span>
+        <span class="comment">%       'SigmaSurround', [12, 1]);</span>
+        <span class="comment">%     faultBandsTable = computeFaultFrequencyBands(...</span>
+        <span class="comment">%       operatingConditions, ...</span>
+        <span class="comment">%       bearingParams, ...</span>
+        <span class="comment">%       sfrfsParams);</span>
+        <span class="comment">%       bands = extractBands(faultBandsTable, 2);</span>
+        <span class="comment">%   See also: bearingParameters, createOperatingConditions,</span>
+        <span class="comment">%     sfrfsParameters, computeFaultFrequencyBands</span>
+
+            <span class="keyword">arguments</span>
+                faultBandsTable <span class="typesection">table</span>
+                row <span class="typesection">(1,1) {mustBeInteger, mustBePositive}</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> row &gt; height(faultBandsTable)
+                error(<span class="string">'sfrfs:extractBands:Badsubscript'</span>,<span class="keyword">...</span>
+                    <span class="string">'Row index exceeds number of table rows.'</span>);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Extract the nested cell array structure</span>
+            faultGroup = faultBandsTable{row,<span class="string">'FaultGroup'</span>};
+            speed = faultBandsTable{row,<span class="string">'Speed'</span>};
+            load = faultBandsTable{row,<span class="string">'Load'</span>};
+
+
+            cellarraybands = faultBandsTable{row, <span class="string">'ReceptiveFieldBands'</span>};
+
+            <span class="comment">% Normalise to 1&times;N cell array of containers.Map</span>
+            <span class="keyword">if</span> isa(cellarraybands, <span class="string">'containers.Map'</span>)
+                <span class="comment">% Single map &rarr; wrap into cell</span>
+                cellarraybands = {cellarraybands};
+
+            <span class="keyword">elseif</span> iscell(cellarraybands)
+
+                <span class="comment">% Unwrap single nested cell: {{maps...}}</span>
+                <span class="keyword">if</span> isscalar(cellarraybands) &amp;&amp; iscell(cellarraybands{1})
+                    cellarraybands = cellarraybands{1};
+                <span class="keyword">end</span>
+
+                <span class="comment">% Final safety: must be cell of maps</span>
+                <span class="keyword">if</span> ~all(cellfun(@(x) <span class="keyword">...</span>
+                        isa(x,<span class="string">'containers.Map'</span>), cellarraybands))
+                    error(<span class="string">'sfrfs:extractBands:InvalidBandContainer'</span>, <span class="keyword">...</span>
+                        <span class="string">'ReceptiveFieldBands must contain containers.Map'</span>);
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                error(<span class="string">'sfrfs:extractBands:InvalidBandContainer'</span>, <span class="keyword">...</span>
+                    <span class="string">'Unexpected type in ReceptiveFieldBands.'</span>);
+            <span class="keyword">end</span>
+
+            N = numel(cellarraybands);
+
+            <span class="comment">% Create info object for the user</span>
+            bands = struct();
+            bands.FaultGroup = faultGroup;
+            bands.Speed = speed;
+            bands.Load = load;
+            bands.NumberOfBands = N;
+            bands.MinFreqColumn = 1;
+            bands.MaxFreqColumn = 2;
+            bands.HarmonicColumn = 3;
+            bands.SidebandColumn = 4;
+            bands.CharacteristicFrequencyIndex = NaN;
+
+            <span class="comment">% create the double matrix to contain the output</span>
+            bands.CenterBandsMatrix = [zeros(N,4),(1:N)'];
+            bands.SurroundBandsMatrix = bands.CenterBandsMatrix;
+
+            <span class="comment">% fill the matrix first, in the order they are in the cell</span>
+            <span class="comment">% array</span>
+            <span class="keyword">for</span> i=1:N
+                celldict = cellarraybands{i};
+                bands.CenterBandsMatrix(i,bands.MinFreqColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Bands'</span>).Center(1);
+                bands.CenterBandsMatrix(i,bands.MaxFreqColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Bands'</span>).Center(2);
+                bands.CenterBandsMatrix(i,bands.HarmonicColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Harmonic'</span>);
+                bands.CenterBandsMatrix(i,bands.SidebandColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Sideband'</span>);
+                bands.SurroundBandsMatrix(i,bands.MinFreqColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Bands'</span>).Surround(1);
+                bands.SurroundBandsMatrix(i,bands.MaxFreqColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Bands'</span>).Surround(2);
+                bands.SurroundBandsMatrix(i,bands.HarmonicColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Harmonic'</span>);
+                bands.SurroundBandsMatrix(i,bands.SidebandColumn) = <span class="keyword">...</span>
+                    celldict(<span class="string">'Sideband'</span>);
+                <span class="keyword">if</span> celldict(<span class="string">'Harmonic'</span>) == 1 &amp;&amp; celldict(<span class="string">'Sideband'</span>) == 0
+                    bands.CharacteristicFrequencyIndex = i;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Sort lexicographically by lower frequency, harmonic, then</span>
+            <span class="comment">% sideband</span>
+            sortedMat = sortrows(bands.CenterBandsMatrix, <span class="keyword">...</span>
+                [bands.MinFreqColumn, bands.HarmonicColumn, <span class="keyword">...</span>
+                 bands.SidebandColumn]);
+            <span class="comment">% remove auxiliary column</span>
+            bands.CenterBandsMatrix = sortedMat(:,1:end-1);
+            bands.SurroundBandsMatrix = <span class="keyword">...</span>
+                bands.SurroundBandsMatrix(sortedMat(:,end), 1:end-1);
+            bands = orderfields(bands);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef (Abstract) FaultFrequencyBands < handle
+    % FaultFrequencyBands Abstract frequency bands class agnostic to the
+    %   system or component.
+    %
+    %   Provides a contract for classes representing characteristic
+    %   fault frequency bands, including common properties and abstract
+    %   interfaces for fault type descriptions and mappings.
+    %
+    % Properties (Abstract, Constant):
+    %   faultFrequencyCodes       - Struct or map of fault frequency codes.
+    %   faultTypeDescriptions     - Cell array of fault type description 
+    %                               strings.
+    %   faultTypeGroups           - Numeric or categorical grouping of 
+    %                               fault types.
+    %   faultGroupToTypeName      - Inverse of faultTypeGroups
+    %
+    %
+    % Concrete Properties:
+    %   operatingConditions       - OperatingConditions object
+    %   sfrfsParams               - Parameters for SFRFs computation
+    %   bandsTable                - Table with computed fault bands.
+    %
+    % Methods (Abstract):
+    %   computeBands 
+    %                             - Abstract signature 
+    %                               the method should build the fault 
+    %                               frequency bands table.
+    %
+    %   computeBands( operatingConditions)
+    %   computes the fault frequency bands for each row in the
+    %   faultBandsTable table.
+    %
+    %   Output table columns:
+    %       FaultGroup          - numeric index of the fault band entry
+    %       Description         - human-readable fault type description 
+    %                             (e.g. "Outer Race Fault")
+    %       Speed                - shaft rotational speed (Hz)
+    %       Load                - load value from operatingConditions
+    %       ReceptiveFieldBands - cell containing the bands definition 
+    %                             as a collection of instances of 
+    %                             containers.Map, each map with keys:
+    %                               'Bands', 
+    %                               'Harmonic', 
+    %                               'Label', 
+    %                               'Sideband'
+    %
+    %   Example (usage with rolling bearings, for implementation example
+    %            see code in BearingFrequencyBands/computeBands):
+    %
+    %       % 1. Set the operating conditions
+    %       speed = [35; 37.5; 40];
+    %       load  = [12; 11; 10];
+    %       ocObj = OperatingConditions(speed, load);
+    % 
+    %       % 2. Bearing + SRF params
+    %       bp = ParametersRollingBearings( ...
+    %           'numRollingElements',8, ...
+    %           'ballDiameter',7.92, ...
+    %           'pitchDiameter',34.55, ...
+    %           'contactAngle',0);
+    % 
+    %       sharedParams = ...
+    %         SFRFsParameters.createSFRFsParameters( ...
+    %           'order', 3, ...
+    %           'numSidebands', 4, ...
+    %           'numHarmonics', 8, ...
+    %           'sigmaCenter', [5, 7], ...
+    %           'sigmaSurround', [12, 3], ...
+    %           'inhibitionFactor', 0.6);
+    %
+    %       sp = SFRFsParametersRollingBearings( ...
+    %           'SameForAllFaultTypes', sharedParams);
+    %
+    %
+    %       % 3. Create object instance
+    %       bfb = BearingFrequencyBands( ...
+    %           bearingParams = bp, ...
+    %           sfrfsParams = sp, ...
+    %           operatingConditions = ocObj);
+    %
+    %       % 4. Compute fault bands
+    %       bfb.computeBands();
+    %
+    %   Notes:
+    %       FaultGroup numeric index and Label in ReceptiveFieldBands 
+    %       entries  are compatible with MATLAB's function 
+    %       'bearingFaultBands' introduced in 
+    %       Predictive Maintenance Toolbox R2019b
+    %
+    % See also: BearingFrequencyBands, ReceptiveFieldGainFunctions
+
+    
+    properties (Abstract, Constant)
+        faultFrequencyCodes
+        faultTypeDescriptions
+        faultTypeGroups
+        faultGroupToTypeName
+    end
+    
+    properties (Access = private)
+        % sfrfsParamsInternal stores the actual data internally.
+        % It bypasses MATLAB limitations on abstract typed properties,
+        % preventing runtime instantiation errors.
+        % Type validation is enforced only once in the constructor.
+        sfrfsParamsInternal 
+    end
+
+    properties (Dependent)
+        % sfrfsParams exposes read-only access to sfrfsParamsInternal.
+        % Declared as Dependent to avoid internal storage conflicts.
+        % This pattern avoids MATLAB runtime errors related to abstract
+        % property validation and allows association visibility in the 
+        % 'Class Diagram Viewer'.
+        % Clients should access sfrfsParams only; direct assignment is 
+        % prohibited.
+        %
+        % A getter method returns sfrfsParamsInternal transparently.
+        %
+        % Validation of assigned values is performed only on the private 
+        % property.
+        sfrfsParams SFRFsParameters
+    end
+
+    properties 
+        operatingConditions OperatingConditions
+        bandsTable table = table.empty()
+    end
+
+        methods
+
+        function obj = FaultFrequencyBands(args)
+            arguments
+                args.operatingConditions (1,1) OperatingConditions
+                args.sfrfsParams (1,1) SFRFsParameters
+            end
+            obj.operatingConditions = args.operatingConditions;
+            if isa(args.sfrfsParams,'SFRFsParameters')
+                obj.sfrfsParamsInternal = args.sfrfsParams;
+            else
+                error( ...
+                    ['sfrfs:FaultFrequencyBands:'...
+                     'TypeMismatchError'],...
+                    'object must be instance of SFRFsParameters.');
+            end
+        end
+
+        % Getter only to enforce validation at construction time
+        % circunventing limitations of abstract classes in properties
+        function val = get.sfrfsParams(obj)
+            val = obj.sfrfsParamsInternal; 
+        end
+
+    end
+    
+    methods (Abstract)
+
+        computeBands( obj, operatingConditions)
+        % computeBands  Abstract signature 
+        %   the method should build the fault frequency bands table.
+        %
+        %   computeBands( operatingConditions)
+        %   computes the fault frequency bands for each row in the
+        %   faultBandsTable table.
+        %
+        %   Output table columns:
+        %       FaultGroup          - numeric index of the fault band entry
+        %       Description         - human-readable fault type description 
+        %                             (e.g. "Outer Race Fault")
+        %       Speed                - shaft rotational speed (Hz)
+        %       Load                - load value from operatingConditions
+        %       ReceptiveFieldBands - cell containing the bands definition 
+        %                             as a collection of instances of 
+        %                             containers.Map, each map with keys:
+        %                               'Bands', 
+        %                               'Harmonic', 
+        %                               'Label', 
+        %                               'Sideband'
+        %
+        %   Example (with rolling bearings):
+        %
+        %       % 1. Set the operating conditions
+        %       speed = [35; 37.5; 40];
+        %       load  = [12; 11; 10];
+        %       ocObj = OperatingConditions(speed, load);
+        % 
+        %       % 2. Bearing + SRF params
+        %       bp = ParametersRollingBearings( ...
+        %           'numRollingElements',8, ...
+        %           'ballDiameter',7.92, ...
+        %           'pitchDiameter',34.55, ...
+        %           'contactAngle',0);
+        % 
+        %       sharedParams = ...
+        %         SFRFsParameters.createSfrfsParameters( ...
+        %           'order', 3, ...
+        %           'numSidebands', 4, ...
+        %           'numHarmonics', 8, ...
+        %           'sigmaCenter', [5, 7], ...
+        %           'sigmaSurround', [12, 3], ...
+        %           'inhibitionFactor', 0.6);
+        %
+        %       sp = SFRFsParametersRollingBearings( ...
+        %           'SameForAllFaultTypes', sharedParams);
+        %
+        %
+        %       % 3. Create object instance
+        %       bfb = BearingFrequencyBands(bp, sp);
+        %
+        %       % 4. Compute fault bands
+        %       bfb .computeBands(ocObj);
+        %
+        %   Notes:
+        %       FaultGroup numeric index and Label in ReceptiveFieldBands 
+        %       entries  are compatible with MATLAB's function 
+        %       'bearingFaultBands' introduced in 
+        %       Predictive Maintenance Toolbox R2019b
+    end
+
+    methods (Static)
+
+        function bands = extractBands(faultBandsTable, row)
+        %EXTRACTBANDS Extract and sort band matrices from a table row.
+        %   bands = extractBands(faultBandsTable, row) extracts band 
+        %   information from the specified row of faultBandsTable and 
+        %   returns a struct with metadata and sorted matrices for center 
+        %   and surround frequency bands.
+        %
+        %   Parameters:
+        %       faultBandsTable - Table containing fault band data, 
+        %                         including a 'ReceptiveFieldBands' column 
+        %                         with band definitions.
+        %       row             - Row index (positive integer) specifying 
+        %                         which row to extract and process.
+        %
+        %   Output:
+        %       bands - Struct with fields:
+        %           FaultGroup                   - Fault group identifier
+        %           Speed                        - Operating speed
+        %           Load                         - Operating load
+        %           NumberOfBands                - Number of bands in this 
+        %                                          row
+        %           MinFreqColumn                - Index for minimum 
+        %                                          frequency
+        %           MaxFreqColumn                - Index for maximum 
+        %                                          frequency
+        %           HarmonicColumn               - Index for harmonic 
+        %                                          column
+        %           SidebandColumn               - Index for sideband 
+        %                                          column
+        %           CharacteristicFrequencyIndex - Index of characteristic 
+        % band
+        %           CenterBandsMatrix            - Sorted matrix for center 
+        %                                          bands
+        %           SurroundBandsMatrix          - Sorted matrix for 
+        %                                          surround bands
+        %
+        %   The band matrices are sorted lexicographically by minimum 
+        %   frequency, harmonic, and sideband index.
+        %
+        %   Example:
+        %     speeds = [35; 37.5; 40];
+        %     loads  = [12; 11; 10];
+        %     operatingConditions = ...
+        %       createOperatingConditions(speeds, loads);
+        %     bearingParams = bearingParameters(...
+        %       'NumRollingElements',8,...
+        %       'BallDiameter',7.92,...
+        %       'PitchDiameter',34.55,...
+        %       'ContactAngle',0);
+        %     sfrfsParams = sfrfsParameters(...
+        %       'NumHarmonics', 10,... 
+        %       'NumSidebands', 2,... 
+        %       'SigmaCenter', [4, 6],... 
+        %       'SigmaSurround', [12, 1]);
+        %     faultBandsTable = computeFaultFrequencyBands(...
+        %       operatingConditions, ...
+        %       bearingParams, ...
+        %       sfrfsParams);
+        %       bands = extractBands(faultBandsTable, 2);
+        %   See also: bearingParameters, createOperatingConditions,
+        %     sfrfsParameters, computeFaultFrequencyBands
+        
+            arguments
+                faultBandsTable table
+                row (1,1) {mustBeInteger, mustBePositive}
+            end
+        
+            if row > height(faultBandsTable)
+                error('sfrfs:extractBands:Badsubscript',...
+                    'Row index exceeds number of table rows.');
+            end
+        
+            % Extract the nested cell array structure
+            faultGroup = faultBandsTable{row,'FaultGroup'};
+            speed = faultBandsTable{row,'Speed'};
+            load = faultBandsTable{row,'Load'};
+
+
+            cellarraybands = faultBandsTable{row, 'ReceptiveFieldBands'};
+
+            % Normalise to 1×N cell array of containers.Map
+            if isa(cellarraybands, 'containers.Map')
+                % Single map → wrap into cell
+                cellarraybands = {cellarraybands};
+
+            elseif iscell(cellarraybands)
+
+                % Unwrap single nested cell: {{maps...}}
+                if isscalar(cellarraybands) && iscell(cellarraybands{1})
+                    cellarraybands = cellarraybands{1};
+                end
+
+                % Final safety: must be cell of maps
+                if ~all(cellfun(@(x) ...
+                        isa(x,'containers.Map'), cellarraybands))
+                    error('sfrfs:extractBands:InvalidBandContainer', ...
+                        'ReceptiveFieldBands must contain containers.Map');
+                end
+            else
+                error('sfrfs:extractBands:InvalidBandContainer', ...
+                    'Unexpected type in ReceptiveFieldBands.');
+            end
+
+            N = numel(cellarraybands);
+        
+            % Create info object for the user
+            bands = struct();
+            bands.FaultGroup = faultGroup;
+            bands.Speed = speed;
+            bands.Load = load;
+            bands.NumberOfBands = N;
+            bands.MinFreqColumn = 1;
+            bands.MaxFreqColumn = 2;
+            bands.HarmonicColumn = 3;
+            bands.SidebandColumn = 4;
+            bands.CharacteristicFrequencyIndex = NaN; 
+        
+            % create the double matrix to contain the output
+            bands.CenterBandsMatrix = [zeros(N,4),(1:N)'];
+            bands.SurroundBandsMatrix = bands.CenterBandsMatrix;
+        
+            % fill the matrix first, in the order they are in the cell 
+            % array
+            for i=1:N
+                celldict = cellarraybands{i};
+                bands.CenterBandsMatrix(i,bands.MinFreqColumn) = ...
+                    celldict('Bands').Center(1);
+                bands.CenterBandsMatrix(i,bands.MaxFreqColumn) = ...
+                    celldict('Bands').Center(2);
+                bands.CenterBandsMatrix(i,bands.HarmonicColumn) = ...
+                    celldict('Harmonic');
+                bands.CenterBandsMatrix(i,bands.SidebandColumn) = ...
+                    celldict('Sideband');
+                bands.SurroundBandsMatrix(i,bands.MinFreqColumn) = ...
+                    celldict('Bands').Surround(1);
+                bands.SurroundBandsMatrix(i,bands.MaxFreqColumn) = ...
+                    celldict('Bands').Surround(2);
+                bands.SurroundBandsMatrix(i,bands.HarmonicColumn) = ...
+                    celldict('Harmonic');
+                bands.SurroundBandsMatrix(i,bands.SidebandColumn) = ...
+                    celldict('Sideband');      
+                if celldict('Harmonic') == 1 && celldict('Sideband') == 0
+                    bands.CharacteristicFrequencyIndex = i;
+                end
+            end
+            
+            % Sort lexicographically by lower frequency, harmonic, then 
+            % sideband
+            sortedMat = sortrows(bands.CenterBandsMatrix, ...
+                [bands.MinFreqColumn, bands.HarmonicColumn, ...
+                 bands.SidebandColumn]);
+            % remove auxiliary column
+            bands.CenterBandsMatrix = sortedMat(:,1:end-1);
+            bands.SurroundBandsMatrix = ...
+                bands.SurroundBandsMatrix(sortedMat(:,end), 1:end-1);
+            bands = orderfields(bands);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

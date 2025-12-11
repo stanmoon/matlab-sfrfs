@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>EnsembleUtil</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="EnsembleUtil.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> EnsembleUtil
+<span class="comment">%EnsembleUtil Static utility functions for ensemble processing.</span>
+<span class="comment">%</span>
+<span class="comment">%   This class provides utility methods for ensemble handling.</span>
+<span class="comment">%</span>
+<span class="comment">%   Utility Methods:</span>
+<span class="comment">%     appendSuffix(baseName, suffix) - Append suffix to a base name,</span>
+<span class="comment">%       preserving the input type (char or string).</span>
+<span class="comment">%</span>
+<span class="comment">%     removeSuffix(nameWithSuffix, suffix) - Remove specified suffix</span>
+<span class="comment">%       from a name, preserving the input type and verifying presence</span>
+<span class="comment">%       of the suffix.</span>
+<span class="comment">%</span>
+<span class="comment">%   Usage:</span>
+<span class="comment">%     To access help for each method, use:</span>
+<span class="comment">%       help EnsembleUtil.appendSuffix</span>
+<span class="comment">%       help EnsembleUtil.removeSuffix</span>
+
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> outputName = appendSuffix(baseName, suffix)
+        <span class="comment">%APPENDSUFFIX Append suffix to a base name, preserving input type.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   outputName = EnsembleUtil.appendSuffix(baseName, suffix)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   baseName - char or string scalar</span>
+        <span class="comment">%   suffix   - string scalar suffix to append</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   outputName - baseName with suffix appended, same type as input</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%     colName = EnsembleUtil.appendSuffix(...</span>
+        <span class="comment">%       'HorizontalAcceleration', '_FFT');</span>
+
+            <span class="keyword">arguments</span>
+                baseName <span class="typesection">{mustBeTextScalar}</span>
+                suffix <span class="typesection">(1,1) string</span>
+            <span class="keyword">end</span>
+            isCharInput = ischar(baseName);
+            outputName = string(baseName) + suffix;
+            <span class="keyword">if</span> isCharInput
+                outputName = char(outputName);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> baseName = removeSuffix(nameWithSuffix, suffix)
+        <span class="comment">%REMOVESUFFIX Remove suffix from name if present, preserving type.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   baseName = EnsembleUtil.removeSuffix(nameWithSuffix, suffix)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   nameWithSuffix - char or string scalar</span>
+        <span class="comment">%   suffix         - string scalar suffix to remove</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   baseName - nameWithSuffix without trailing suffix</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%     baseName = EnsembleUtil.removeSuffix(...</span>
+        <span class="comment">%       'VerticalAcceleration_FFT', '_FFT');</span>
+            <span class="keyword">arguments</span>
+                nameWithSuffix <span class="typesection">{mustBeTextScalar}</span>
+                suffix <span class="typesection">(1,1) string</span>
+            <span class="keyword">end</span>
+            isCharInput = ischar(nameWithSuffix);
+            nameStr = string(nameWithSuffix);
+            <span class="keyword">if</span> endsWith(nameStr, suffix)
+                suffixLength = strlength(suffix);
+                baseName = extractBefore(<span class="keyword">...</span>
+                    nameStr, strlength(nameStr) - suffixLength + 1);
+            <span class="keyword">else</span>
+                errorId = <span class="string">'sfrfs:EnsembleUtil:InvalidSuffix'</span>;
+                error(<span class="keyword">...</span>
+                    errorId, <span class="keyword">...</span>
+                    <span class="string">'"%s" does not end with the expected suffix "%s".'</span>, <span class="keyword">...</span>
+                    nameWithSuffix, <span class="keyword">...</span>
+                    suffix);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> isCharInput
+                baseName = char(baseName);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef EnsembleUtil
+%EnsembleUtil Static utility functions for ensemble processing.
+%
+%   This class provides utility methods for ensemble handling.
+%
+%   Utility Methods:
+%     appendSuffix(baseName, suffix) - Append suffix to a base name,
+%       preserving the input type (char or string).
+%
+%     removeSuffix(nameWithSuffix, suffix) - Remove specified suffix 
+%       from a name, preserving the input type and verifying presence 
+%       of the suffix.
+%
+%   Usage:
+%     To access help for each method, use:
+%       help EnsembleUtil.appendSuffix
+%       help EnsembleUtil.removeSuffix
+
+    
+    methods (Static)
+
+        function outputName = appendSuffix(baseName, suffix)
+        %APPENDSUFFIX Append suffix to a base name, preserving input type.
+        %
+        %   outputName = EnsembleUtil.appendSuffix(baseName, suffix)
+        %
+        % Inputs:
+        %   baseName - char or string scalar
+        %   suffix   - string scalar suffix to append
+        %
+        % Output:
+        %   outputName - baseName with suffix appended, same type as input
+        %
+        % Example:
+        %     colName = EnsembleUtil.appendSuffix(...
+        %       'HorizontalAcceleration', '_FFT');
+        
+            arguments
+                baseName {mustBeTextScalar}
+                suffix (1,1) string
+            end
+            isCharInput = ischar(baseName);
+            outputName = string(baseName) + suffix;
+            if isCharInput
+                outputName = char(outputName);
+            end
+        end
+
+        function baseName = removeSuffix(nameWithSuffix, suffix)
+        %REMOVESUFFIX Remove suffix from name if present, preserving type.
+        %
+        %   baseName = EnsembleUtil.removeSuffix(nameWithSuffix, suffix)
+        %
+        % Inputs:
+        %   nameWithSuffix - char or string scalar
+        %   suffix         - string scalar suffix to remove
+        %
+        % Output:
+        %   baseName - nameWithSuffix without trailing suffix
+        %
+        % Example:
+        %     baseName = EnsembleUtil.removeSuffix(...
+        %       'VerticalAcceleration_FFT', '_FFT');
+            arguments
+                nameWithSuffix {mustBeTextScalar}
+                suffix (1,1) string
+            end
+            isCharInput = ischar(nameWithSuffix);
+            nameStr = string(nameWithSuffix);
+            if endsWith(nameStr, suffix)
+                suffixLength = strlength(suffix);
+                baseName = extractBefore(...
+                    nameStr, strlength(nameStr) - suffixLength + 1);
+            else
+                errorId = 'sfrfs:EnsembleUtil:InvalidSuffix';
+                error(...
+                    errorId, ...
+                    '"%s" does not end with the expected suffix "%s".', ...
+                    nameWithSuffix, ...
+                    suffix);
+            end
+            if isCharInput
+                baseName = char(baseName);
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

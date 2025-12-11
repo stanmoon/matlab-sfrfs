@@ -1,0 +1,563 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>EnsembleProcessor</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="EnsembleProcessor.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> (Abstract) EnsembleProcessor &lt; handle
+<span class="comment">% EnsembleProcessor Abstract base for ensemble processing classes.</span>
+<span class="comment">%</span>
+<span class="comment">%   Defines the interface for classes that process ensembles using</span>
+<span class="comment">%   parallel workers.</span>
+<span class="comment">%</span>
+<span class="comment">% Properties:</span>
+<span class="comment">%   numWorkers           Number of parallel workers to use</span>
+<span class="comment">%                        (positive integer, default: 2).</span>
+<span class="comment">%</span>
+<span class="comment">%   ensemble             Ensemble Broker object.</span>
+<span class="comment">%</span>
+<span class="comment">% Methods (Abstract):</span>
+<span class="comment">%   getProcessParams     Return a struct with required parameters.</span>
+<span class="comment">%</span>
+<span class="comment">% Methods:</span>
+<span class="comment">%   process              Apply a function handle to ensemble members using</span>
+<span class="comment">%                        parallel execution.</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        <span class="comment">% numWorkers Number of parallel workers (default: 2)</span>
+        numWorkersInternal <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+            <span class="typesection">{mustBePositive, mustBeInteger}</span> = 2
+
+
+        <span class="comment">% ensemble EnsembleBroker instance</span>
+        <span class="comment">% (MATLAB has no 'null', empty is available for concrete classes)</span>
+        ensembleInternal = EnsembleBroker.empty
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        <span class="comment">% to implement read-only operations on properties but for ensemble</span>
+        numWorkers <span class="typesection">double</span>
+        ensemble <span class="typesection">EnsembleBroker</span>
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">methods</span>
+        <span class="comment">% getter methods</span>
+
+        <span class="keyword">function</span> val = get.numWorkers(obj)
+            val = obj.numWorkersInternal;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.ensemble(obj)
+            val = obj.ensembleInternal;
+        <span class="keyword">end</span>
+
+        <span class="comment">%setter for ensemble object</span>
+        <span class="keyword">function</span> set.ensemble(obj, val)
+            <span class="comment">% Setter for ensemble property</span>
+            <span class="comment">% Ensures the assigned value is a nonempty EnsembleBroker</span>
+            <span class="comment">% instance</span>
+
+            <span class="keyword">if</span> isempty(val)
+                error(<span class="string">'sfrfs:EnsembleProcessor:EmptyEnsemble'</span>, <span class="keyword">...</span>
+                    <span class="string">'Ensemble cannot be empty.'</span>);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~isa(val, <span class="string">'EnsembleBroker'</span>)
+                error(<span class="string">'sfrfs:EnsembleProcessor:InvalidEnsembleType'</span>, <span class="keyword">...</span>
+                    <span class="string">'Ensemble must be an instance of EnsembleBroker.'</span>);
+            <span class="keyword">end</span>
+
+            obj.ensembleInternal = val;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Abstract)
+
+        <span class="comment">% getProcessParams Get parameters for the process method.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   params = getProcessParams(obj) returns a struct containing all</span>
+        <span class="comment">%   relevant parameters required for processing the ensemble.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output Arguments:</span>
+        <span class="comment">%     params - Struct with processing parameters.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%     function params = getProcessParams(obj)</span>
+        <span class="comment">%         params.memberFiles = obj.ensemble.Files;</span>
+        <span class="comment">%         params.sf = obj.samplingFrequency;</span>
+        <span class="comment">%         params.fbt = obj.faultBandsTable;</span>
+        <span class="comment">%         % other params...</span>
+        <span class="comment">%     end</span>
+        <span class="comment">%</span>
+        <span class="comment">%   See also: process</span>
+
+        params = getProcessParams(obj)
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = EnsembleProcessor(args)
+        <span class="comment">% Constructor for EnsembleProcessor.</span>
+        <span class="comment">% Argument Descriptions:</span>
+        <span class="comment">%</span>
+        <span class="comment">%   numWorkers           Number of parallel workers</span>
+        <span class="comment">%                    (1,:) char   (positive integer).</span>
+        <span class="comment">%                        Default is 2.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   ensemble             Ensemble.</span>
+        <span class="comment">%                        Default is EnsembleBroker.empty.</span>
+            <span class="keyword">arguments</span>
+                args.numWorkers <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 2
+                args.ensemble <span class="typesection">EnsembleBroker </span>= EnsembleBroker.empty
+            <span class="keyword">end</span>
+            obj.numWorkersInternal = args.numWorkers;
+            obj.ensemble = args.ensemble;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> process(obj, computeHandle)
+            <span class="comment">%PROCESS Process ensemble members using a provided compute</span>
+            <span class="comment">% handle.</span>
+            <span class="comment">%   process(obj, computeHandle) processes all members in the</span>
+            <span class="comment">%   ensemble, applying the function handle 'computeHandle' to</span>
+            <span class="comment">%   each member. Parallel or sequential execution is determined</span>
+            <span class="comment">%   by the number of workers.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Input Arguments:</span>
+            <span class="comment">%     obj           - EnsembleProcessor instance.</span>
+            <span class="comment">%     computeHandle - Function handle to apply to each member,</span>
+            <span class="comment">%                     e.g.,</span>
+            <span class="comment">%                     @(tbl, params) SubClass.compute(...</span>
+            <span class="comment">%                           tbl, params)</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Example (make compute Static):</span>
+            <span class="comment">%     processor.process(@(tbl, params) ...</span>
+            <span class="comment">%       SubClass.compute(tbl, params));</span>
+            <span class="comment">%</span>
+            <span class="comment">%   See also: parfor, EnsembleProcessor</span>
+
+            <span class="keyword">arguments</span>
+                obj
+                computeHandle <span class="typesection">(1,1) function_handle</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% runtime check</span>
+            <span class="keyword">if</span> isempty(obj.ensemble)
+                error(<span class="string">'sfrfs:EnsembleProcessor:EmptyEnsemble'</span>,<span class="keyword">...</span>
+                      <span class="string">'Cannot process: Ensemble has not been assigned.'</span>);
+            <span class="keyword">end</span>
+            memberFiles = obj.ensemble.getFiles();
+            params = obj.getProcessParams();
+            mtvn = obj.ensemble.memberTableVarName;
+            sortf = obj.ensemble.sortField;
+
+            compute = parallel.pool.Constant(@() computeHandle);
+
+            <span class="comment">% Dimension pool</span>
+
+            <span class="keyword">if</span> isempty(gcp(<span class="string">'nocreate'</span>))
+                parpool(obj.numWorkers);
+            <span class="keyword">end</span>
+
+            log = SFRFsLogger.getLogger();
+
+            <span class="keyword">if</span> log.isInfoEnabled()
+                log.info(<span class="string">'Running with %d workers.'</span>, <span class="keyword">...</span>
+                    obj.numWorkersInternal);
+            <span class="keyword">end</span>
+
+            nWorkers = numel(memberFiles);
+            exceptions = cell(nWorkers,1);
+
+            <span class="keyword">parfor</span> kIdx = 1:nWorkers
+
+                log = SFRFsLogger.getLogger();
+                <span class="keyword">if</span> log.isInfoEnabled()
+                    log.info(sprintf(<span class="string">'Worker processing %s ...'</span>, <span class="keyword">...</span>
+                        memberFiles{kIdx}));
+                <span class="keyword">end</span>
+
+                <span class="keyword">try</span>
+                    <span class="comment">% Load member and sort</span>
+                    tbl = EnsembleBroker.loadEnsembleMember(<span class="keyword">...</span>
+                        <span class="string">'filename'</span>, memberFiles{kIdx}, <span class="keyword">...</span>
+                        <span class="string">'memberTableVarName'</span>, mtvn, <span class="keyword">...</span>
+                        <span class="string">'sort'</span>, true, <span class="keyword">...</span>
+                        <span class="string">'sortField'</span>, sortf);
+
+                    tbl = compute.Value(tbl,params);
+
+                    <span class="comment">% Save the updated table</span>
+                    EnsembleBroker.saveEnsembleMember(<span class="keyword">...</span>
+                     memberFiles{kIdx}, mtvn, tbl);
+                <span class="keyword">catch</span> ME
+                    <span class="keyword">if</span> log.isWarningEnabled()
+                        log.warning(<span class="string">'Error processing file %s: %s'</span>, <span class="keyword">...</span>
+                            memberFiles{kIdx}, ME.message);
+                        log.warning(<span class="string">'%s'</span>, getReport(ME, <span class="string">'extended'</span>));
+                    <span class="keyword">end</span>
+                    exceptions{kIdx} = ME;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            EnsembleProcessor.throwIfParallelErrors(exceptions);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access=private)
+        <span class="keyword">function</span> throwIfParallelErrors(exceptions)
+        <span class="comment">% Aggregate any exceptions thrown by workers</span>
+            log = SFRFsLogger.getLogger();
+
+            failedIdx = find(~cellfun(<span class="string">'isempty'</span>, exceptions));
+            nExcep = numel(failedIdx);
+
+            <span class="keyword">if</span> nExcep &gt; 0
+                <span class="comment">% Compose messages from actual failed workers</span>
+                msgs = cell(nExcep,1);
+                <span class="keyword">for</span> i = 1:nExcep
+                    idx = failedIdx(i);
+                    msgs{i} = sprintf(<span class="keyword">...</span>
+                        <span class="string">'Worker %d: %s'</span>, idx, exceptions{idx}.message);
+                <span class="keyword">end</span>
+
+                combinedMsg = strjoin(msgs, <span class="string">'; '</span>);
+                <span class="keyword">if</span> log.isWarningEnabled()
+                    log.warning(combinedMsg);
+                <span class="keyword">end</span>
+
+                <span class="comment">% Create aggregated MException</span>
+                ME = MException(<span class="keyword">...</span>
+                    <span class="string">'SFRFsProcessor:ProcessingError'</span>, combinedMsg);
+
+                <span class="comment">% Add all individual exceptions as causes</span>
+                <span class="keyword">for</span> i = 1:nExcep
+                    ME = addCause(ME, exceptions{failedIdx(i)});
+                <span class="keyword">end</span>
+
+                throwAsCaller(ME);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef (Abstract) EnsembleProcessor < handle
+% EnsembleProcessor Abstract base for ensemble processing classes.
+%
+%   Defines the interface for classes that process ensembles using
+%   parallel workers.
+%
+% Properties:
+%   numWorkers           Number of parallel workers to use 
+%                        (positive integer, default: 2).
+%
+%   ensemble             Ensemble Broker object.
+%
+% Methods (Abstract):
+%   getProcessParams     Return a struct with required parameters.
+%
+% Methods:
+%   process              Apply a function handle to ensemble members using
+%                        parallel execution.
+
+    properties (Access = private)
+        % numWorkers Number of parallel workers (default: 2)
+        numWorkersInternal (1,1) double ...
+            {mustBePositive, mustBeInteger} = 2
+    
+    
+        % ensemble EnsembleBroker instance
+        % (MATLAB has no 'null', empty is available for concrete classes)
+        ensembleInternal = EnsembleBroker.empty
+    end
+
+    properties (Dependent)
+        % to implement read-only operations on properties but for ensemble
+        numWorkers double
+        ensemble EnsembleBroker
+    end
+
+    
+    methods
+        % getter methods
+
+        function val = get.numWorkers(obj)
+            val = obj.numWorkersInternal;
+        end
+
+        function val = get.ensemble(obj)
+            val = obj.ensembleInternal;
+        end
+
+        %setter for ensemble object
+        function set.ensemble(obj, val)
+            % Setter for ensemble property
+            % Ensures the assigned value is a nonempty EnsembleBroker 
+            % instance
+            
+            if isempty(val)
+                error('sfrfs:EnsembleProcessor:EmptyEnsemble', ...
+                    'Ensemble cannot be empty.');
+            end
+            if ~isa(val, 'EnsembleBroker')
+                error('sfrfs:EnsembleProcessor:InvalidEnsembleType', ...
+                    'Ensemble must be an instance of EnsembleBroker.');
+            end
+            
+            obj.ensembleInternal = val;
+        end
+    end
+
+    methods (Abstract)
+
+        % getProcessParams Get parameters for the process method.
+        %
+        %   params = getProcessParams(obj) returns a struct containing all
+        %   relevant parameters required for processing the ensemble.
+        %
+        %   Output Arguments:
+        %     params - Struct with processing parameters. 
+        %
+        %   Example:
+        %     function params = getProcessParams(obj)
+        %         params.memberFiles = obj.ensemble.Files;
+        %         params.sf = obj.samplingFrequency;
+        %         params.fbt = obj.faultBandsTable;
+        %         % other params...
+        %     end
+        %
+        %   See also: process
+    
+        params = getProcessParams(obj)
+    end
+
+    methods
+
+        function obj = EnsembleProcessor(args)
+        % Constructor for EnsembleProcessor.
+        % Argument Descriptions:
+        %
+        %   numWorkers           Number of parallel workers 
+        %                    (1,:) char   (positive integer).
+        %                        Default is 2.
+        %
+        %   ensemble             Ensemble.
+        %                        Default is EnsembleBroker.empty.
+            arguments
+                args.numWorkers (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 2
+                args.ensemble EnsembleBroker = EnsembleBroker.empty
+            end
+            obj.numWorkersInternal = args.numWorkers;
+            obj.ensemble = args.ensemble;
+        end
+
+        function process(obj, computeHandle)
+            %PROCESS Process ensemble members using a provided compute 
+            % handle.
+            %   process(obj, computeHandle) processes all members in the 
+            %   ensemble, applying the function handle 'computeHandle' to 
+            %   each member. Parallel or sequential execution is determined 
+            %   by the number of workers.
+            %
+            %   Input Arguments:
+            %     obj           - EnsembleProcessor instance.
+            %     computeHandle - Function handle to apply to each member,
+            %                     e.g., 
+            %                     @(tbl, params) SubClass.compute(...
+            %                           tbl, params)
+            %
+            %   Example (make compute Static):
+            %     processor.process(@(tbl, params) ...
+            %       SubClass.compute(tbl, params));
+            %
+            %   See also: parfor, EnsembleProcessor
+
+            arguments
+                obj
+                computeHandle (1,1) function_handle
+            end
+            
+            % runtime check
+            if isempty(obj.ensemble)
+                error('sfrfs:EnsembleProcessor:EmptyEnsemble',...
+                      'Cannot process: Ensemble has not been assigned.');
+            end
+            memberFiles = obj.ensemble.getFiles();
+            params = obj.getProcessParams();
+            mtvn = obj.ensemble.memberTableVarName;
+            sortf = obj.ensemble.sortField;
+
+            compute = parallel.pool.Constant(@() computeHandle);
+
+            % Dimension pool
+
+            if isempty(gcp('nocreate'))
+                parpool(obj.numWorkers);
+            end
+
+            log = SFRFsLogger.getLogger();
+
+            if log.isInfoEnabled()
+                log.info('Running with %d workers.', ...
+                    obj.numWorkersInternal);
+            end
+
+            nWorkers = numel(memberFiles);
+            exceptions = cell(nWorkers,1);
+
+            parfor kIdx = 1:nWorkers
+
+                log = SFRFsLogger.getLogger();
+                if log.isInfoEnabled()
+                    log.info(sprintf('Worker processing %s ...', ...
+                        memberFiles{kIdx}));
+                end
+
+                try
+                    % Load member and sort
+                    tbl = EnsembleBroker.loadEnsembleMember(...
+                        'filename', memberFiles{kIdx}, ...
+                        'memberTableVarName', mtvn, ...
+                        'sort', true, ...
+                        'sortField', sortf);
+
+                    tbl = compute.Value(tbl,params);
+                    
+                    % Save the updated table
+                    EnsembleBroker.saveEnsembleMember(...
+                     memberFiles{kIdx}, mtvn, tbl);
+                catch ME
+                    if log.isWarningEnabled()
+                        log.warning('Error processing file %s: %s', ...
+                            memberFiles{kIdx}, ME.message);
+                        log.warning('%s', getReport(ME, 'extended'));
+                    end
+                    exceptions{kIdx} = ME;
+                end
+            end
+            EnsembleProcessor.throwIfParallelErrors(exceptions);    
+        end
+    end
+
+    methods (Static, Access=private)
+        function throwIfParallelErrors(exceptions)
+        % Aggregate any exceptions thrown by workers
+            log = SFRFsLogger.getLogger();
+        
+            failedIdx = find(~cellfun('isempty', exceptions));
+            nExcep = numel(failedIdx);
+        
+            if nExcep > 0
+                % Compose messages from actual failed workers
+                msgs = cell(nExcep,1);
+                for i = 1:nExcep
+                    idx = failedIdx(i);
+                    msgs{i} = sprintf(...
+                        'Worker %d: %s', idx, exceptions{idx}.message);
+                end
+        
+                combinedMsg = strjoin(msgs, '; ');
+                if log.isWarningEnabled()
+                    log.warning(combinedMsg);
+                end
+        
+                % Create aggregated MException
+                ME = MException(...
+                    'SFRFsProcessor:ProcessingError', combinedMsg);
+        
+                % Add all individual exceptions as causes
+                for i = 1:nExcep
+                    ME = addCause(ME, exceptions{failedIdx(i)});
+                end
+        
+                throwAsCaller(ME);
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

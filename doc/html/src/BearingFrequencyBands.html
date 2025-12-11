@@ -1,0 +1,1705 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>BearingFrequencyBands</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="BearingFrequencyBands.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> BearingFrequencyBands &lt; FaultFrequencyBands
+<span class="comment">% BearingFrequencyBands  Compute bearing fault characteristic frequency</span>
+<span class="comment">%   bands</span>
+<span class="comment">%</span>
+<span class="comment">%   Computes characteristic and sideband frequency bands for bearing faults</span>
+<span class="comment">%   based on bearing geometry and Spectral Fault Receptive Fields (SFRF)</span>
+<span class="comment">%   parameters.</span>
+<span class="comment">%   Supports configurable harmonics, sidebands, and Gaussian bandwidths for</span>
+<span class="comment">%   each fault type.</span>
+<span class="comment">%</span>
+<span class="comment">% Properties:</span>
+<span class="comment">%   bearingParams - ParametersRollingBearings object containing bearing</span>
+<span class="comment">%                   geometry</span>
+<span class="comment">%   sfrfsParams   - SFRFsParametersRollingBearings object configuring SFRF</span>
+<span class="comment">%                   settings</span>
+<span class="comment">%</span>
+<span class="comment">% Constant Properties:</span>
+<span class="comment">%   BPFO_CODE - Code for Ball Pass Frequency Outer Race ('Fo')</span>
+<span class="comment">%   BPFI_CODE - Code for Ball Pass Frequency Inner Race ('Fi')</span>
+<span class="comment">%   BSF_CODE  - Code for Ball Spin Frequency ('Fb')</span>
+<span class="comment">%   FTF_CODE  - Code for Fundamental Train Frequency (Cage) ('Fc')</span>
+<span class="comment">%   FR_CODE   - Code for Shaft Rotational Frequency ('Fr')</span>
+<span class="comment">%   faultFrequencyCodes - Cell array of all fault frequency codes used</span>
+<span class="comment">%</span>
+<span class="comment">% Example:</span>
+<span class="comment">%   % Define bearing geometry</span>
+<span class="comment">%   bp = ParametersRollingBearings( ...</span>
+<span class="comment">%       'numRollingElements', 8, ...</span>
+<span class="comment">%       'ballDiameter', 7.92, ...</span>
+<span class="comment">%       'pitchDiameter', 34.55, ...</span>
+<span class="comment">%       'contactAngle', 0);</span>
+<span class="comment">%</span>
+<span class="comment">%   sharedParams = ...</span>
+<span class="comment">%       SFRFsParametersRollingBearings.createSFRFsParameters( ...</span>
+<span class="comment">%       'order', 3, ...</span>
+<span class="comment">%       'numSidebands', 4, ...</span>
+<span class="comment">%       'numHarmonics', 8, ...</span>
+<span class="comment">%       'sigmaCenter', [5, 7], ...</span>
+<span class="comment">%       'sigmaSurround', [12, 3], ...</span>
+<span class="comment">%       'inhibitionFactor', 0.6);</span>
+<span class="comment">%</span>
+<span class="comment">%   sp = SFRFsParametersRollingBearings( ...</span>
+<span class="comment">%       'SameForAllFaultTypes', sharedParams);</span>
+<span class="comment">%</span>
+<span class="comment">%   speed = [35; 37.5; 40];</span>
+<span class="comment">%       load  = [12; 11; 10];</span>
+<span class="comment">%       ocObj = OperatingConditions(speed, load);</span>
+<span class="comment">%</span>
+<span class="comment">%   % Create the BearingFrequencyBands object using named parameters</span>
+<span class="comment">%   bfb = BearingFrequencyBands( ...</span>
+<span class="comment">%       bearingParams = bp, ...</span>
+<span class="comment">%       sfrfsParams = sp, ...</span>
+<span class="comment">%       operatingConditions = ocObj);</span>
+<span class="comment">%</span>
+<span class="comment">%   % Compute frequency bands for a shaft speed of 1500 Hz</span>
+<span class="comment">%   bands = bfb.computeForSpeed(1500);</span>
+<span class="comment">%</span>
+<span class="comment">% See also ParametersRollingBearings, SFRFsParametersRollingBearings</span>
+
+
+    <span class="keyword">properties</span>
+        bearingParams <span class="typesection">ParametersRollingBearings</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Constant)
+        BPFO_CODE = <span class="string">'Fo'</span>  <span class="comment">% Ball Pass Frequency Outer Race Code</span>
+        BPFI_CODE = <span class="string">'Fi'</span>  <span class="comment">% Ball Pass Frequency Inner Race Code</span>
+        BSF_CODE = <span class="string">'Fb'</span>  <span class="comment">% Ball Spin Frequency Code</span>
+        FTF_CODE = <span class="string">'Fc'</span>  <span class="comment">% Fundamental Train Frequency Code (Cage)</span>
+        FR_CODE = <span class="string">'Fr'</span>  <span class="comment">% Shaft Rotational Frequency Code</span>
+
+        <span class="comment">% Fault frequency codes as defined in MATLAB bearingFaultBands</span>
+        faultFrequencyCodes = { <span class="keyword">...</span>
+            BearingFrequencyBands.BPFO_CODE, <span class="keyword">...</span>
+            BearingFrequencyBands.BPFI_CODE, <span class="keyword">...</span>
+            BearingFrequencyBands.BSF_CODE, <span class="keyword">...</span>
+            BearingFrequencyBands.FTF_CODE <span class="keyword">...</span>
+        }
+
+        <span class="comment">% Descriptions used for fault bands table</span>
+        faultTypeDescriptions = containers.Map({ <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME}, <span class="keyword">...</span>
+            { <span class="keyword">...</span>
+                <span class="string">"Outer Race Fault"</span>, <span class="keyword">...</span>
+                <span class="string">"Inner Race Fault"</span>, <span class="keyword">...</span>
+                <span class="string">"Ball Fault"</span>, <span class="keyword">...</span>
+                <span class="string">"Cage Fault"</span> <span class="keyword">...</span>
+            })
+
+        <span class="comment">% Fault group numeric IDs compatible with MATLAB bearingFaultBands</span>
+        faultTypeGroups = containers.Map({ <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, <span class="keyword">...</span>
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME}, <span class="keyword">...</span>
+            { <span class="keyword">...</span>
+                1, <span class="keyword">...</span><span class="comment">  % Outer Race group ID</span>
+                2, <span class="keyword">...</span><span class="comment">  % Inner Race group ID</span>
+                3, <span class="keyword">...</span><span class="comment">  % Ball group ID</span>
+                4  <span class="keyword">...</span><span class="comment">  % Cage group ID</span>
+            })
+
+        <span class="comment">% Inverse of faultTypeGroups</span>
+        faultGroupToTypeName = <span class="keyword">...</span>
+            BearingFrequencyBands.buildGroupToFaultTypesMap();
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = BearingFrequencyBands(args)
+            <span class="keyword">arguments</span>
+                args.bearingParams <span class="typesection">(1,1) ParametersRollingBearings</span>
+                args.sfrfsParams <span class="typesection">(1,1) SFRFsParametersRollingBearings</span>
+                args.operatingConditions <span class="typesection">(1,1) OperatingConditions</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Call superclass constructor with named params struct</span>
+            obj = obj@FaultFrequencyBands( <span class="keyword">...</span>
+                operatingConditions=args.operatingConditions, <span class="keyword">...</span>
+                sfrfsParams = args.sfrfsParams);
+
+            <span class="comment">% Assign subclass-specific property</span>
+            obj.bearingParams = args.bearingParams;
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> computeBands(obj)
+        <span class="comment">% computeBands  Build fault frequency bands table</span>
+        <span class="comment">%   computeBands()</span>
+        <span class="comment">%   computes the fault frequency bands for each row in the</span>
+        <span class="comment">%   bandsTable table.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output table columns:</span>
+        <span class="comment">%       FaultGroup          - numeric index of the fault band entry</span>
+        <span class="comment">%       Description         - human-readable fault type description</span>
+        <span class="comment">%                             (e.g. "Outer Race Fault")</span>
+        <span class="comment">%       Speed               - shaft rotational speed (Hz)</span>
+        <span class="comment">%       Load                - load value from operatingConditions</span>
+        <span class="comment">%       ReceptiveFieldBands - cell containing the bands definition</span>
+        <span class="comment">%                             as a collection of instances of</span>
+        <span class="comment">%                             containers.Map, each map with keys:</span>
+        <span class="comment">%                               'Bands',</span>
+        <span class="comment">%                               'Harmonic',</span>
+        <span class="comment">%                               'Label',</span>
+        <span class="comment">%                               'Sideband'</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 1. Set the operating conditions</span>
+        <span class="comment">%       speed = [35; 37.5; 40];</span>
+        <span class="comment">%       load  = [12; 11; 10];</span>
+        <span class="comment">%       ocObj = OperatingConditions(speed, load);</span>
+        <span class="comment">% FaultFrequency</span>
+        <span class="comment">%       % 2. Bearing + SRF params</span>
+        <span class="comment">%       bp = ParametersRollingBearings( ...</span>
+        <span class="comment">%           'numRollingElements',8, ...</span>
+        <span class="comment">%           'ballDiameter',7.92, ...</span>
+        <span class="comment">%           'pitchDiameter',34.55, ...</span>
+        <span class="comment">%           'contactAngle',0);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       sharedParams = ...</span>
+        <span class="comment">%         SFRFsParameters.crFaultFrequencyeateSFRFsParameters( ...</span>
+        <span class="comment">%           'order', 3, ...</span>
+        <span class="comment">%           'numSidebands', 4, ...</span>
+        <span class="comment">%           'numHarmonics', 8, ...</span>
+        <span class="comment">%           'sigmaCenter', [5, 7], ...</span>
+        <span class="comment">%           'sigmaSurround', [12, 3], ...</span>
+        <span class="comment">%           'inhibitionFactor', 0.6);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       sp = SFRFsParametersRollingBearings( ...</span>
+        <span class="comment">%           'SameForAllFaultTypes', sharedParams);</span>
+        <span class="comment">%</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 3. Create object instance</span>
+        <span class="comment">%       bfb = BearingFrequencyBands(...</span>
+        <span class="comment">%           'bearingParams',bp, ...</span>
+        <span class="comment">%           'sfrfsParams',sp, ...</span>
+        <span class="comment">%           'operatingConditions', ocObj);</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 4. Compute fault bands</span>
+        <span class="comment">%       bfb.computeBands();</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Notes:</span>
+        <span class="comment">%       FaultGroup numeric index and Label in ReceptiveFieldBands</span>
+        <span class="comment">%       entries  are compatible with MATLAB's function</span>
+        <span class="comment">%       'bearingFaultBands' introduced in</span>
+        <span class="comment">%       Predictive Maintenance Toolbox R2019b</span>
+
+
+            oc = obj.operatingConditions.conditionsTable;
+
+            <span class="comment">% Get constant list of fault types</span>
+            faultTypes = SFRFsParametersRollingBearings.faultTypes;
+            numFaultTypes = numel(faultTypes);
+
+            <span class="comment">% Number of operating conditions</span>
+            numOC = height(oc);
+
+            <span class="comment">% Preallocate one row per fault type per operating condition</span>
+            totalRows = numOC * numFaultTypes;
+
+            faultBandsStruct(totalRows) = struct( <span class="keyword">...</span>
+                <span class="string">'FaultGroup'</span>, [], <span class="keyword">...</span>
+                <span class="string">'Description'</span>, <span class="string">""</span>, <span class="keyword">...</span>
+                <span class="string">'Speed'</span>, [], <span class="keyword">...</span>
+                <span class="string">'Load'</span>, [], <span class="keyword">...</span>
+                <span class="string">'ReceptiveFieldBands'</span>, [] <span class="keyword">...</span>
+            );
+
+            log = SFRFsLogger.getLogger();
+
+            <span class="comment">% Fill rows</span>
+            rowIdx = 1;
+            <span class="keyword">for</span> condIdx = 1:numOC
+                <span class="comment">% speed and load</span>
+                oc_speed = oc.Speed(condIdx);
+                oc_load  = oc.Load(condIdx);
+
+                <span class="comment">% Log context info</span>
+                <span class="keyword">if</span> log.isInfoEnabled()
+                    contextMsg = <span class="keyword">...</span>
+                        sprintf([<span class="string">'Computing fault bands for Speed=%.3f'</span><span class="keyword">...</span>
+                        <span class="string">' Hz, Load=%.3f'</span>], <span class="keyword">...</span>
+                        oc_speed, oc_load);
+                    log.info(contextMsg);
+                <span class="keyword">end</span>
+
+                <span class="comment">% compute all fault bands for this speed ---</span>
+                fbs = obj.computeForSpeed(oc_speed);
+
+                <span class="comment">% add rows per each fault type</span>
+                <span class="keyword">for</span> ftIdx = 1:numFaultTypes
+                    ftName   = faultTypes{ftIdx};
+                    description = obj.faultTypeDescriptions(ftName);
+
+                    bands = fbs.(ftName);
+
+                    <span class="comment">% Always enforce cell array</span>
+                    <span class="keyword">if</span> ~iscell(bands)
+                        bands = {bands};
+                    <span class="keyword">end</span>
+
+                    faultBandsStruct(rowIdx).FaultGroup = <span class="keyword">...</span>
+                        obj.faultTypeGroups(ftName);
+                    faultBandsStruct(rowIdx).Description = description;
+                    faultBandsStruct(rowIdx).Speed = oc_speed;
+                    faultBandsStruct(rowIdx).Load = oc_load;
+                    faultBandsStruct(rowIdx).ReceptiveFieldBands = {bands};
+
+                    rowIdx = rowIdx + 1;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Convert struct array to table</span>
+            obj.bandsTable = <span class="keyword">...</span>
+                struct2table(faultBandsStruct, <span class="string">'AsArray'</span>, true);
+
+            <span class="keyword">if</span> log.isFineEnabled()
+                log.fine(obj.toString())
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> faultBands = computeForSpeed(obj, speed)
+            <span class="comment">% Compute fault bands for given shaft speed (Hz)</span>
+
+            faultTypes = SFRFsParametersRollingBearings.faultTypes;
+            faultBands = struct();
+            log = SFRFsLogger.getLogger();
+
+            <span class="keyword">for</span> f = 1:numel(faultTypes)
+                ftName       = faultTypes{f};
+
+                description = obj.faultTypeDescriptions(ftName);
+
+                <span class="comment">% Log context info</span>
+                contextMsg = <span class="keyword">...</span>
+                    sprintf([<span class="string">'Computing fault bands for Speed=%.3f'</span><span class="keyword">...</span>
+                    <span class="string">' Hz, Fault=%s'</span>], speed, description);
+                    log.info(contextMsg);
+                sfrf_params  = obj.sfrfsParams.(ftName);
+                mapsForType  = obj.computeBandsForFaultType(<span class="keyword">...</span>
+                    ftName, speed, sfrf_params);
+                faultBands.(ftName) = mapsForType;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> str = toString(obj)
+            <span class="comment">% string representation of the BearingFrequencyBands object</span>
+
+            <span class="comment">% Convert bearingParams and sfrfsParams to strings</span>
+            bpStr = obj.bearingParams.toString();
+            spStr = obj.sfrfsParams.toString();
+
+            <span class="comment">% Convert the bandsTable to JSON string (compact)</span>
+            <span class="keyword">if</span> isempty(obj.bandsTable)
+                fbStr = <span class="string">"[]"</span>;
+            <span class="keyword">else</span>
+                fbStr = jsonencode(obj.bandsTable);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Compose final string</span>
+            str = sprintf(<span class="keyword">...</span>
+                <span class="string">"BearingFrequencyBands:%s,%s[bandsTable:%s]"</span>, <span class="keyword">...</span>
+                bpStr, spStr, fbStr);
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">methods</span> (Access = private)
+
+        <span class="keyword">function</span> mapsForType = computeBandsForFaultType( <span class="keyword">...</span>
+                obj, ftName, speed, sfrf_params)
+            <span class="keyword">switch</span> ftName
+                <span class="keyword">case</span> <span class="keyword">...</span>
+                  SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME
+                  mapsForType = <span class="keyword">...</span>
+                      obj.computeOuterRaceBands(speed, sfrf_params);
+
+                <span class="keyword">case</span> <span class="keyword">...</span>
+                  SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME
+                  mapsForType = <span class="keyword">...</span>
+                      obj.computeInnerRaceBands(speed, sfrf_params);
+
+                <span class="keyword">case</span> SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME
+                    mapsForType = obj.computeBallBands(speed, sfrf_params);
+
+                <span class="keyword">case</span> SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME
+                    mapsForType = obj.computeCageBands(speed, sfrf_params);
+
+                <span class="keyword">otherwise</span>
+                    error( <span class="keyword">...</span>
+                            [<span class="string">'sfrfs:BearingFrequencyBands:'</span> <span class="keyword">...</span>
+                            <span class="string">'ModulationCodeRequired'</span>], <span class="keyword">...</span>
+                            <span class="string">'Unknown fault type: %s'</span>, ftName);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [NB, DB, DP, phi] = getBearingGeometryParams(obj)
+        <span class="comment">%GETGEOMETRY Extract common bearing geometry in consistent units</span>
+            NB  = obj.bearingParams.numRollingElements;
+            DB  = obj.bearingParams.ballDiameter;
+            DP  = obj.bearingParams.pitchDiameter;
+            phi = deg2rad(obj.bearingParams.contactAngle);
+        <span class="keyword">end</span>
+
+         <span class="keyword">function</span> f0 = getCentralFrequency(obj, faultCode, speed)
+            <span class="comment">% Retrieve geometry from this object's state</span>
+            [NB, DB, DP, phi] = obj.getBearingGeometryParams();
+
+            <span class="keyword">switch</span> faultCode
+                <span class="keyword">case</span> BearingFrequencyBands.BPFO_CODE <span class="comment">% Outer race BPFO</span>
+                    f0 = (NB / 2) * speed * (1 - (DB / DP) * cos(phi));
+
+                <span class="keyword">case</span> BearingFrequencyBands.BPFI_CODE <span class="comment">% Inner race BPFI</span>
+                    f0 = (NB / 2) * speed * (1 + (DB / DP) * cos(phi));
+
+                <span class="keyword">case</span> BearingFrequencyBands.BSF_CODE <span class="comment">% Ball spin BSF</span>
+                    f0 = (DP / (2 * DB)) * speed * <span class="keyword">...</span>
+                         (1 - ((DB / DP) * cos(phi)) ^ 2);
+
+                <span class="keyword">case</span> BearingFrequencyBands.FTF_CODE <span class="comment">% Cage / FTF</span>
+                    f0 = 0.5 * speed * (1 - (DB / DP) * cos(phi));
+
+                <span class="keyword">otherwise</span>
+                    error( <span class="keyword">...</span>
+                        [<span class="string">'sfrfs:BearingFrequencyBands:'</span> <span class="keyword">...</span>
+                         <span class="string">'UnknownFaultCode'</span>], <span class="keyword">...</span>
+                        <span class="string">'Unknown fault code: %s'</span>, faultCode);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> maps = computeOuterRaceBands(obj, speed, sfrf_params)
+            <span class="comment">% Compute band maps for the Outer Race fault type</span>
+
+            numH = sfrf_params.numHarmonics;
+            maps = cell(1, numH);
+
+            <span class="comment">% compute central frequency</span>
+            f_bpfo = obj.getCentralFrequency(obj.BPFO_CODE, speed);
+
+            <span class="keyword">for</span> h = 1:numH
+                <span class="comment">% Frequency of the harmonic</span>
+                freqH = h * f_bpfo;
+
+                map = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                    freqH, sfrf_params, <span class="keyword">...</span>
+                    HarmonicNumber = h, <span class="keyword">...</span>
+                    SidebandNumber = 0, <span class="keyword">...</span>
+                    CentralCode    = obj.BPFO_CODE);
+
+                maps{h} = map;
+            <span class="keyword">end</span>
+
+            <span class="comment">% Remove bands with negative frequencies</span>
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> maps = computeInnerRaceBands(obj, speed, sfrf_params)
+            <span class="comment">% Compute band maps for the Inner Race fault type</span>
+
+            numH = sfrf_params.numHarmonics;
+            numS = sfrf_params.numSidebands;
+            maps = cell(1, numH * (2 * numS + 1));
+
+            <span class="comment">% Central frequency for Inner Race from single source of truth</span>
+            f_bpfi = obj.getCentralFrequency(obj.BPFI_CODE, speed);
+
+            <span class="comment">% Modulation frequency (shaft rotational speed)</span>
+            f_mod = speed;  <span class="comment">% Hz</span>
+
+            centralCode = obj.BPFI_CODE;
+            modCode     = obj.FR_CODE;
+
+            idx = 1;
+            <span class="keyword">for</span> h = 1:numH
+                f_central = h * f_bpfi;
+
+                <span class="keyword">for</span> sb = -numS:numS
+                    <span class="keyword">if</span> sb == 0
+                        <span class="comment">% Central harmonic frequency component</span>
+                        maps{idx} = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                            f_central, sfrf_params, <span class="keyword">...</span>
+                            HarmonicNumber = h, <span class="keyword">...</span>
+                            SidebandNumber = sb, <span class="keyword">...</span>
+                            CentralCode = centralCode);
+                    <span class="keyword">else</span>
+                        <span class="comment">% Sidebands modulated by shaft rotation frequency</span>
+                        f_sb = f_central + sb * f_mod;
+                        maps{idx} = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                            f_sb, sfrf_params, <span class="keyword">...</span>
+                            HarmonicNumber = h, <span class="keyword">...</span>
+                            SidebandNumber = sb, <span class="keyword">...</span>
+                            CentralCode = centralCode, <span class="keyword">...</span>
+                            ModulationCode = modCode);
+                    <span class="keyword">end</span>
+                    idx = idx + 1;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            <span class="comment">% Remove bands with negative frequencies</span>
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> maps = computeBallBands(obj, speed, sfrf_params)
+        <span class="comment">% Compute band maps for the Ball Spin fault type</span>
+
+            numH = sfrf_params.numHarmonics;
+            numS = sfrf_params.numSidebands;
+            maps = cell(1, numH * (2 * numS + 1));
+
+            <span class="comment">% Central frequency for Ball Spin from single source of truth</span>
+            f_bsf = obj.getCentralFrequency(obj.BSF_CODE, speed);
+
+            <span class="comment">% Modulation frequency (shaft rotational speed)</span>
+            f_mod = speed;  <span class="comment">% Hz</span>
+
+            centralCode = obj.BSF_CODE;
+            modCode     = obj.FTF_CODE;  <span class="comment">% Cage frequency</span>
+
+            idx = 1;
+            <span class="keyword">for</span> h = 1:numH
+                f_central = h * f_bsf;
+
+                <span class="keyword">for</span> sb = -numS:numS
+                    <span class="keyword">if</span> sb == 0
+                        <span class="comment">% Central harmonic</span>
+                        maps{idx} = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                            f_central, sfrf_params, <span class="keyword">...</span>
+                            HarmonicNumber = h, <span class="keyword">...</span>
+                            SidebandNumber = sb, <span class="keyword">...</span>
+                            CentralCode    = centralCode);
+                    <span class="keyword">else</span>
+                        <span class="comment">% Sidebands (modulated by cage frequency)</span>
+                        f_sb = f_central + sb * f_mod;
+                        maps{idx} = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                            f_sb, sfrf_params, <span class="keyword">...</span>
+                            HarmonicNumber = h, <span class="keyword">...</span>
+                            SidebandNumber = sb, <span class="keyword">...</span>
+                            CentralCode    = centralCode, <span class="keyword">...</span>
+                            ModulationCode = modCode);
+                    <span class="keyword">end</span>
+                    idx = idx + 1;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            <span class="comment">% Remove bands with negative frequencies</span>
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> maps = computeCageBands(obj, speed, sfrf_params)
+            <span class="comment">% Compute band maps for the Cage fault type</span>
+
+            numH = sfrf_params.numHarmonics;
+            maps = cell(1, numH);
+
+            <span class="comment">% Get central frequency for fundamental train frequency from</span>
+            <span class="comment">% single source of truth</span>
+            f_ftf = obj.getCentralFrequency(obj.FTF_CODE, speed);
+
+            <span class="keyword">for</span> h = 1:numH
+                <span class="comment">% Frequency of the harmonic</span>
+                freqH = h * f_ftf;
+
+                map = BearingFrequencyBands.buildBandMap( <span class="keyword">...</span>
+                    freqH, sfrf_params, <span class="keyword">...</span>
+                    HarmonicNumber = h, <span class="keyword">...</span>
+                    SidebandNumber = 0, <span class="keyword">...</span>
+                    CentralCode    = obj.FTF_CODE);
+
+                maps{h} = map;
+            <span class="keyword">end</span>
+            <span class="comment">% Remove bands with negative frequencies</span>
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> map = buildGroupToFaultTypesMap()
+            map = containers.Map( <span class="keyword">...</span>
+                values(BearingFrequencyBands.faultTypeGroups), <span class="keyword">...</span>
+                keys(BearingFrequencyBands.faultTypeGroups));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> map = buildBandMap(freq, sfrf_params, opts)
+        <span class="comment">%BUILDBANDMAP Construct a containers.Map describing one band</span>
+        <span class="comment">%   instance.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   map = buildBandMap(freq, sfrf_params, opts)</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%       freq        (1,1) double  - Central frequency for the band</span>
+        <span class="comment">%                                   (Hz)</span>
+        <span class="comment">%       sfrf_params               - Per-fault SFRFs parameters</span>
+        <span class="comment">%                                   object, specifying</span>
+        <span class="comment">%                                   SigmaCenter and SigmaSurround</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Named Arguments in opts:</span>
+        <span class="comment">%       HarmonicNumber (1,1) {mustBeInteger, mustBePositive}</span>
+        <span class="comment">%           Harmonic index (1 = fundamental)</span>
+        <span class="comment">%</span>
+        <span class="comment">%       SidebandNumber (1,1) {mustBeInteger}</span>
+        <span class="comment">%           Sideband index (0 if none)</span>
+        <span class="comment">%</span>
+        <span class="comment">%       CentralCode    (1,:) char</span>
+        <span class="comment">%           Short code string for the central (carrier) frequency</span>
+        <span class="comment">%           e.g. 'Fo' (Outer), 'Fi' (Inner), 'Fb' (Ball),</span>
+        <span class="comment">%           'Fc' (Cage)</span>
+        <span class="comment">%</span>
+        <span class="comment">%       ModulationCode (1,:) char = ''</span>
+        <span class="comment">%           Short code string for the modulation (sideband)</span>
+        <span class="comment">%           frequency</span>
+        <span class="comment">%           Required if SidebandNumber ~= 0.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       map - containers.Map with keys:</span>
+        <span class="comment">%                 'Bands'    - bandStruct from makeBands()</span>
+        <span class="comment">%                 'Harmonic' - harmonic index</span>
+        <span class="comment">%                 'Label'    - fault frequency label string</span>
+        <span class="comment">%                 'Sideband' - sideband index</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Notes:</span>
+        <span class="comment">%       - This wraps makeBands() to build the band edges.</span>
+        <span class="comment">%       - Label is generated by buildLabel() using named arguments.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example:</span>
+        <span class="comment">%       m = BearingFrequencyBands.buildBandMap(100, params, ...</span>
+        <span class="comment">%               HarmonicNumber = 1, SidebandNumber = -2, ...</span>
+        <span class="comment">%               CentralCode    = 'Fo', ...</span>
+        <span class="comment">%               ModulationCode = 'Fr');</span>
+
+            <span class="keyword">arguments</span>
+                freq <span class="typesection">(1,1) double</span>
+                sfrf_params
+                opts.HarmonicNumber <span class="typesection">(1,1) {mustBeInteger, mustBePositive}</span>
+                opts.SidebandNumber <span class="typesection">(1,1) {mustBeInteger}</span>
+                opts.CentralCode <span class="typesection">(1,:) char</span>
+                opts.ModulationCode <span class="typesection">(1,:) char </span>= <span class="string">''</span> <span class="comment">% optional</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Validate modulation code requirement</span>
+            <span class="keyword">if</span> opts.SidebandNumber ~= 0 &amp;&amp; isempty(opts.ModulationCode)
+                error(<span class="keyword">...</span>
+                    [<span class="string">'sfrfs:BearingFrequencyBands:'</span> <span class="keyword">...</span>
+                     <span class="string">'ModulationCodeRequired'</span>], <span class="keyword">...</span>
+                      <span class="string">"ModulationCode required for nonzero sidebands"</span>);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Compute band limits</span>
+            bandStruct = <span class="keyword">...</span>
+                BearingFrequencyBands.makeBands(freq, sfrf_params);
+
+            <span class="comment">% Generate label via named-argument call</span>
+            label = BearingFrequencyBands.buildLabel( <span class="keyword">...</span>
+                HarmonicNumber = opts.HarmonicNumber, <span class="keyword">...</span>
+                SidebandNumber = opts.SidebandNumber, <span class="keyword">...</span>
+                CentralCode    = opts.CentralCode, <span class="keyword">...</span>
+                ModulationCode = opts.ModulationCode);
+
+            <span class="comment">% Construct the map</span>
+            map = containers.Map( <span class="keyword">...</span>
+                {<span class="string">'Bands'</span>,<span class="string">'Harmonic'</span>,<span class="string">'Label'</span>,<span class="string">'Sideband'</span>}, <span class="keyword">...</span>
+                {<span class="keyword">...</span>
+                    bandStruct, <span class="keyword">...</span>
+                    opts.HarmonicNumber, <span class="keyword">...</span>
+                    label, <span class="keyword">...</span>
+                    opts.SidebandNumber} <span class="keyword">...</span>
+                );
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> label = buildLabel(args)
+        <span class="comment">%BUILDLABEL Construct a fault frequency label using named</span>
+        <span class="comment">%   arguments.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   label = buildLabel(args)</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Named Arguments (fields of args):</span>
+        <span class="comment">%       HarmonicNumber   (1,1) integer &gt;= 1</span>
+        <span class="comment">%           Harmonic of the central (carrier) frequency.</span>
+        <span class="comment">%</span>
+        <span class="comment">%       SidebandNumber   (1,1) integer</span>
+        <span class="comment">%           Sideband index relative to the central frequency.</span>
+        <span class="comment">%           Zero indicates no sidebands. Positive values produce</span>
+        <span class="comment">%           a '+' in the label, negative values a '-'.</span>
+        <span class="comment">%</span>
+        <span class="comment">%       CentralCode      (1,:) char</span>
+        <span class="comment">%           Short code identifying the central (carrier) frequency,</span>
+        <span class="comment">%           e.g. 'Fo' (Outer race), 'Fi' (Inner race), 'Fb' (Ball).</span>
+        <span class="comment">%</span>
+        <span class="comment">%       ModulationCode   (1,:) char = ''</span>
+        <span class="comment">%           Short code for the modulation (sideband) frequency,</span>
+        <span class="comment">%           e.g. 'Fc' (Cage), 'Fr' (Rotational). Optional; required</span>
+        <span class="comment">%           only when SidebandNumber ~= 0.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Common codes:</span>
+        <span class="comment">%       Fo - Outer race (BPFO)</span>
+        <span class="comment">%       Fi - Inner race (BPFI)</span>
+        <span class="comment">%       Fb - Ball / rolling element (BSF)</span>
+        <span class="comment">%       Fc - Cage / fundamental train frequency (FTF)</span>
+        <span class="comment">%       Fr - Rotational frequency</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       label - char array representing the harmonic/sideband in</span>
+        <span class="comment">%               MATLAB's bearing fault notation, e.g.:</span>
+        <span class="comment">%                   '1Fo'         - fundamental, no sidebands</span>
+        <span class="comment">%                   '2Fi+1Fr'     - 2nd harmonic of Fi, +1 Fr</span>
+        <span class="comment">%                                   sideband</span>
+        <span class="comment">%                   '1Fb-2Fc'     - fundamental Fb, -2 Fc sidebands</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Example usage:</span>
+        <span class="comment">%       % 1) Fundamental, no sidebands</span>
+        <span class="comment">%       lbl = BearingFrequencyBands.buildLabel( ...</span>
+        <span class="comment">%           HarmonicNumber = 1, ...</span>
+        <span class="comment">%           SidebandNumber = 0, ...</span>
+        <span class="comment">%           CentralCode    = 'Fo' )</span>
+        <span class="comment">%       % returns: '1Fo'</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 2) Positive sideband (+1)</span>
+        <span class="comment">%       lbl = BearingFrequencyBands.buildLabel( ...</span>
+        <span class="comment">%           HarmonicNumber = 2, ...</span>
+        <span class="comment">%           SidebandNumber = 1, ...</span>
+        <span class="comment">%           CentralCode    = 'Fi', ...</span>
+        <span class="comment">%           ModulationCode = 'Fr' )</span>
+        <span class="comment">%       % returns: '2Fi+1Fr'</span>
+        <span class="comment">%</span>
+        <span class="comment">%       % 3) Negative sideband (‑2)</span>
+        <span class="comment">%       lbl = BearingFrequencyBands.buildLabel( ...</span>
+        <span class="comment">%           HarmonicNumber = 1, ...</span>
+        <span class="comment">%           SidebandNumber = -2, ...</span>
+        <span class="comment">%           CentralCode    = 'Fb', ...</span>
+        <span class="comment">%           ModulationCode = 'Fc' )</span>
+        <span class="comment">%       % returns: '1Fb-2Fc'</span>
+        <span class="comment">%   Notes:</span>
+        <span class="comment">%       - Raises an error if SidebandNumber ~= 0 and ModulationCode</span>
+        <span class="comment">%         is omitted or empty.</span>
+        <span class="comment">%       - Sign of SidebandNumber determines the '+' or '-' in the</span>
+        <span class="comment">%         label.</span>
+
+            <span class="keyword">arguments</span>
+                args.HarmonicNumber <span class="typesection">(1,1) {mustBeInteger, mustBePositive}</span>
+                args.SidebandNumber <span class="typesection">(1,1) {mustBeInteger}</span>
+                args.CentralCode <span class="typesection">(1,:) char</span>
+                args.ModulationCode <span class="typesection">(1,:) char </span>= <span class="string">''</span>  <span class="comment">% optional</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> args.SidebandNumber == 0
+                <span class="comment">% No sidebands</span>
+                label = sprintf(<span class="keyword">...</span>
+                    <span class="string">'%d%s'</span>, args.HarmonicNumber, args.CentralCode);
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> isempty(args.ModulationCode)
+                    error(<span class="keyword">...</span>
+                        [<span class="string">'sfrfs:BearingFrequencyBands:'</span><span class="keyword">...</span>
+                        <span class="string">'ModulationCodeRequired'</span>], <span class="keyword">...</span>
+                        <span class="string">"ModulationCode required for nonzero sidebands"</span>);
+                <span class="keyword">end</span>
+                <span class="comment">% Include + or - automatically</span>
+                label = sprintf(<span class="string">'%d%s%+d%s'</span>, <span class="keyword">...</span>
+                                args.HarmonicNumber, <span class="keyword">...</span>
+                                args.CentralCode, <span class="keyword">...</span>
+                                args.SidebandNumber, <span class="keyword">...</span>
+                                args.ModulationCode);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> bandStruct = makeBands(freq, sfrf_params)
+        <span class="comment">%MAKEBANDS  Build band limit structure from central frequency and</span>
+        <span class="comment">%   SFRF parameters</span>
+        <span class="comment">%</span>
+        <span class="comment">%   bandStruct = MAKEBANDS(freq, sfrf_params) constructs the</span>
+        <span class="comment">%   frequency band limits for both the "Center" and "Surround"</span>
+        <span class="comment">%   bands based on the specified central frequency and the</span>
+        <span class="comment">%   sigma widths stored in the SFRF parameters object.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%       freq        - Scalar central frequency for the band (Hz)</span>
+        <span class="comment">%       sfrf_params - SFRFs parameters object for a fault type,</span>
+        <span class="comment">%                     containing SigmaCenter and SigmaSurround.</span>
+        <span class="comment">%                     Only the first elements in these arrays</span>
+        <span class="comment">%                     are currently used.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%       bandStruct  - Struct with fields:</span>
+        <span class="comment">%                       .Center   [fLow, fHigh] limits for center band</span>
+        <span class="comment">%                       .Surround [fLow, fHigh] limits for surround</span>
+        <span class="comment">%                       band</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Notes:</span>
+        <span class="comment">%       - Both bands are computed symmetrically around 'freq'.</span>
+        <span class="comment">%       - Bandwidths are taken as full widths (not half-widths).</span>
+
+            bandwidthCenter   = sfrf_params.sigmaCenter(1);
+            bandwidthSurround = sfrf_params.sigmaSurround(1);
+
+            bandCenter   = <span class="keyword">...</span>
+                [freq - bandwidthCenter/2,   freq + bandwidthCenter/2];
+            bandSurround = <span class="keyword">...</span>
+                [freq - bandwidthSurround/2, freq + bandwidthSurround/2];
+
+            <span class="keyword">if</span> bandCenter(1) &lt; 0 || bandSurround(1) &lt; 0
+                log = SFRFsLogger.getLogger();
+                log.fine(<span class="keyword">...</span>
+                    sprintf([<span class="string">'Negative frequency band detected.'</span><span class="keyword">...</span>
+                                 <span class="string">'Center band limits: [%g, %g].'</span><span class="keyword">...</span>
+                                 <span class="string">'Surround band limits: [%g, %g].'</span>], <span class="keyword">...</span>
+                                 bandCenter(1), bandCenter(2), <span class="keyword">...</span>
+                                 bandSurround(1), bandSurround(2)));
+            <span class="keyword">end</span>
+
+            bandStruct = struct(<span class="keyword">...</span>
+                <span class="string">'Center'</span>,   bandCenter, <span class="keyword">...</span>
+                <span class="string">'Surround'</span>, bandSurround);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> filteredMaps = filterInvalidBands(maps)
+            <span class="comment">%FILTERINVALIDBANDS Remove bands with negative lower frequency</span>
+            <span class="comment">%   limits</span>
+            <span class="comment">%</span>
+            <span class="comment">%   filteredMaps = FILTERINVALIDBANDS(maps) filters out any</span>
+            <span class="comment">%   band map structures from the input cell array 'maps' whose</span>
+            <span class="comment">%   'Bands' frequency limits (either Center or Surround) have</span>
+            <span class="comment">%   negative lower bounds.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   This ensures all returned bands have physically meaningful</span>
+            <span class="comment">%   frequencies.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Input:</span>
+            <span class="comment">%       maps - Cell array of containers.Map objects representing</span>
+            <span class="comment">%              frequency band info, each with a 'Bands' field</span>
+            <span class="comment">%              containing 'Center' and 'Surround' frequency</span>
+            <span class="comment">%              limits as [fLow, fHigh].</span>
+            <span class="comment">%</span>
+            <span class="comment">%   Output:</span>
+            <span class="comment">%       filteredMaps - Cell array containing only bands with</span>
+            <span class="comment">%                      non-negative lower frequency limits.</span>
+
+            isValid = cellfun(@(m) <span class="keyword">...</span>
+                ~isempty(m) &amp;&amp; <span class="keyword">...</span>
+                m(<span class="string">'Bands'</span>).Center(1) &gt;= 0 &amp;&amp; <span class="keyword">...</span>
+                m(<span class="string">'Bands'</span>).Surround(1) &gt;= 0, <span class="keyword">...</span>
+                maps);
+
+            <span class="comment">% Number of bands filtered out</span>
+            droppedCount = sum(~isValid);
+
+            <span class="keyword">if</span> droppedCount &gt; 0
+                <span class="comment">% Collect labels of dropped bands</span>
+                labels = cellfun(@(m) m(<span class="string">'Label'</span>), <span class="keyword">...</span>
+                    maps(~isValid), <span class="string">'UniformOutput'</span>, false);
+                labelsStr = strjoin(labels, <span class="string">', '</span>);
+
+                log = SFRFsLogger.getLogger();
+                msg = sprintf(<span class="keyword">...</span>
+                    <span class="string">'Negative frequency bands dropped (%d): %s'</span>,<span class="keyword">...</span>
+                    droppedCount, labelsStr);
+                log.info(msg);
+            <span class="keyword">end</span>
+
+            filteredMaps = maps(isValid);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef BearingFrequencyBands < FaultFrequencyBands
+% BearingFrequencyBands  Compute bearing fault characteristic frequency 
+%   bands
+%
+%   Computes characteristic and sideband frequency bands for bearing faults 
+%   based on bearing geometry and Spectral Fault Receptive Fields (SFRF) 
+%   parameters.
+%   Supports configurable harmonics, sidebands, and Gaussian bandwidths for 
+%   each fault type.
+%
+% Properties:
+%   bearingParams - ParametersRollingBearings object containing bearing 
+%                   geometry
+%   sfrfsParams   - SFRFsParametersRollingBearings object configuring SFRF 
+%                   settings
+%
+% Constant Properties:
+%   BPFO_CODE - Code for Ball Pass Frequency Outer Race ('Fo')
+%   BPFI_CODE - Code for Ball Pass Frequency Inner Race ('Fi')
+%   BSF_CODE  - Code for Ball Spin Frequency ('Fb')
+%   FTF_CODE  - Code for Fundamental Train Frequency (Cage) ('Fc')
+%   FR_CODE   - Code for Shaft Rotational Frequency ('Fr')
+%   faultFrequencyCodes - Cell array of all fault frequency codes used
+%
+% Example:
+%   % Define bearing geometry
+%   bp = ParametersRollingBearings( ...
+%       'numRollingElements', 8, ...
+%       'ballDiameter', 7.92, ...
+%       'pitchDiameter', 34.55, ...
+%       'contactAngle', 0);
+%
+%   sharedParams = ...
+%       SFRFsParametersRollingBearings.createSFRFsParameters( ...
+%       'order', 3, ...
+%       'numSidebands', 4, ...
+%       'numHarmonics', 8, ...
+%       'sigmaCenter', [5, 7], ...
+%       'sigmaSurround', [12, 3], ...
+%       'inhibitionFactor', 0.6);
+%
+%   sp = SFRFsParametersRollingBearings( ...
+%       'SameForAllFaultTypes', sharedParams);
+%
+%   speed = [35; 37.5; 40];
+%       load  = [12; 11; 10];
+%       ocObj = OperatingConditions(speed, load);
+%
+%   % Create the BearingFrequencyBands object using named parameters
+%   bfb = BearingFrequencyBands( ...
+%       bearingParams = bp, ...
+%       sfrfsParams = sp, ...
+%       operatingConditions = ocObj);
+%
+%   % Compute frequency bands for a shaft speed of 1500 Hz
+%   bands = bfb.computeForSpeed(1500);
+%
+% See also ParametersRollingBearings, SFRFsParametersRollingBearings
+
+
+    properties
+        bearingParams ParametersRollingBearings
+    end
+
+    properties (Constant)
+        BPFO_CODE = 'Fo'  % Ball Pass Frequency Outer Race Code
+        BPFI_CODE = 'Fi'  % Ball Pass Frequency Inner Race Code
+        BSF_CODE = 'Fb'  % Ball Spin Frequency Code
+        FTF_CODE = 'Fc'  % Fundamental Train Frequency Code (Cage)
+        FR_CODE = 'Fr'  % Shaft Rotational Frequency Code
+
+        % Fault frequency codes as defined in MATLAB bearingFaultBands
+        faultFrequencyCodes = { ...
+            BearingFrequencyBands.BPFO_CODE, ...
+            BearingFrequencyBands.BPFI_CODE, ...
+            BearingFrequencyBands.BSF_CODE, ...
+            BearingFrequencyBands.FTF_CODE ...
+        }
+
+        % Descriptions used for fault bands table
+        faultTypeDescriptions = containers.Map({ ...
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME}, ...
+            { ...
+                "Outer Race Fault", ...
+                "Inner Race Fault", ...
+                "Ball Fault", ...
+                "Cage Fault" ...
+            })
+
+        % Fault group numeric IDs compatible with MATLAB bearingFaultBands
+        faultTypeGroups = containers.Map({ ...
+            SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, ...
+            SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME}, ...
+            { ...
+                1, ...  % Outer Race group ID
+                2, ...  % Inner Race group ID
+                3, ...  % Ball group ID
+                4  ...  % Cage group ID
+            })
+
+        % Inverse of faultTypeGroups
+        faultGroupToTypeName = ...
+            BearingFrequencyBands.buildGroupToFaultTypesMap();
+
+    end
+
+    methods
+
+        function obj = BearingFrequencyBands(args)
+            arguments
+                args.bearingParams (1,1) ParametersRollingBearings
+                args.sfrfsParams (1,1) SFRFsParametersRollingBearings
+                args.operatingConditions (1,1) OperatingConditions
+            end
+            
+            % Call superclass constructor with named params struct
+            obj = obj@FaultFrequencyBands( ...
+                operatingConditions=args.operatingConditions, ...
+                sfrfsParams = args.sfrfsParams);
+            
+            % Assign subclass-specific property
+            obj.bearingParams = args.bearingParams;
+        end
+
+
+        function computeBands(obj)
+        % computeBands  Build fault frequency bands table
+        %   computeBands()
+        %   computes the fault frequency bands for each row in the
+        %   bandsTable table.
+        %
+        %   Output table columns:
+        %       FaultGroup          - numeric index of the fault band entry
+        %       Description         - human-readable fault type description 
+        %                             (e.g. "Outer Race Fault")
+        %       Speed               - shaft rotational speed (Hz)
+        %       Load                - load value from operatingConditions
+        %       ReceptiveFieldBands - cell containing the bands definition 
+        %                             as a collection of instances of 
+        %                             containers.Map, each map with keys:
+        %                               'Bands', 
+        %                               'Harmonic', 
+        %                               'Label', 
+        %                               'Sideband'
+        %
+        %   Example:
+        %
+        %       % 1. Set the operating conditions
+        %       speed = [35; 37.5; 40];
+        %       load  = [12; 11; 10];
+        %       ocObj = OperatingConditions(speed, load);
+        % FaultFrequency
+        %       % 2. Bearing + SRF params
+        %       bp = ParametersRollingBearings( ...
+        %           'numRollingElements',8, ...
+        %           'ballDiameter',7.92, ...
+        %           'pitchDiameter',34.55, ...
+        %           'contactAngle',0);
+        % 
+        %       sharedParams = ...
+        %         SFRFsParameters.crFaultFrequencyeateSFRFsParameters( ...
+        %           'order', 3, ...
+        %           'numSidebands', 4, ...
+        %           'numHarmonics', 8, ...
+        %           'sigmaCenter', [5, 7], ...
+        %           'sigmaSurround', [12, 3], ...
+        %           'inhibitionFactor', 0.6);
+        %
+        %       sp = SFRFsParametersRollingBearings( ...
+        %           'SameForAllFaultTypes', sharedParams);
+        %
+        %
+        %       % 3. Create object instance
+        %       bfb = BearingFrequencyBands(...
+        %           'bearingParams',bp, ... 
+        %           'sfrfsParams',sp, ...
+        %           'operatingConditions', ocObj);
+        %
+        %       % 4. Compute fault bands
+        %       bfb.computeBands();
+        %
+        %   Notes:
+        %       FaultGroup numeric index and Label in ReceptiveFieldBands 
+        %       entries  are compatible with MATLAB's function 
+        %       'bearingFaultBands' introduced in 
+        %       Predictive Maintenance Toolbox R2019b
+
+
+            oc = obj.operatingConditions.conditionsTable;
+        
+            % Get constant list of fault types
+            faultTypes = SFRFsParametersRollingBearings.faultTypes;
+            numFaultTypes = numel(faultTypes);
+
+            % Number of operating conditions
+            numOC = height(oc);
+            
+            % Preallocate one row per fault type per operating condition
+            totalRows = numOC * numFaultTypes;
+            
+            faultBandsStruct(totalRows) = struct( ...
+                'FaultGroup', [], ...
+                'Description', "", ...
+                'Speed', [], ...
+                'Load', [], ...
+                'ReceptiveFieldBands', [] ...
+            );
+
+            log = SFRFsLogger.getLogger();
+
+            % Fill rows
+            rowIdx = 1;
+            for condIdx = 1:numOC
+                % speed and load
+                oc_speed = oc.Speed(condIdx);
+                oc_load  = oc.Load(condIdx);
+
+                % Log context info
+                if log.isInfoEnabled()
+                    contextMsg = ...
+                        sprintf(['Computing fault bands for Speed=%.3f'...
+                        ' Hz, Load=%.3f'], ...
+                        oc_speed, oc_load);
+                    log.info(contextMsg);
+                end
+
+                % compute all fault bands for this speed REPLACE_WITH_DASH_DASH-
+                fbs = obj.computeForSpeed(oc_speed);
+            
+                % add rows per each fault type
+                for ftIdx = 1:numFaultTypes
+                    ftName   = faultTypes{ftIdx};
+                    description = obj.faultTypeDescriptions(ftName);
+
+                    bands = fbs.(ftName); 
+
+                    % Always enforce cell array
+                    if ~iscell(bands)
+                        bands = {bands};
+                    end
+            
+                    faultBandsStruct(rowIdx).FaultGroup = ...
+                        obj.faultTypeGroups(ftName);
+                    faultBandsStruct(rowIdx).Description = description;
+                    faultBandsStruct(rowIdx).Speed = oc_speed;
+                    faultBandsStruct(rowIdx).Load = oc_load;
+                    faultBandsStruct(rowIdx).ReceptiveFieldBands = {bands}; 
+            
+                    rowIdx = rowIdx + 1;
+                end
+            end
+            
+            % Convert struct array to table
+            obj.bandsTable = ...
+                struct2table(faultBandsStruct, 'AsArray', true);
+            
+            if log.isFineEnabled()
+                log.fine(obj.toString())
+            end
+
+        end
+
+        function faultBands = computeForSpeed(obj, speed)
+            % Compute fault bands for given shaft speed (Hz)
+        
+            faultTypes = SFRFsParametersRollingBearings.faultTypes;
+            faultBands = struct();
+            log = SFRFsLogger.getLogger();
+        
+            for f = 1:numel(faultTypes)
+                ftName       = faultTypes{f};
+
+                description = obj.faultTypeDescriptions(ftName);
+
+                % Log context info
+                contextMsg = ...
+                    sprintf(['Computing fault bands for Speed=%.3f'...
+                    ' Hz, Fault=%s'], speed, description);
+                    log.info(contextMsg);
+                sfrf_params  = obj.sfrfsParams.(ftName);
+                mapsForType  = obj.computeBandsForFaultType(...
+                    ftName, speed, sfrf_params);
+                faultBands.(ftName) = mapsForType;
+            end
+        end
+
+        function str = toString(obj)
+            % string representation of the BearingFrequencyBands object
+            
+            % Convert bearingParams and sfrfsParams to strings 
+            bpStr = obj.bearingParams.toString();
+            spStr = obj.sfrfsParams.toString();
+            
+            % Convert the bandsTable to JSON string (compact)
+            if isempty(obj.bandsTable)
+                fbStr = "[]";
+            else
+                fbStr = jsonencode(obj.bandsTable);
+            end
+            
+            % Compose final string
+            str = sprintf(...
+                "BearingFrequencyBands:%s,%s[bandsTable:%s]", ...
+                bpStr, spStr, fbStr);
+        end
+
+    end
+
+
+    methods (Access = private)
+
+        function mapsForType = computeBandsForFaultType( ...
+                obj, ftName, speed, sfrf_params)
+            switch ftName
+                case ...
+                  SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME
+                  mapsForType = ...
+                      obj.computeOuterRaceBands(speed, sfrf_params);
+    
+                case ...
+                  SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME
+                  mapsForType = ...
+                      obj.computeInnerRaceBands(speed, sfrf_params);
+    
+                case SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME
+                    mapsForType = obj.computeBallBands(speed, sfrf_params);
+    
+                case SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME
+                    mapsForType = obj.computeCageBands(speed, sfrf_params);
+    
+                otherwise
+                    error( ...
+                            ['sfrfs:BearingFrequencyBands:' ...
+                            'ModulationCodeRequired'], ...
+                            'Unknown fault type: %s', ftName);
+            end
+        end
+
+        function [NB, DB, DP, phi] = getBearingGeometryParams(obj)
+        %GETGEOMETRY Extract common bearing geometry in consistent units
+            NB  = obj.bearingParams.numRollingElements;
+            DB  = obj.bearingParams.ballDiameter;
+            DP  = obj.bearingParams.pitchDiameter;
+            phi = deg2rad(obj.bearingParams.contactAngle);
+        end
+
+         function f0 = getCentralFrequency(obj, faultCode, speed)
+            % Retrieve geometry from this object's state
+            [NB, DB, DP, phi] = obj.getBearingGeometryParams();
+        
+            switch faultCode
+                case BearingFrequencyBands.BPFO_CODE % Outer race BPFO
+                    f0 = (NB / 2) * speed * (1 - (DB / DP) * cos(phi));
+        
+                case BearingFrequencyBands.BPFI_CODE % Inner race BPFI
+                    f0 = (NB / 2) * speed * (1 + (DB / DP) * cos(phi));
+        
+                case BearingFrequencyBands.BSF_CODE % Ball spin BSF
+                    f0 = (DP / (2 * DB)) * speed * ...
+                         (1 - ((DB / DP) * cos(phi)) ^ 2);
+        
+                case BearingFrequencyBands.FTF_CODE % Cage / FTF
+                    f0 = 0.5 * speed * (1 - (DB / DP) * cos(phi));
+        
+                otherwise
+                    error( ...
+                        ['sfrfs:BearingFrequencyBands:' ...
+                         'UnknownFaultCode'], ...
+                        'Unknown fault code: %s', faultCode);
+            end
+        end
+
+        function maps = computeOuterRaceBands(obj, speed, sfrf_params)
+            % Compute band maps for the Outer Race fault type
+        
+            numH = sfrf_params.numHarmonics;
+            maps = cell(1, numH);
+        
+            % compute central frequency 
+            f_bpfo = obj.getCentralFrequency(obj.BPFO_CODE, speed);
+        
+            for h = 1:numH
+                % Frequency of the harmonic
+                freqH = h * f_bpfo;
+        
+                map = BearingFrequencyBands.buildBandMap( ...
+                    freqH, sfrf_params, ...
+                    HarmonicNumber = h, ...
+                    SidebandNumber = 0, ...
+                    CentralCode    = obj.BPFO_CODE);
+        
+                maps{h} = map;
+            end
+
+            % Remove bands with negative frequencies
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        end
+
+        function maps = computeInnerRaceBands(obj, speed, sfrf_params)
+            % Compute band maps for the Inner Race fault type
+        
+            numH = sfrf_params.numHarmonics;
+            numS = sfrf_params.numSidebands;
+            maps = cell(1, numH * (2 * numS + 1));
+        
+            % Central frequency for Inner Race from single source of truth
+            f_bpfi = obj.getCentralFrequency(obj.BPFI_CODE, speed);
+        
+            % Modulation frequency (shaft rotational speed)
+            f_mod = speed;  % Hz
+        
+            centralCode = obj.BPFI_CODE;
+            modCode     = obj.FR_CODE;
+        
+            idx = 1;
+            for h = 1:numH
+                f_central = h * f_bpfi;
+        
+                for sb = -numS:numS
+                    if sb == 0
+                        % Central harmonic frequency component
+                        maps{idx} = BearingFrequencyBands.buildBandMap( ...
+                            f_central, sfrf_params, ...
+                            HarmonicNumber = h, ...
+                            SidebandNumber = sb, ...
+                            CentralCode = centralCode);
+                    else
+                        % Sidebands modulated by shaft rotation frequency
+                        f_sb = f_central + sb * f_mod;
+                        maps{idx} = BearingFrequencyBands.buildBandMap( ...
+                            f_sb, sfrf_params, ...
+                            HarmonicNumber = h, ...
+                            SidebandNumber = sb, ...
+                            CentralCode = centralCode, ...
+                            ModulationCode = modCode);
+                    end
+                    idx = idx + 1;
+                end
+            end
+            % Remove bands with negative frequencies
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        end
+
+        function maps = computeBallBands(obj, speed, sfrf_params)
+        % Compute band maps for the Ball Spin fault type
+        
+            numH = sfrf_params.numHarmonics;
+            numS = sfrf_params.numSidebands;
+            maps = cell(1, numH * (2 * numS + 1));
+        
+            % Central frequency for Ball Spin from single source of truth
+            f_bsf = obj.getCentralFrequency(obj.BSF_CODE, speed);
+        
+            % Modulation frequency (shaft rotational speed)
+            f_mod = speed;  % Hz
+        
+            centralCode = obj.BSF_CODE;
+            modCode     = obj.FTF_CODE;  % Cage frequency
+        
+            idx = 1;
+            for h = 1:numH
+                f_central = h * f_bsf;
+        
+                for sb = -numS:numS
+                    if sb == 0
+                        % Central harmonic
+                        maps{idx} = BearingFrequencyBands.buildBandMap( ...
+                            f_central, sfrf_params, ...
+                            HarmonicNumber = h, ...
+                            SidebandNumber = sb, ...
+                            CentralCode    = centralCode);
+                    else
+                        % Sidebands (modulated by cage frequency)
+                        f_sb = f_central + sb * f_mod;
+                        maps{idx} = BearingFrequencyBands.buildBandMap( ...
+                            f_sb, sfrf_params, ...
+                            HarmonicNumber = h, ...
+                            SidebandNumber = sb, ...
+                            CentralCode    = centralCode, ...
+                            ModulationCode = modCode);
+                    end
+                    idx = idx + 1;
+                end
+            end
+            % Remove bands with negative frequencies
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        end
+
+        function maps = computeCageBands(obj, speed, sfrf_params)
+            % Compute band maps for the Cage fault type
+        
+            numH = sfrf_params.numHarmonics;
+            maps = cell(1, numH);
+        
+            % Get central frequency for fundamental train frequency from 
+            % single source of truth
+            f_ftf = obj.getCentralFrequency(obj.FTF_CODE, speed);
+        
+            for h = 1:numH
+                % Frequency of the harmonic
+                freqH = h * f_ftf;
+        
+                map = BearingFrequencyBands.buildBandMap( ...
+                    freqH, sfrf_params, ...
+                    HarmonicNumber = h, ...
+                    SidebandNumber = 0, ...
+                    CentralCode    = obj.FTF_CODE);
+        
+                maps{h} = map;
+            end
+            % Remove bands with negative frequencies
+            maps = BearingFrequencyBands.filterInvalidBands(maps);
+        end
+    end
+
+    methods (Static, Access = private)
+
+        function map = buildGroupToFaultTypesMap()
+            map = containers.Map( ...
+                values(BearingFrequencyBands.faultTypeGroups), ...
+                keys(BearingFrequencyBands.faultTypeGroups));
+        end
+
+        function map = buildBandMap(freq, sfrf_params, opts)
+        %BUILDBANDMAP Construct a containers.Map describing one band 
+        %   instance.
+        %
+        %   map = buildBandMap(freq, sfrf_params, opts)
+        %
+        %   Inputs:
+        %       freq        (1,1) double  - Central frequency for the band 
+        %                                   (Hz)
+        %       sfrf_params               - Per-fault SFRFs parameters 
+        %                                   object, specifying
+        %                                   SigmaCenter and SigmaSurround
+        %
+        %   Named Arguments in opts:
+        %       HarmonicNumber (1,1) {mustBeInteger, mustBePositive}
+        %           Harmonic index (1 = fundamental)
+        %
+        %       SidebandNumber (1,1) {mustBeInteger}
+        %           Sideband index (0 if none)
+        %
+        %       CentralCode    (1,:) char
+        %           Short code string for the central (carrier) frequency
+        %           e.g. 'Fo' (Outer), 'Fi' (Inner), 'Fb' (Ball), 
+        %           'Fc' (Cage)
+        %
+        %       ModulationCode (1,:) char = ''
+        %           Short code string for the modulation (sideband) 
+        %           frequency
+        %           Required if SidebandNumber ~= 0.
+        %
+        %   Output:
+        %       map - containers.Map with keys:
+        %                 'Bands'    - bandStruct from makeBands()
+        %                 'Harmonic' - harmonic index
+        %                 'Label'    - fault frequency label string
+        %                 'Sideband' - sideband index
+        %
+        %   Notes:
+        %       - This wraps makeBands() to build the band edges.
+        %       - Label is generated by buildLabel() using named arguments.
+        %
+        %   Example:
+        %       m = BearingFrequencyBands.buildBandMap(100, params, ...
+        %               HarmonicNumber = 1, SidebandNumber = -2, ...
+        %               CentralCode    = 'Fo', ...
+        %               ModulationCode = 'Fr');
+        
+            arguments
+                freq (1,1) double
+                sfrf_params
+                opts.HarmonicNumber (1,1) {mustBeInteger, mustBePositive}
+                opts.SidebandNumber (1,1) {mustBeInteger}
+                opts.CentralCode (1,:) char
+                opts.ModulationCode (1,:) char = '' % optional
+            end
+    
+            % Validate modulation code requirement
+            if opts.SidebandNumber ~= 0 && isempty(opts.ModulationCode)
+                error(...
+                    ['sfrfs:BearingFrequencyBands:' ...
+                     'ModulationCodeRequired'], ...
+                      "ModulationCode required for nonzero sidebands");
+            end
+    
+            % Compute band limits
+            bandStruct = ...
+                BearingFrequencyBands.makeBands(freq, sfrf_params);
+    
+            % Generate label via named-argument call
+            label = BearingFrequencyBands.buildLabel( ...
+                HarmonicNumber = opts.HarmonicNumber, ...
+                SidebandNumber = opts.SidebandNumber, ...
+                CentralCode    = opts.CentralCode, ...
+                ModulationCode = opts.ModulationCode);
+    
+            % Construct the map
+            map = containers.Map( ...
+                {'Bands','Harmonic','Label','Sideband'}, ...
+                {...
+                    bandStruct, ...
+                    opts.HarmonicNumber, ...
+                    label, ...
+                    opts.SidebandNumber} ...
+                );
+        end
+
+        function label = buildLabel(args)
+        %BUILDLABEL Construct a fault frequency label using named 
+        %   arguments.
+        %
+        %   label = buildLabel(args)
+        %
+        %   Named Arguments (fields of args):
+        %       HarmonicNumber   (1,1) integer >= 1
+        %           Harmonic of the central (carrier) frequency.
+        %
+        %       SidebandNumber   (1,1) integer
+        %           Sideband index relative to the central frequency.
+        %           Zero indicates no sidebands. Positive values produce
+        %           a '+' in the label, negative values a '-'.
+        %
+        %       CentralCode      (1,:) char
+        %           Short code identifying the central (carrier) frequency,
+        %           e.g. 'Fo' (Outer race), 'Fi' (Inner race), 'Fb' (Ball).
+        %
+        %       ModulationCode   (1,:) char = ''
+        %           Short code for the modulation (sideband) frequency,
+        %           e.g. 'Fc' (Cage), 'Fr' (Rotational). Optional; required
+        %           only when SidebandNumber ~= 0.
+        %
+        %   Common codes:
+        %       Fo - Outer race (BPFO)
+        %       Fi - Inner race (BPFI)
+        %       Fb - Ball / rolling element (BSF)
+        %       Fc - Cage / fundamental train frequency (FTF)
+        %       Fr - Rotational frequency
+        %
+        %   Output:
+        %       label - char array representing the harmonic/sideband in
+        %               MATLAB's bearing fault notation, e.g.:
+        %                   '1Fo'         - fundamental, no sidebands
+        %                   '2Fi+1Fr'     - 2nd harmonic of Fi, +1 Fr 
+        %                                   sideband
+        %                   '1Fb-2Fc'     - fundamental Fb, -2 Fc sidebands
+        %
+        %   Example usage:
+        %       % 1) Fundamental, no sidebands
+        %       lbl = BearingFrequencyBands.buildLabel( ...
+        %           HarmonicNumber = 1, ...
+        %           SidebandNumber = 0, ...
+        %           CentralCode    = 'Fo' )
+        %       % returns: '1Fo'
+        %
+        %       % 2) Positive sideband (+1)
+        %       lbl = BearingFrequencyBands.buildLabel( ...
+        %           HarmonicNumber = 2, ...
+        %           SidebandNumber = 1, ...
+        %           CentralCode    = 'Fi', ...
+        %           ModulationCode = 'Fr' )
+        %       % returns: '2Fi+1Fr'
+        %
+        %       % 3) Negative sideband (‑2)
+        %       lbl = BearingFrequencyBands.buildLabel( ...
+        %           HarmonicNumber = 1, ...
+        %           SidebandNumber = -2, ...
+        %           CentralCode    = 'Fb', ...
+        %           ModulationCode = 'Fc' )
+        %       % returns: '1Fb-2Fc'
+        %   Notes:
+        %       - Raises an error if SidebandNumber ~= 0 and ModulationCode
+        %         is omitted or empty.
+        %       - Sign of SidebandNumber determines the '+' or '-' in the 
+        %         label.
+        
+            arguments
+                args.HarmonicNumber (1,1) {mustBeInteger, mustBePositive}
+                args.SidebandNumber (1,1) {mustBeInteger}
+                args.CentralCode (1,:) char
+                args.ModulationCode (1,:) char = ''  % optional
+            end
+    
+            if args.SidebandNumber == 0
+                % No sidebands
+                label = sprintf(...
+                    '%d%s', args.HarmonicNumber, args.CentralCode);
+            else
+                if isempty(args.ModulationCode)
+                    error(...
+                        ['sfrfs:BearingFrequencyBands:'...
+                        'ModulationCodeRequired'], ...
+                        "ModulationCode required for nonzero sidebands");
+                end
+                % Include + or - automatically
+                label = sprintf('%d%s%+d%s', ...
+                                args.HarmonicNumber, ...
+                                args.CentralCode, ...
+                                args.SidebandNumber, ...
+                                args.ModulationCode);
+            end
+        end
+
+        function bandStruct = makeBands(freq, sfrf_params)
+        %MAKEBANDS  Build band limit structure from central frequency and 
+        %   SFRF parameters
+        %
+        %   bandStruct = MAKEBANDS(freq, sfrf_params) constructs the
+        %   frequency band limits for both the "Center" and "Surround"
+        %   bands based on the specified central frequency and the 
+        %   sigma widths stored in the SFRF parameters object.
+        %
+        %   Inputs:
+        %       freq        - Scalar central frequency for the band (Hz)
+        %       sfrf_params - SFRFs parameters object for a fault type,
+        %                     containing SigmaCenter and SigmaSurround.
+        %                     Only the first elements in these arrays
+        %                     are currently used.
+        %
+        %   Output:
+        %       bandStruct  - Struct with fields:
+        %                       .Center   [fLow, fHigh] limits for center band
+        %                       .Surround [fLow, fHigh] limits for surround 
+        %                       band
+        %
+        %   Notes:
+        %       - Both bands are computed symmetrically around 'freq'.
+        %       - Bandwidths are taken as full widths (not half-widths).
+        
+            bandwidthCenter   = sfrf_params.sigmaCenter(1);
+            bandwidthSurround = sfrf_params.sigmaSurround(1);
+    
+            bandCenter   = ...
+                [freq - bandwidthCenter/2,   freq + bandwidthCenter/2];
+            bandSurround = ...
+                [freq - bandwidthSurround/2, freq + bandwidthSurround/2];
+
+            if bandCenter(1) < 0 || bandSurround(1) < 0
+                log = SFRFsLogger.getLogger();
+                log.fine(...
+                    sprintf(['Negative frequency band detected.'...
+                                 'Center band limits: [%g, %g].'...
+                                 'Surround band limits: [%g, %g].'], ...
+                                 bandCenter(1), bandCenter(2), ...
+                                 bandSurround(1), bandSurround(2)));
+            end
+    
+            bandStruct = struct(...
+                'Center',   bandCenter, ...
+                'Surround', bandSurround);
+        end
+
+        function filteredMaps = filterInvalidBands(maps)
+            %FILTERINVALIDBANDS Remove bands with negative lower frequency 
+            %   limits
+            %
+            %   filteredMaps = FILTERINVALIDBANDS(maps) filters out any 
+            %   band map structures from the input cell array 'maps' whose 
+            %   'Bands' frequency limits (either Center or Surround) have 
+            %   negative lower bounds.
+            %   
+            %   This ensures all returned bands have physically meaningful 
+            %   frequencies.
+            %
+            %   Input:
+            %       maps - Cell array of containers.Map objects representing 
+            %              frequency band info, each with a 'Bands' field 
+            %              containing 'Center' and 'Surround' frequency 
+            %              limits as [fLow, fHigh].
+            %
+            %   Output:
+            %       filteredMaps - Cell array containing only bands with 
+            %                      non-negative lower frequency limits.
+            
+            isValid = cellfun(@(m) ...
+                ~isempty(m) && ...
+                m('Bands').Center(1) >= 0 && ...
+                m('Bands').Surround(1) >= 0, ...
+                maps);
+        
+            % Number of bands filtered out
+            droppedCount = sum(~isValid); 
+        
+            if droppedCount > 0
+                % Collect labels of dropped bands
+                labels = cellfun(@(m) m('Label'), ...
+                    maps(~isValid), 'UniformOutput', false);
+                labelsStr = strjoin(labels, ', ');
+        
+                log = SFRFsLogger.getLogger();
+                msg = sprintf(...
+                    'Negative frequency bands dropped (%d): %s',...
+                    droppedCount, labelsStr);
+                log.info(msg);
+            end
+        
+            filteredMaps = maps(isValid);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestSFRFsEnsembleBroker</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="TestSFRFsEnsembleBroker.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestSFRFsEnsembleBroker &lt; matlab.unittest.TestCase
+    <span class="comment">% Tests for the SFRFsEnsembleBroker subclass</span>
+
+    <span class="keyword">properties</span>
+        sampleEnsemble
+        getFilesFcn
+        temporalSnapshotColumns
+        broker
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (TestMethodSetup)
+        <span class="keyword">function</span> setup(testCase)
+            <span class="comment">% Dummy ensemble with Files property</span>
+            filesStruct = struct(<span class="string">'Files'</span>, {{<span class="string">'file1.mat'</span>, <span class="string">'file2.mat'</span>}});
+            testCase.sampleEnsemble = filesStruct;
+
+            <span class="comment">% Signal columns</span>
+            testCase.temporalSnapshotColumns = { <span class="keyword">...</span>
+                <span class="string">'HorizontalAcceleration'</span>, <span class="string">'VerticalAcceleration'</span>};
+
+            testCase.getFilesFcn = @(obj) obj.Files;
+
+            <span class="comment">% Create SFRFsEnsembleBroker instance</span>
+            testCase.broker = SFRFsEnsembleBroker( <span class="keyword">...</span>
+                EnsembleObject = testCase.sampleEnsemble, <span class="keyword">...</span>
+                GetFilesFunction = testCase.getFilesFcn, <span class="keyword">...</span>
+                TemporalSnapshotColumns = <span class="keyword">...</span>
+                testCase.temporalSnapshotColumns);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Test)
+
+        <span class="keyword">function</span> testDefaultSFRFsSuffix(testCase)
+            <span class="comment">% Map to SFRF name and infer default suffix</span>
+            name = <span class="string">"Signal1"</span>;
+            sfrfsName = testCase.broker.mapToSFRFColumn(name);
+
+            testCase.verifyEqual(sfrfsName, name + <span class="string">"_SFRFs"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testCustomSFRFsSuffix(testCase)
+            customSuffix = <span class="string">"_CUSTOM_SFRFS"</span>;
+
+            customBroker = SFRFsEnsembleBroker( <span class="keyword">...</span>
+                EnsembleObject = testCase.sampleEnsemble, <span class="keyword">...</span>
+                GetFilesFunction = testCase.getFilesFcn, <span class="keyword">...</span>
+                TemporalSnapshotColumns = <span class="keyword">...</span>
+                testCase.temporalSnapshotColumns, <span class="keyword">...</span>
+                sfrfsSuffix = customSuffix);
+
+            name = <span class="string">"Signal2"</span>;
+            sfrfsName = customBroker.mapToSFRFColumn(name);
+
+            testCase.verifyEqual(sfrfsName, name + customSuffix);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMappingPreservesType(testCase)
+            <span class="comment">% char input</span>
+            baseChar = <span class="string">'Signal_Char'</span>;
+            sfrfsChar = testCase.broker.mapToSFRFColumn(baseChar);
+            testCase.verifyClass(sfrfsChar, <span class="string">'char'</span>);
+
+            temporalChar = <span class="keyword">...</span>
+                testCase.broker.mapToTemporalFromSFRFColumn(sfrfsChar);
+            testCase.verifyEqual(temporalChar, baseChar);
+
+            <span class="comment">% string input</span>
+            baseStr = <span class="string">"Signal_String"</span>;
+            sfrfsStr = testCase.broker.mapToSFRFColumn(baseStr);
+            testCase.verifyClass(sfrfsStr, <span class="string">'string'</span>);
+
+            temporalStr = <span class="keyword">...</span>
+                testCase.broker.mapToTemporalFromSFRFColumn(sfrfsStr);
+            testCase.verifyEqual(temporalStr, baseStr);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testTemporalMappingErrorsIfSuffixMissing(testCase)
+            badName = <span class="string">"SignalWithoutSuffix"</span>;
+
+            fcn = @() <span class="keyword">...</span>
+                testCase.broker.mapToTemporalFromSFRFColumn(badName);
+
+            testCase.verifyError(fcn, <span class="keyword">...</span>
+                <span class="string">'sfrfs:EnsembleUtil:InvalidSuffix'</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestSFRFsEnsembleBroker < matlab.unittest.TestCase
+    % Tests for the SFRFsEnsembleBroker subclass
+
+    properties
+        sampleEnsemble
+        getFilesFcn
+        temporalSnapshotColumns
+        broker
+    end
+
+    methods (TestMethodSetup)
+        function setup(testCase)
+            % Dummy ensemble with Files property
+            filesStruct = struct('Files', {{'file1.mat', 'file2.mat'}});
+            testCase.sampleEnsemble = filesStruct;
+
+            % Signal columns
+            testCase.temporalSnapshotColumns = { ...
+                'HorizontalAcceleration', 'VerticalAcceleration'};
+
+            testCase.getFilesFcn = @(obj) obj.Files;
+
+            % Create SFRFsEnsembleBroker instance
+            testCase.broker = SFRFsEnsembleBroker( ...
+                EnsembleObject = testCase.sampleEnsemble, ...
+                GetFilesFunction = testCase.getFilesFcn, ...
+                TemporalSnapshotColumns = ...
+                testCase.temporalSnapshotColumns);
+        end
+    end
+
+    methods (Test)
+
+        function testDefaultSFRFsSuffix(testCase)
+            % Map to SFRF name and infer default suffix
+            name = "Signal1";
+            sfrfsName = testCase.broker.mapToSFRFColumn(name);
+
+            testCase.verifyEqual(sfrfsName, name + "_SFRFs");
+        end
+
+        function testCustomSFRFsSuffix(testCase)
+            customSuffix = "_CUSTOM_SFRFS";
+
+            customBroker = SFRFsEnsembleBroker( ...
+                EnsembleObject = testCase.sampleEnsemble, ...
+                GetFilesFunction = testCase.getFilesFcn, ...
+                TemporalSnapshotColumns = ...
+                testCase.temporalSnapshotColumns, ...
+                sfrfsSuffix = customSuffix);
+
+            name = "Signal2";
+            sfrfsName = customBroker.mapToSFRFColumn(name);
+
+            testCase.verifyEqual(sfrfsName, name + customSuffix);
+        end
+
+        function testMappingPreservesType(testCase)
+            % char input
+            baseChar = 'Signal_Char';
+            sfrfsChar = testCase.broker.mapToSFRFColumn(baseChar);
+            testCase.verifyClass(sfrfsChar, 'char');
+
+            temporalChar = ...
+                testCase.broker.mapToTemporalFromSFRFColumn(sfrfsChar);
+            testCase.verifyEqual(temporalChar, baseChar);
+
+            % string input
+            baseStr = "Signal_String";
+            sfrfsStr = testCase.broker.mapToSFRFColumn(baseStr);
+            testCase.verifyClass(sfrfsStr, 'string');
+
+            temporalStr = ...
+                testCase.broker.mapToTemporalFromSFRFColumn(sfrfsStr);
+            testCase.verifyEqual(temporalStr, baseStr);
+        end
+
+        function testTemporalMappingErrorsIfSuffixMissing(testCase)
+            badName = "SignalWithoutSuffix";
+
+            fcn = @() ...
+                testCase.broker.mapToTemporalFromSFRFColumn(badName);
+
+            testCase.verifyError(fcn, ...
+                'sfrfs:EnsembleUtil:InvalidSuffix');
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

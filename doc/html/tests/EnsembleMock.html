@@ -1,0 +1,375 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>EnsembleMock</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-12-10">
+<meta name="DC.source" content="EnsembleMock.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> EnsembleMock &lt; handle
+    <span class="keyword">properties</span>
+        numMembers <span class="typesection">(1,1) double {mustBePositive, mustBeInteger}</span> = 3
+        minSnapshots <span class="typesection">(1,1) double {mustBePositive, mustBeInteger}</span> = 5
+        maxSnapshots <span class="typesection">(1,1) double {mustBePositive, mustBeInteger}</span> = 10
+        nSamples <span class="typesection">(1,1) double {mustBePositive, mustBeInteger}</span> = 32768
+        speeds <span class="typesection">double </span>= [35; 37.5; 40]
+        loads <span class="typesection">double </span>= [12; 11; 10]
+        temporalSnapshotColumns <span class="typesection">cell </span>= <span class="keyword">...</span>
+            {<span class="string">'HorizontalAcceleration'</span>, <span class="string">'VerticalAcceleration'</span>}
+        ensembleDataFolder <span class="typesection">char </span>= <span class="string">''</span>
+        fileEnsembleDS
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = EnsembleMock(args)
+            <span class="keyword">arguments</span>
+                args.numMembers <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 15
+                args.minSnapshots <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 5
+                args.maxSnapshots <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 10
+                args.nSamples <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive, mustBeInteger}</span> = 32768
+                args.speeds <span class="typesection">double </span>= [35; 37.5; 40]
+                args.loads <span class="typesection">double </span>= [12; 11; 10]
+                args.temporalSnapshotColumns <span class="typesection">cell </span>= <span class="keyword">...</span>
+                    {<span class="string">'HorizontalAcceleration'</span>, <span class="string">'VerticalAcceleration'</span>}
+            <span class="keyword">end</span>
+            obj.numMembers = args.numMembers;
+            obj.minSnapshots = args.minSnapshots;
+            obj.maxSnapshots = args.maxSnapshots;
+            obj.nSamples = args.nSamples;
+            obj.speeds = args.speeds;
+            obj.loads = args.loads;
+            obj.temporalSnapshotColumns = args.temporalSnapshotColumns;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> prepare(obj)
+            <span class="comment">% Creates temp folder and saves ensemble files with random data</span>
+            <span class="keyword">if</span> ~isempty(obj.ensembleDataFolder) &amp;&amp; <span class="keyword">...</span>
+                    isfolder(obj.ensembleDataFolder)
+                rmdir(obj.ensembleDataFolder,<span class="string">'s'</span>);
+            <span class="keyword">end</span>
+            obj.ensembleDataFolder = tempname;
+            mkdir(obj.ensembleDataFolder);
+
+            <span class="keyword">for</span> i = 1:obj.numMembers
+                nSnapshots = randi([obj.minSnapshots, obj.maxSnapshots]);
+                HorizontalAcceleration = cell(nSnapshots,1);
+                VerticalAcceleration = cell(nSnapshots,1);
+                <span class="keyword">for</span> j = 1:nSnapshots
+                    HorizontalAcceleration{j} = randn(obj.nSamples,1);
+                    VerticalAcceleration{j} = randn(obj.nSamples,1);
+                <span class="keyword">end</span>
+
+                SnapshotIndex = (1:nSnapshots).';
+                Speed = repmat(obj.speeds(min(i,end)), nSnapshots,1);
+                Load = repmat(obj.loads(min(i,end)), nSnapshots,1);
+
+                ensembleMemberTable = table( <span class="keyword">...</span>
+                    HorizontalAcceleration, <span class="keyword">...</span>
+                    VerticalAcceleration, <span class="keyword">...</span>
+                    Speed, <span class="keyword">...</span>
+                    Load, <span class="keyword">...</span>
+                    SnapshotIndex);
+
+                filename = fullfile(<span class="keyword">...</span>
+                    obj.ensembleDataFolder, <span class="keyword">...</span>
+                    sprintf(<span class="string">'member_%03d.mat'</span>, i));
+                save(filename, <span class="string">'ensembleMemberTable'</span>);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Create datastore</span>
+            ds = fileEnsembleDatastore(obj.ensembleDataFolder, <span class="string">'.mat'</span>);
+
+            <span class="comment">% Set categories</span>
+            ds.DataVariables = obj.temporalSnapshotColumns;
+            ds.ConditionVariables = {<span class="string">'Speed'</span>, <span class="string">'Load'</span>};
+            ds.IndependentVariables = {<span class="string">'SnapshotIndex'</span>};
+
+            <span class="comment">% SelectedVariables</span>
+            ds.SelectedVariables = [<span class="keyword">...</span>
+                ds.DataVariables.', <span class="keyword">...</span>
+                ds.ConditionVariables.', <span class="keyword">...</span>
+                ds.IndependentVariables];
+
+            ds.ReadFcn = @EnsembleMock.readMember;
+            ds.WriteToMemberFcn = @EnsembleMock.writeMember;
+
+
+            obj.fileEnsembleDS = ds;
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> cleanup(obj)
+            <span class="comment">% Delete the ensemble data folder and contents</span>
+            <span class="keyword">if</span> ~isempty(obj.ensembleDataFolder) &amp;&amp; <span class="keyword">...</span>
+                    isfolder(obj.ensembleDataFolder)
+                rmdir(obj.ensembleDataFolder, <span class="string">'s'</span>);
+                obj.ensembleDataFolder = <span class="string">''</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+        <span class="keyword">function</span> data = readMember(filename, selectedVars)
+            tbl = <span class="keyword">...</span>
+                load(filename, <span class="string">'ensembleMemberTable'</span>).ensembleMemberTable;
+            data = tbl(:, <span class="keyword">...</span>
+                intersect(<span class="keyword">...</span>
+                selectedVars, tbl.Properties.VariableNames, <span class="string">'stable'</span>));
+            SFRFsLogger.getLogger().info(<span class="keyword">...</span>
+                sprintf(<span class="string">'Reading %s: %s'</span>, <span class="keyword">...</span>
+                filename, strjoin(selectedVars, <span class="string">', '</span>)));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> writeMember(filename, data)
+            <span class="comment">% Load existing table</span>
+            S = load(filename, <span class="string">'ensembleMemberTable'</span>);
+            tbl = S.ensembleMemberTable;
+
+            <span class="comment">% Add or overwrite each field in the table</span>
+            fields = fieldnames(data);
+            <span class="keyword">for</span> k = 1:numel(fields)
+                tbl.(fields{k}) = data.(fields{k});
+            <span class="keyword">end</span>
+
+            <span class="comment">% Save back</span>
+            ensembleMemberTable = tbl;
+            save(filename, <span class="string">'ensembleMemberTable'</span>);
+
+            <span class="comment">% Logging</span>
+            SFRFsLogger.getLogger().info( <span class="keyword">...</span>
+                sprintf(<span class="string">'Writing %s: %s'</span>, filename, strjoin(fields, <span class="string">', '</span>)));
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef EnsembleMock < handle
+    properties
+        numMembers (1,1) double {mustBePositive, mustBeInteger} = 3
+        minSnapshots (1,1) double {mustBePositive, mustBeInteger} = 5
+        maxSnapshots (1,1) double {mustBePositive, mustBeInteger} = 10
+        nSamples (1,1) double {mustBePositive, mustBeInteger} = 32768
+        speeds double = [35; 37.5; 40]
+        loads double = [12; 11; 10]
+        temporalSnapshotColumns cell = ...
+            {'HorizontalAcceleration', 'VerticalAcceleration'}
+        ensembleDataFolder char = ''
+        fileEnsembleDS
+    end
+    
+    methods
+        function obj = EnsembleMock(args)
+            arguments
+                args.numMembers (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 15
+                args.minSnapshots (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 5
+                args.maxSnapshots (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 10
+                args.nSamples (1,1) double ...
+                    {mustBePositive, mustBeInteger} = 32768
+                args.speeds double = [35; 37.5; 40]
+                args.loads double = [12; 11; 10]
+                args.temporalSnapshotColumns cell = ...
+                    {'HorizontalAcceleration', 'VerticalAcceleration'}
+            end
+            obj.numMembers = args.numMembers;
+            obj.minSnapshots = args.minSnapshots;
+            obj.maxSnapshots = args.maxSnapshots;
+            obj.nSamples = args.nSamples;
+            obj.speeds = args.speeds;
+            obj.loads = args.loads;
+            obj.temporalSnapshotColumns = args.temporalSnapshotColumns;
+        end
+        
+        function prepare(obj)
+            % Creates temp folder and saves ensemble files with random data
+            if ~isempty(obj.ensembleDataFolder) && ...
+                    isfolder(obj.ensembleDataFolder)
+                rmdir(obj.ensembleDataFolder,'s');
+            end
+            obj.ensembleDataFolder = tempname;
+            mkdir(obj.ensembleDataFolder);
+        
+            for i = 1:obj.numMembers
+                nSnapshots = randi([obj.minSnapshots, obj.maxSnapshots]);
+                HorizontalAcceleration = cell(nSnapshots,1);
+                VerticalAcceleration = cell(nSnapshots,1);
+                for j = 1:nSnapshots
+                    HorizontalAcceleration{j} = randn(obj.nSamples,1);
+                    VerticalAcceleration{j} = randn(obj.nSamples,1);
+                end
+        
+                SnapshotIndex = (1:nSnapshots).';
+                Speed = repmat(obj.speeds(min(i,end)), nSnapshots,1);
+                Load = repmat(obj.loads(min(i,end)), nSnapshots,1);
+        
+                ensembleMemberTable = table( ...
+                    HorizontalAcceleration, ...
+                    VerticalAcceleration, ...
+                    Speed, ...
+                    Load, ...
+                    SnapshotIndex);
+        
+                filename = fullfile(...
+                    obj.ensembleDataFolder, ...
+                    sprintf('member_%03d.mat', i));
+                save(filename, 'ensembleMemberTable');
+            end
+        
+            % Create datastore
+            ds = fileEnsembleDatastore(obj.ensembleDataFolder, '.mat');
+            
+            % Set categories
+            ds.DataVariables = obj.temporalSnapshotColumns;          
+            ds.ConditionVariables = {'Speed', 'Load'};
+            ds.IndependentVariables = {'SnapshotIndex'};
+            
+            % SelectedVariables
+            ds.SelectedVariables = [...
+                ds.DataVariables.', ...
+                ds.ConditionVariables.', ...
+                ds.IndependentVariables];
+
+            ds.ReadFcn = @EnsembleMock.readMember;
+            ds.WriteToMemberFcn = @EnsembleMock.writeMember;
+
+
+            obj.fileEnsembleDS = ds;
+        end
+
+
+        function cleanup(obj)
+            % Delete the ensemble data folder and contents
+            if ~isempty(obj.ensembleDataFolder) && ...
+                    isfolder(obj.ensembleDataFolder)
+                rmdir(obj.ensembleDataFolder, 's');
+                obj.ensembleDataFolder = '';
+            end
+        end
+    end
+
+    methods (Static)
+        function data = readMember(filename, selectedVars)
+            tbl = ...
+                load(filename, 'ensembleMemberTable').ensembleMemberTable;
+            data = tbl(:, ...
+                intersect(...
+                selectedVars, tbl.Properties.VariableNames, 'stable'));
+            SFRFsLogger.getLogger().info(...
+                sprintf('Reading %s: %s', ...
+                filename, strjoin(selectedVars, ', ')));
+        end
+
+        function writeMember(filename, data)
+            % Load existing table
+            S = load(filename, 'ensembleMemberTable');
+            tbl = S.ensembleMemberTable;
+
+            % Add or overwrite each field in the table
+            fields = fieldnames(data);
+            for k = 1:numel(fields)
+                tbl.(fields{k}) = data.(fields{k});
+            end
+
+            % Save back
+            ensembleMemberTable = tbl;
+            save(filename, 'ensembleMemberTable');
+
+            % Logging
+            SFRFsLogger.getLogger().info( ...
+                sprintf('Writing %s: %s', filename, strjoin(fields, ', ')));
+        end
+
+    end
+
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

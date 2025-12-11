@@ -1,0 +1,10 @@
+# Ignore MATLAB Project metadata and build artifacts
+resources/project/
+.buildtool/
+deploymentLog.html
+
+# Ignore MATLAB autosave and backup files
+*.asv
+*.m~
+*.autosave
+
