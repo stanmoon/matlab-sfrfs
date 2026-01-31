@@ -116,5 +116,18 @@ classdef TestFFTEnsembleProcessor < matlab.unittest.TestCase
             testCase.processor.process();
             testCase.assertTrue(true);
         end
+
+        function testTooManyWorkersFailsFastWithId(testCase)
+            c = parcluster("Processes");
+            tooMany = c.NumWorkers + 1;
+
+            pBad = FFTEnsembleProcessor( ...
+                numWorkers = tooMany, ...
+                ensemble = testCase.testEnsemble);
+
+            testCase.verifyError(@() pBad.process(), ...
+                "sfrfs:EnsembleProcessor:TooManyWorkers");
+        end
+
     end
 end

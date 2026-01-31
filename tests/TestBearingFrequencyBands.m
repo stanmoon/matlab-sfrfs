@@ -2,515 +2,442 @@ classdef TestBearingFrequencyBands < matlab.unittest.TestCase
     % Test suite for the BearingFrequencyBands class.
     %
     % Covers:
-    %   - Valid construction with required arguments
-    %   - Constructor type validation errors
-    %   - computeForSpeed output structure correctness
-    %   - computeFaultFrequencyBands input validation errors
-    %   - Band computation correctness for known input
-    %   - Label formatting and band structure integrity
-    
+    % - Valid construction with required arguments
+    % - Constructor type validation errors
+    % - computeForSpeed output structure correctness
+    % - computeBands output table integrity and descriptions
+    % - Band computation correctness vs bearingFaultBands
+    % - Sideband center correctness
+    % - ReceptiveFieldBands storage invariants
+
     properties
         validOperatingConditions
         validBearingParams
         validSfrfsParams
-        bfb      % BearingFrequencyBands instance
+        bfb
     end
-    
+
     methods (TestMethodSetup)
         function createValidObjects(testCase)
-            % Create a valid ParametersRollingBearings
             testCase.validBearingParams = ParametersRollingBearings( ...
                 'numRollingElements', 8, ...
-                'ballDiameter',       7.92, ...
-                'pitchDiameter',      34.55, ...
-                'contactAngle',       0 );
-            
-            % Create shared SFRF params for all fault types
+                'ballDiameter', 7.92, ...
+                'pitchDiameter', 34.55, ...
+                'contactAngle', 0);
+
             sharedParams = ...
-                SFRFsParametersRollingBearings.createSFRFsParameters(...
-                'order',           3, ...
-                'numSidebands',    2, ...
-                'numHarmonics',    3, ...
-                'sigmaCenter',     [5, 7], ...
-                'sigmaSurround',   [12, 3], ...
-                'inhibitionFactor', 0.5 );
-            
+                SFRFsParametersRollingBearings.buildSFRFsParameters( ...
+                'order', 3, ...
+                'numSidebands', 2, ...
+                'numHarmonics', 3, ...
+                'centerMask', GaussianMaskParameters( ...
+                    'bandwidth', 5, 'sigmaRule', 7), ...
+                'surroundMask', GaussianMaskParameters( ...
+                    'bandwidth', 12, 'sigmaRule', 3), ...
+                'inhibitionFactor', 0.5);
+
             testCase.validSfrfsParams = SFRFsParametersRollingBearings( ...
-                'SameForAllFaultTypes', sharedParams );
+                'SameForAllFaultTypes', sharedParams);
 
             speed = [35; 37.5; 40];
             load  = [12; 11; 10];
             testCase.validOperatingConditions = ...
                 OperatingConditions(speed, load);
-            
-            % Create BFB object
+
             testCase.bfb = BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
-                sfrfsParams = testCase.validSfrfsParams,...
-                operatingConditions = testCase.validOperatingConditions ...
-                );
+                sfrfsParams = testCase.validSfrfsParams, ...
+                operatingConditions = testCase.validOperatingConditions);
         end
     end
-    
+
     methods (Test)
-        
-        % test valid construction and argument settings
         function testValidConstruction(testCase)
-            testCase.verifyInstanceOf(...
-                ...
-                testCase.bfb, 'BearingFrequencyBands');
-            testCase.verifyEqual(...
-                testCase.bfb.bearingParams, testCase.validBearingParams);
-            testCase.verifyEqual(...
-                testCase.bfb.sfrfsParams, testCase.validSfrfsParams);
+            testCase.verifyInstanceOf(testCase.bfb, ...
+                'BearingFrequencyBands');
+            testCase.verifyEqual(testCase.bfb.bearingParams, ...
+                testCase.validBearingParams);
+            testCase.verifyEqual(testCase.bfb.sfrfsParams, ...
+                testCase.validSfrfsParams);
         end
-        
-        % test for an invalid object for bearing parameters
+
         function testInvalidBearingParamsType(testCase)
-            testCase.verifyError(@() BearingFrequencyBands( ...
-                bearingParams='invalid', ...
-                sfrfsParams = testCase.validSfrfsParams,...
-                OperatingConditions = testCase.validOperatingConditions), ...
-                'MATLAB:validation:UnableToConvert');
+            f = @() BearingFrequencyBands( ...
+                bearingParams = 'invalid', ...
+                sfrfsParams = testCase.validSfrfsParams, ...
+                operatingConditions = testCase.validOperatingConditions);
+
+            testCase.verifyError(f, 'MATLAB:validation:UnableToConvert');
         end
 
-        % test for an invalid SFRF parameters
         function testInvalidSfrfsParamsType(testCase)
-            invalidSFRFParams = [];
-            testCase.verifyError(@() BearingFrequencyBands( ...
+            f = @() BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
-                sfrfsParams = invalidSFRFParams,...
-                OperatingConditions = testCase.validOperatingConditions), ...
-                'MATLAB:validation:UnableToConvert');
+                sfrfsParams = [], ...
+                operatingConditions = testCase.validOperatingConditions);
+
+            testCase.verifyError(f, 'MATLAB:validation:UnableToConvert');
         end
 
-        % test for an invalid operating conditions
         function testInvalidOperatingConditions(testCase)
-            invalidOperatingConditions = {};
-            testCase.verifyError(@() BearingFrequencyBands( ...
+            f = @() BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
-                sfrfsParams = testCase.validSfrfsParams,...
-                OperatingConditions = invalidOperatingConditions), ...
-                'MATLAB:validation:UnableToConvert');
+                sfrfsParams = testCase.validSfrfsParams, ...
+                operatingConditions = {});
+
+            testCase.verifyError(f, 'MATLAB:validation:UnableToConvert');
         end
 
-        % test missing bearing parameters
         function testMissingBearingParamsArgument(testCase)
-            testCase.verifyError(@() BearingFrequencyBands( ...
-                sfrfsParams = testCase.validSfrfsParams,...
-                OperatingConditions = testCase.validOperatingConditions), ...
-                'MATLAB:nonExistentField');
+            f = @() BearingFrequencyBands( ...
+                sfrfsParams = testCase.validSfrfsParams, ...
+                operatingConditions = testCase.validOperatingConditions);
+
+            testCase.verifyError(f, 'MATLAB:nonExistentField');
         end
 
-        % test missing bearing parameters
-        function testMissingSFRSsParamsArgument(testCase)
-            testCase.verifyError(@() BearingFrequencyBands( ...
+        function testMissingSfrfsParamsArgument(testCase)
+            f = @() BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
-                OperatingConditions = testCase.validOperatingConditions), ...
-                'MATLAB:nonExistentField');
+                operatingConditions = testCase.validOperatingConditions);
+
+            testCase.verifyError(f, 'MATLAB:nonExistentField');
         end
 
-        % test missing bearing parameters
         function testMissingOperatingConditionsArgument(testCase)
-            testCase.verifyError(@() BearingFrequencyBands( ...
+            f = @() BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
-                sfrfsParams = testCase.validSfrfsParams), ...
-                'MATLAB:nonExistentField');
-        end    
-        
-        
-        % test structure of computation of individual operating conditions
+                sfrfsParams = testCase.validSfrfsParams);
+
+            testCase.verifyError(f, 'MATLAB:nonExistentField');
+        end
+
         function testComputeForSpeedKeysAndTypes(testCase)
             result = testCase.bfb.computeForSpeed(30);
             ftNames = SFRFsParametersRollingBearings.faultTypes;
-            
-            % we expect a structure with fault types as field names
+
             testCase.verifyEqual(sort(fieldnames(result)), sort(ftNames)');
-            
-            % Check that each fault type returns a cell array of Maps
-            % each map having appropriate keys
+
+            import dicts.BandMapSchema
+
+            kBands = BandMapSchema.BANDS;
+            kHar   = BandMapSchema.HARMONIC;
+            kLbl   = BandMapSchema.LABEL;
+            kSide  = BandMapSchema.SIDEBAND;
+
             for f = ftNames
                 val = result.(f{1});
+
                 testCase.verifyClass(val, 'cell');
+                testCase.verifyGreaterThan(numel(val), 0);
+
                 testCase.verifyClass(val{1}, 'containers.Map');
-                testCase.verifyTrue(...
-                    all( isKey(val{1}, ...
-                    {'Bands','Harmonic','Label','Sideband'}) ));
+                m = val{1};
+
+                testCase.verifyTrue(isKey(m, kBands));
+                testCase.verifyTrue(isKey(m, kHar));
+                testCase.verifyTrue(isKey(m, kLbl));
+                testCase.verifyTrue(isKey(m, kSide));
             end
         end
-        
-        % test descriptions in table
+
         function testDescriptionsInAnswer(testCase)
+            testCase.bfb.computeBands();
+
+            import tables.FaultBandsTableSchema
+            import tables.OperatingConditionsTableSchema
 
             ocTable = testCase.validOperatingConditions.conditionsTable;
-            testCase.bfb.computeBands();
             tbl = testCase.bfb.bandsTable;
-            numrows = height(tbl);
+
             expectedRows = height(ocTable) * ...
                 numel(SFRFsParametersRollingBearings.faultTypes);
-            testCase.verifyEqual(numrows, expectedRows);
-            
-            % consistency of fault group and description
-            
+
+            testCase.verifyEqual(height(tbl), expectedRows);
+
+            kFaultGroupT = FaultBandsTableSchema.FAULTGROUP;
+            kDescT       = FaultBandsTableSchema.DESCRIPTION;
+
             for idx = 1:expectedRows
-                faultType = BearingFrequencyBands.faultGroupToTypeName(...
-                    tbl.FaultGroup(idx) );
+                fg = tbl{idx, kFaultGroupT};
+                ftName = BearingFrequencyBands.faultGroupToTypeName(fg);
 
                 expectedDesc = ...
-                    BearingFrequencyBands.faultTypeDescriptions(...
-                    faultType);
+                    BearingFrequencyBands.faultTypeDescriptions(ftName);
 
-                actualDesc = string(tbl.Description{idx});
+                actualDesc = string(tbl{idx, kDescT});
 
                 testCase.verifyEqual(actualDesc, expectedDesc);
             end
         end
-        
-        % test BPFO
+
         function testBPFOcentralFreqFromMaps(testCase)
-            speed = 30;
-            NB = testCase.validBearingParams.numRollingElements; 
-            DB = testCase.validBearingParams.ballDiameter;
-            DP = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-            
-            % call to MATLAB's bearingFaultBands function to get bands 
-            [~, info] = bearingFaultBands(speed, NB, DB, DP, phi);
-            
-            % Find the index of the BPFO first harmonic
-            expectedLabel = ['1' BearingFrequencyBands.BPFO_CODE];
-
-            idxBPFO = find(strcmp(info.Labels, expectedLabel), 1);
-            expectedBPFO = info.Centers(idxBPFO);
-            
-            % compute with class 
-            rs = testCase.bfb.computeForSpeed(speed);
-            % No need to search for label, no sidebands, first element is
-            % the first harmonic
-            bpfoMap = rs.(...
-             SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME){1};
-
-            labelFromMap = bpfoMap('Label');
-            
-            % average center of receptive field to estimate central freq
-            centralFreqFromMap = mean(bpfoMap('Bands').Center);
-            
-            % check it matches MATLAB's PdM toolbox answer
-            testCase.verifyEqual(...
-                centralFreqFromMap, expectedBPFO, 'AbsTol', 1e-12);
-            testCase.verifyEqual(labelFromMap, expectedLabel);
+            testCase.verifyCentralFreqMatchesPdM( ...
+                30, BearingFrequencyBands.BPFO_CODE, ...
+                SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME);
         end
-        
-        % test BPFI
+
         function testBPFIcentralFreqFromMaps(testCase)
-            speed = 30;
-            NB = testCase.validBearingParams.numRollingElements; 
-            DB = testCase.validBearingParams.ballDiameter;
-            DP = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-        
-            [~, info] = bearingFaultBands(speed, NB, DB, DP, phi);
-
-            expectedLabel = ['1' BearingFrequencyBands.BPFI_CODE];
-            idx = find(strcmp(info.Labels, expectedLabel), 1);
-            expected = info.Centers(idx);
-        
-            rs = testCase.bfb.computeForSpeed(speed);
-
-            maps = rs.(...
+            testCase.verifyCentralFreqMatchesPdM( ...
+                30, BearingFrequencyBands.BPFI_CODE, ...
                 SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME);
-
-            %find index of central freq
-            idxCentral = find(...
-                strcmp(...
-                cellfun(...
-                @(m)m('Label'), maps, 'UniformOutput', false),...
-                expectedLabel), 1);
-
-            bpfiMap = maps{idxCentral};
-            
-            centralFreqFromMap = mean(bpfiMap('Bands').Center);
-
-            labelFromMap = bpfiMap('Label');
-        
-            testCase.verifyEqual(...
-                centralFreqFromMap, expected, 'AbsTol', 1e-12);
-
-            testCase.verifyEqual(labelFromMap, expectedLabel);
         end
-        
-        % test BSF
+
         function testBSFcentralFreqFromMaps(testCase)
-            speed = 30;
-            NB = testCase.validBearingParams.numRollingElements; 
-            DB = testCase.validBearingParams.ballDiameter;
-            DP = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-        
-            [~, info] = bearingFaultBands(speed, NB, DB, DP, phi);
-
-            expectedLabel = ['1' BearingFrequencyBands.BSF_CODE];
-            idx = find(strcmp(info.Labels, expectedLabel), 1);
-            expected = info.Centers(idx);
-        
-            rs = testCase.bfb.computeForSpeed(speed);
-
-            maps = rs.(...
+            testCase.verifyCentralFreqMatchesPdM( ...
+                30, BearingFrequencyBands.BSF_CODE, ...
                 SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME);
-
-            %find index of central freq
-            idxCentral = find(...
-                strcmp(...
-                cellfun(...
-                @(m)m('Label'), maps, 'UniformOutput', false),...
-                expectedLabel), 1);
-
-            bsfMap = maps{idxCentral};
-
-            labelFromMap = bsfMap('Label');
-
-            centralFreqFromMap = mean(bsfMap('Bands').Center);
-        
-            testCase.verifyEqual(...
-                centralFreqFromMap, expected, 'AbsTol', 1e-12);
-
-            testCase.verifyEqual(labelFromMap, expectedLabel);
         end
-        
+
         function testFTFcentralFreqFromMaps(testCase)
-            speed = 30;
-            NB = testCase.validBearingParams.numRollingElements; 
-            DB = testCase.validBearingParams.ballDiameter;
-            DP = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-        
-            [~, info] = bearingFaultBands(speed, NB, DB, DP, phi);
-
-            expectedLabel = ['1' BearingFrequencyBands.FTF_CODE];
-            idx = find(strcmp(info.Labels, expectedLabel), 1);
-            expected = info.Centers(idx);
-        
-            rs = testCase.bfb.computeForSpeed(speed);
-            % No need to search for label: FTF has no sidebands
-            % first harmonic in first index as they are ordered
-            ftfMap = rs.(...
-                SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME){1};
-
-            labelFromMap = ftfMap('Label');
-
-            centralFreqFromMap = mean(ftfMap('Bands').Center);
-        
-            testCase.verifyEqual(...
-                centralFreqFromMap, expected, 'AbsTol', 1e-12);
-
-            testCase.verifyEqual(labelFromMap, expectedLabel);
+            testCase.verifyCentralFreqMatchesPdM( ...
+                30, BearingFrequencyBands.FTF_CODE, ...
+                SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME);
         end
 
-        % check bands of central freq for BPFO
         function testBPFOCenterAndSurroundBands(testCase)
-            speed = 30;
-            NB  = testCase.validBearingParams.numRollingElements;
-            DB  = testCase.validBearingParams.ballDiameter;
-            DP  = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-            expectedLabel = ['1' BearingFrequencyBands.BPFO_CODE];
-        
-            % expected center band
-            widthCenter = ...
-                testCase.validSfrfsParams.outerRace.sigmaCenter(1);
-            [FBcenter, info] = ...
-                bearingFaultBands(speed, NB, DB, DP, phi, ...
-                'Width', widthCenter);
-            idxCenter = find(strcmp(info.Labels, expectedLabel), 1);
-            expectedCenterBand = FBcenter(idxCenter,:);
-        
-            % expected surround band
-            widthSurround = ...
-                testCase.validSfrfsParams.outerRace.sigmaSurround(1);
-            FBsurround = bearingFaultBands(speed, NB, DB, DP, phi, ...
-                                           'Width', widthSurround);
-            expectedSurroundBand = FBsurround(idxCenter,:); 
-        
-            % compute with class under test
-            rs = testCase.bfb.computeForSpeed(speed);
-            % first harmonic is first element
-            bpfoMap = rs.(...
-             SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME){1};
-
-            bands = bpfoMap('Bands');
-        
-            % checks
-            testCase.verifyEqual(...
-                bands.Center,   expectedCenterBand,   'AbsTol', 1e-12);
-            testCase.verifyEqual(...
-                bands.Surround, expectedSurroundBand, 'AbsTol', 1e-12);
+            testCase.verifyBandsMatchPdM( ...
+                30, BearingFrequencyBands.BPFO_CODE, ...
+                SFRFsParametersRollingBearings.OUTER_RACE_FAULT_TYPE_NAME, ...
+                testCase.validSfrfsParams.outerRace);
         end
 
-        % check bands of central freq for BPFI
         function testBPFICenterAndSurroundBands(testCase)
-            speed = 30;
-            NB  = testCase.validBearingParams.numRollingElements;
-            DB  = testCase.validBearingParams.ballDiameter;
-            DP  = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-            expectedLabel = ['1' BearingFrequencyBands.BPFI_CODE]; 
-        
-            % expected center band
-            widthCenter = ...
-                testCase.validSfrfsParams.innerRace.sigmaCenter(1);
-            [FBcenter, info] = bearingFaultBands(...
-                speed, NB, DB, DP, phi, ...
-                'Width', widthCenter);
-            idxCenter = find(strcmp(info.Labels, expectedLabel), 1);
-            expectedCenterBand = FBcenter(idxCenter,:);
-        
-            % expected surround band
-            widthSurround = ...
-                testCase.validSfrfsParams.innerRace.sigmaSurround(1);
-            FBsurround = bearingFaultBands(speed, NB, DB, DP, phi, ...
-                                           'Width', widthSurround);
-            expectedSurroundBand = FBsurround(idxCenter,:);
-        
-            % compute with class under test
-            rs = testCase.bfb.computeForSpeed(speed);
+            testCase.verifyBandsMatchPdM( ...
+                30, BearingFrequencyBands.BPFI_CODE, ...
+                SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME, ...
+                testCase.validSfrfsParams.innerRace);
+        end
 
-            % actual maps from class
-            maps = rs.(...
+        function testBSFCenterAndSurroundBands(testCase)
+            testCase.verifyBandsMatchPdM( ...
+                30, BearingFrequencyBands.BSF_CODE, ...
+                SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME, ...
+                testCase.validSfrfsParams.ball);
+        end
+
+        function testFTFCenterAndSurroundBands(testCase)
+            testCase.verifyBandsMatchPdM( ...
+                30, BearingFrequencyBands.FTF_CODE, ...
+                SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME, ...
+                testCase.validSfrfsParams.cage);
+        end
+
+        function testBSFSidebandCentersUseCageFrequency(testCase)
+            speed = 30;
+
+            rs = testCase.bfb.computeForSpeed(speed);
+            maps = rs.(SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME);
+
+            expectedLabel = [ ...
+                '1' BearingFrequencyBands.BSF_CODE ...
+                '+1' BearingFrequencyBands.FTF_CODE];
+
+            m = testCase.findMapByLabel(maps, expectedLabel);
+            testCase.verifyNotEmpty(m);
+
+            f_bsf = testCase.bfb.getCentralFrequency( ...
+                BearingFrequencyBands.BSF_CODE, speed);
+            f_ftf = testCase.bfb.getCentralFrequency( ...
+                BearingFrequencyBands.FTF_CODE, speed);
+
+            expectedCenter = f_bsf + f_ftf;
+
+            import dicts.BandMapSchema
+            import structs.OpponentBandsSchema
+
+            kBands = BandMapSchema.BANDS;
+            kCenterBand = OpponentBandsSchema.CENTER;
+
+            actualCenter = mean(m(kBands).(kCenterBand));
+
+            testCase.verifyEqual(actualCenter, expectedCenter, ...
+                'AbsTol', 1e-12);
+        end
+
+        function testBPFISidebandCentersUseShaftFrequency(testCase)
+            speed = 30;
+
+            rs = testCase.bfb.computeForSpeed(speed);
+            maps = rs.( ...
                 SFRFsParametersRollingBearings.INNER_RACE_FAULT_TYPE_NAME);
 
-            idxCentral = find(strcmp(...
-                cellfun(@(m)m('Label'), maps, 'UniformOutput', false), ...
-                expectedLabel), 1);
+            f_bpfi = testCase.bfb.getCentralFrequency( ...
+                BearingFrequencyBands.BPFI_CODE, speed);
+            f_fr = speed;
 
-            bpfiMap = maps{idxCentral};
-            bands = bpfiMap('Bands');
-        
-            % checks
-            testCase.verifyEqual(...
-                bands.Center, expectedCenterBand, 'AbsTol', 1e-12);
-            testCase.verifyEqual(...
-                bands.Surround, expectedSurroundBand, 'AbsTol', 1e-12);
-        end
-        
-        % check bands of central freq for BSF
-        function testBSFCenterAndSurroundBands(testCase)
-            speed = 30;
-            NB  = testCase.validBearingParams.numRollingElements;
-            DB  = testCase.validBearingParams.ballDiameter;
-            DP  = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-            expectedLabel = ['1' BearingFrequencyBands.BSF_CODE]; 
-        
-            % Expected center band
-            widthCenter = testCase.validSfrfsParams.ball.sigmaCenter(1);
-            [FBcenter, info] = bearingFaultBands(...
-                speed, NB, DB, DP, phi, ...
-                'Width', widthCenter);
-            idxCenter = find(strcmp(info.Labels, expectedLabel), 1);
-            expectedCenterBand = FBcenter(idxCenter,:);
-        
-            % Expected surround band
-            widthSurround = ...
-                testCase.validSfrfsParams.ball.sigmaSurround(1);
-            FBsurround = bearingFaultBands(speed, NB, DB, DP, phi, ...
-                                           'Width', widthSurround);
-            expectedSurroundBand = FBsurround(idxCenter,:);
-        
-            % Actual maps from class (find central matching label)
-            rs = testCase.bfb.computeForSpeed(speed);
+            expectedLabelP = [ ...
+                '1' BearingFrequencyBands.BPFI_CODE ...
+                '+1' BearingFrequencyBands.FR_CODE];
 
-            maps = rs.(...
-                SFRFsParametersRollingBearings.BALL_FAULT_TYPE_NAME);
+            expectedLabelM = [ ...
+                '1' BearingFrequencyBands.BPFI_CODE ...
+                '-1' BearingFrequencyBands.FR_CODE];
 
-            idxCentral = find(strcmp(...
-                cellfun(@(m)m('Label'), maps, 'UniformOutput', false), ...
-                expectedLabel), 1);
+            mP = testCase.findMapByLabel(maps, expectedLabelP);
+            mM = testCase.findMapByLabel(maps, expectedLabelM);
 
-            bsfMap = maps{idxCentral};
-            bands = bsfMap('Bands');
-        
-            % checks
-            testCase.verifyEqual(...
-                bands.Center, expectedCenterBand, 'AbsTol', 1e-12);
-            testCase.verifyEqual(...
-                bands.Surround, expectedSurroundBand, 'AbsTol', 1e-12);
-        end
-        
-        % check bands of central freq for BSF
-        function testFTFCenterAndSurroundBands(testCase)
-            speed = 30;
-            NB  = testCase.validBearingParams.numRollingElements;
-            DB  = testCase.validBearingParams.ballDiameter;
-            DP  = testCase.validBearingParams.pitchDiameter;
-            phi = testCase.validBearingParams.contactAngle;
-            expectedLabel = ['1' BearingFrequencyBands.FTF_CODE];
-        
-            % expected center band
-            widthCenter = testCase.validSfrfsParams.cage.sigmaCenter(1);
-            [FBcenter, info] = bearingFaultBands(speed, NB, DB, DP, phi, ...
-                                                 'Width', widthCenter);
-            idxCenter = find(strcmp(info.Labels, expectedLabel), 1);
-            expectedCenterBand = FBcenter(idxCenter,:);
-        
-            % expected surround band
-            widthSurround = ...
-                testCase.validSfrfsParams.cage.sigmaSurround(1);
-            FBsurround = bearingFaultBands(speed, NB, DB, DP, phi, ...
-                'Width', widthSurround);
-            expectedSurroundBand = FBsurround(idxCenter,:);
+            testCase.verifyNotEmpty(mP);
+            testCase.verifyNotEmpty(mM);
 
-            % actual maps from class
-            % No sidebands for cage freq, safe to take first element
-            rs = testCase.bfb.computeForSpeed(speed);
-            ftfMap = rs.(...
-                SFRFsParametersRollingBearings.CAGE_FAULT_TYPE_NAME){1};
-            bands = ftfMap('Bands');
+            import dicts.BandMapSchema
+            import structs.OpponentBandsSchema
 
-            % checks
-            testCase.verifyEqual(...
-                bands.Center, expectedCenterBand, 'AbsTol', 1e-12);
-            testCase.verifyEqual(...
-                bands.Surround, expectedSurroundBand, 'AbsTol', 1e-12);
+            kBands = BandMapSchema.BANDS;
+            kCenterBand = OpponentBandsSchema.CENTER;
+
+            expectedCenterP = f_bpfi + f_fr;
+            expectedCenterM = f_bpfi - f_fr;
+
+            actualCenterP = mean(mP(kBands).(kCenterBand));
+            actualCenterM = mean(mM(kBands).(kCenterBand));
+
+            testCase.verifyEqual(actualCenterP, expectedCenterP, ...
+                'AbsTol', 1e-12);
+            testCase.verifyEqual(actualCenterM, expectedCenterM, ...
+                'AbsTol', 1e-12);
         end
 
         function testReceptiveFieldBandsAlwaysCell(testCase)
-            % Force edge case that previously broke the structure
             sharedParams = ...
-                SFRFsParametersRollingBearings.createSFRFsParameters( ...
-                'order',           0, ...
-                'numSidebands',    0, ...
-                'numHarmonics',    10, ...
-                'sigmaCenter',     [4, 1], ...
-                'sigmaSurround',   [12, 1], ...
-                'inhibitionFactor', 0.5 );
+                SFRFsParametersRollingBearings.buildSFRFsParameters( ...
+                'order', 0, ...
+                'numSidebands', 0, ...
+                'numHarmonics', 10, ...
+                'centerMask', GaussianMaskParameters( ...
+                    'bandwidth', 4, 'sigmaRule', 1), ...
+                'surroundMask', GaussianMaskParameters( ...
+                    'bandwidth', 12, 'sigmaRule', 1), ...
+                'inhibitionFactor', 0.5);
 
             sfrfsParams = SFRFsParametersRollingBearings( ...
-                SameForAllFaultTypes = sharedParams );
+                SameForAllFaultTypes = sharedParams);
 
             bfbLocal = BearingFrequencyBands( ...
                 bearingParams = testCase.validBearingParams, ...
                 sfrfsParams = sfrfsParams, ...
-                operatingConditions = testCase.validOperatingConditions );
+                operatingConditions = testCase.validOperatingConditions);
 
             bfbLocal.computeBands();
             tbl = bfbLocal.bandsTable;
 
-            % Every entry must be a scalar cell containing a cell array of 
-            % Maps
+            import tables.FaultBandsTableSchema
+            kRfbT = FaultBandsTableSchema.RECEPTIVEFIELDBANDS;
+
             for i = 1:height(tbl)
-                bands = tbl.ReceptiveFieldBands{i};
+                bands = tbl{i, kRfbT};
 
-                % Must be a cell array
-                testCase.verifyClass(bands, 'cell', ...
-                    'ReceptiveFieldBands must always be a cell array');
+                testCase.verifyClass(bands, 'cell');
 
-                % Every cell must contain a containers.Map
-                testCase.verifyTrue(all( ...
-                    cellfun(@(x) isa(x,'containers.Map'), bands)), ...
-                    'Each band must be a containers.Map');
+                % Stored as a scalar cell wrapping the vector of maps
+                % (as per computeBands contract)
+                testCase.verifyTrue(isscalar(bands));
+
+                maps = bands{1};
+                testCase.verifyClass(maps, 'cell');
+                testCase.verifyTrue(all(cellfun(@(x) ...
+                    isa(x, 'containers.Map'), maps)));
+            end
+        end
+    end
+
+    methods (Access = private)
+        function verifyCentralFreqMatchesPdM( ...
+                testCase, speed, centralCode, faultTypeName)
+
+            [NB, DB, DP, phiDeg] = testCase.getPdMInputs();
+
+            [~, info] = bearingFaultBands(speed, NB, DB, DP, phiDeg);
+
+            expectedLabel = ['1' centralCode];
+            idx = find(strcmp(info.Labels, expectedLabel), 1);
+            testCase.verifyNotEmpty(idx);
+
+            expected = info.Centers(idx);
+
+            rs = testCase.bfb.computeForSpeed(speed);
+            maps = rs.(faultTypeName);
+
+            m = testCase.findMapByLabel(maps, expectedLabel);
+            testCase.verifyNotEmpty(m);
+
+            import dicts.BandMapSchema
+            import structs.OpponentBandsSchema
+
+            kBands = BandMapSchema.BANDS;
+            kLbl   = BandMapSchema.LABEL;
+            kCenterBand = OpponentBandsSchema.CENTER;
+
+            testCase.verifyEqual(m(kLbl), expectedLabel);
+
+            centralFreqFromMap = mean(m(kBands).(kCenterBand));
+
+            testCase.verifyEqual(centralFreqFromMap, expected, ...
+                'AbsTol', 1e-12);
+        end
+
+        function verifyBandsMatchPdM( ...
+                testCase, speed, centralCode, faultTypeName, paramsForType)
+
+            [NB, DB, DP, phiDeg] = testCase.getPdMInputs();
+
+            expectedLabel = ['1' centralCode];
+
+            widthCenter = paramsForType.centerMask.bandwidth;
+            [FBcenter, info] = bearingFaultBands( ...
+                speed, NB, DB, DP, phiDeg, 'Width', widthCenter);
+            idx = find(strcmp(info.Labels, expectedLabel), 1);
+            testCase.verifyNotEmpty(idx);
+            expectedCenterBand = FBcenter(idx, :);
+
+            widthSurround = paramsForType.surroundMask.bandwidth;
+            FBsurround = bearingFaultBands( ...
+                speed, NB, DB, DP, phiDeg, 'Width', widthSurround);
+            expectedSurroundBand = FBsurround(idx, :);
+
+            rs = testCase.bfb.computeForSpeed(speed);
+            maps = rs.(faultTypeName);
+
+            m = testCase.findMapByLabel(maps, expectedLabel);
+            testCase.verifyNotEmpty(m);
+
+            import dicts.BandMapSchema
+            import structs.OpponentBandsSchema
+
+            kBands = BandMapSchema.BANDS;
+            kCenterBand = OpponentBandsSchema.CENTER;
+            kSurBand = OpponentBandsSchema.SURROUND;
+
+            bands = m(kBands);
+
+            testCase.verifyEqual( ...
+                bands.(kCenterBand), expectedCenterBand, 'AbsTol', 1e-12);
+            testCase.verifyEqual( ...
+                bands.(kSurBand), expectedSurroundBand, 'AbsTol', 1e-12);
+        end
+
+        function m = findMapByLabel(~, maps, expectedLabel)
+            
+            import dicts.BandMapSchema
+            kLbl = BandMapSchema.LABEL;
+
+            labels = cellfun(@(x) x(kLbl), maps, 'UniformOutput', false);
+            idx = find(strcmp(labels, expectedLabel), 1);
+
+            if isempty(idx)
+                m = [];
+            else
+                m = maps{idx};
             end
         end
 
+        function [NB, DB, DP, phiDeg] = getPdMInputs(testCase)
+            NB = testCase.validBearingParams.numRollingElements;
+            DB = testCase.validBearingParams.ballDiameter;
+            DP = testCase.validBearingParams.pitchDiameter;
 
+            % PdM bearingFaultBands expects degrees
+            phiDeg = testCase.validBearingParams.contactAngle;
+        end
     end
 end

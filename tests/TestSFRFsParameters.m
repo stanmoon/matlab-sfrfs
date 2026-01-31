@@ -3,90 +3,110 @@ classdef TestSFRFsParameters < matlab.unittest.TestCase
 
     methods (Test)
         function testDefaultParameters(testCase)
-            params = SFRFsParameters.createSFRFsParameters();
+            params = SFRFsParameters.buildSFRFsParameters();
 
             testCase.verifyEqual(params.order, 0);
             testCase.verifyEqual(params.numSidebands, 2);
             testCase.verifyEqual(params.numHarmonics, 10);
-            testCase.verifyEqual(params.sigmaCenter, [4, 6]);
-            testCase.verifyEqual(params.sigmaSurround, [12, 1]);
             testCase.verifyEqual(params.inhibitionFactor, 0.8);
+
+            testCase.verifyClass(params.centerMask, ...
+                'GaussianMaskParameters');
+            testCase.verifyClass(params.surroundMask, ...
+                'GaussianMaskParameters');
+
+            testCase.verifyEqual(params.centerMask.bandwidth, 4);
+            testCase.verifyEqual(params.centerMask.sigmaRule, 3);
+            testCase.verifyEqual(params.centerMask.normalize, false);
+
+            testCase.verifyEqual(params.surroundMask.bandwidth, 4);
+            testCase.verifyEqual(params.surroundMask.sigmaRule, 3);
+            testCase.verifyEqual(params.surroundMask.normalize, false);
         end
 
         function testCustomParameters(testCase)
-            params = SFRFsParameters.createSFRFsParameters( ...
+            centerMask = GaussianMaskParameters( ...
+                'bandwidth', 5, ...
+                'sigmaRule', 7, ...
+                'normalize', true);
+
+            surroundMask = SuperGaussianMaskParameters( ...
+                'alpha', 12, ...
+                'beta', 4);
+
+            params = SFRFsParameters.buildSFRFsParameters( ...
                 'order', 3, ...
                 'numSidebands', 5, ...
                 'numHarmonics', 7, ...
-                'sigmaCenter', [5, 7], ...
-                'sigmaSurround', [10, 2], ...
+                'centerMask', centerMask, ...
+                'surroundMask', surroundMask, ...
                 'inhibitionFactor', 0.6);
 
             testCase.verifyEqual(params.order, 3);
             testCase.verifyEqual(params.numSidebands, 5);
             testCase.verifyEqual(params.numHarmonics, 7);
-            testCase.verifyEqual(params.sigmaCenter, [5, 7]);
-            testCase.verifyEqual(params.sigmaSurround, [10, 2]);
             testCase.verifyEqual(params.inhibitionFactor, 0.6);
+
+            testCase.verifyClass(params.centerMask, ...
+                'GaussianMaskParameters');
+            testCase.verifyEqual(params.centerMask.bandwidth, 5);
+            testCase.verifyEqual(params.centerMask.sigmaRule, 7);
+            testCase.verifyEqual(params.centerMask.normalize, true);
+
+            testCase.verifyClass(params.surroundMask, ...
+                'SuperGaussianMaskParameters');
+            testCase.verifyEqual(params.surroundMask.alpha, 12);
+            testCase.verifyEqual(params.surroundMask.beta, 4);
         end
 
         function testValidationErrors(testCase)
             % Negative order
-            f = @()SFRFsParameters.createSFRFsParameters('order', -1);
+            f = @()SFRFsParameters.buildSFRFsParameters('order', -1);
             testCase.verifyError(f, 'MATLAB:validators:mustBeNonnegative');
 
             % Non-integer order
-            f = @()SFRFsParameters.createSFRFsParameters('order', 2.5);
+            f = @()SFRFsParameters.buildSFRFsParameters('order', 2.5);
             testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
 
             % Negative numSidebands
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'numSidebands', -1);
             testCase.verifyError(f, 'MATLAB:validators:mustBeNonnegative');
 
             % Non-integer numSidebands
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'numSidebands', 1.5);
             testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
 
             % Zero numHarmonics
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'numHarmonics', 0);
             testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
 
             % Non-integer numHarmonics
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'numHarmonics', 2.2);
             testCase.verifyError(f, 'MATLAB:validators:mustBeInteger');
 
-            % Invalid sigmaCenter
-            f = @()SFRFsParameters.createSFRFsParameters(...
-                'sigmaCenter', [-1 2]);
-            testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
-
-            f = @()SFRFsParameters.createSFRFsParameters(...
-                'sigmaCenter', [1 2 3]);
-            testCase.verifyError(f, 'MATLAB:validation:IncompatibleSize');
-
-            % Invalid sigmaSurround
-            f = @()SFRFsParameters.createSFRFsParameters(...
-                'sigmaSurround', [0 1]);
-            testCase.verifyError(f, 'MATLAB:validators:mustBePositive');
-
-            f = @()SFRFsParameters.createSFRFsParameters(...
-                'sigmaSurround', [1 2 3]);
-            testCase.verifyError(f, 'MATLAB:validation:IncompatibleSize');
-
             % Inhibition factor out of bounds
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'inhibitionFactor', -0.1);
             testCase.verifyError(...
                 f, 'MATLAB:validators:mustBeGreaterThanOrEqual');
 
-            f = @()SFRFsParameters.createSFRFsParameters(...
+            f = @()SFRFsParameters.buildSFRFsParameters(...
                 'inhibitionFactor', 1.1);
             testCase.verifyError(...
                 f, 'MATLAB:validators:mustBeLessThanOrEqual');
+
+            % Invalid mask types
+            f = @()SFRFsParameters.buildSFRFsParameters(...
+                'centerMask', 123);
+            testCase.verifyError(f, 'MATLAB:validation:UnableToConvert');
+
+            f = @()SFRFsParameters.buildSFRFsParameters(...
+                'surroundMask', struct());
+            testCase.verifyError(f, 'MATLAB:validation:UnableToConvert');
         end
     end
 end
