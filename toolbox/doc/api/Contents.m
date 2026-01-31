@@ -4,4 +4,4 @@
 % Live scripts providing class-by-class API documentation for the
 % Spectral Fault Receptive Fields (SFRFs) toolbox.
 %
-% This folder contains one .mlx live scripts documentation
+% This folder contains .mlx live scripts documentation
