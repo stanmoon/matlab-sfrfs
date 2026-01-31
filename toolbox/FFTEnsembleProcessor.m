@@ -123,10 +123,10 @@ classdef FFTEnsembleProcessor < EnsembleProcessor
                 colName = temporalCols{i};
                 spectralColName = ensemble.mapToSpectralColumn(colName);
                 if log.isFineEnabled()
-                    log.fine(...
-                        sprintf(...
-                        "Computing FFT for column %s..." + colName));
+                    log.fine(sprintf(...
+                        'Computing FFT for column %s...', colName));
                 end
+
                 % Concatenate all snapshots
                 x = [memberTable.(colName){:}]; 
                 X = fft(x, [], 1);

@@ -140,24 +140,42 @@ classdef (Abstract) EnsembleProcessor < handle
                 error('sfrfs:EnsembleProcessor:EmptyEnsemble',...
                       'Cannot process: Ensemble has not been assigned.');
             end
-            memberFiles = obj.ensemble.getFiles();
+            memberFiles = EnsembleProcessor.sortFilesBySizeDesc( ...
+                obj.ensemble.getFiles());
             params = obj.getProcessParams();
             mtvn = obj.ensemble.memberTableVarName;
             sortf = obj.ensemble.sortField;
 
             compute = parallel.pool.Constant(@() computeHandle);
 
-            % Dimension pool
+            % Dimension parallel pool
 
-            if isempty(gcp('nocreate'))
-                parpool(obj.numWorkers);
+            c = parcluster('Processes');
+
+            % Fail fast on worker-count misconfiguration (no silent clamp)
+            if obj.numWorkers > c.NumWorkers
+                log = SFRFsLogger.getLogger();
+                if log.isSevereEnabled()
+                    log.severe([ ...
+                        'Parallel worker misconfiguration: ' ...
+                        'requested=%d, maxSupported=%d, profile=%s'], ...
+                        obj.numWorkers, c.NumWorkers, 'Processes');
+
+                end
+
+                error('sfrfs:EnsembleProcessor:TooManyWorkers', ...
+                    ['Requested %d workers but ''Processes'' supports ' ...
+                     'at most %d. Reduce numWorkers or increase ' ...
+                     'cluster NumWorkers.'], ...
+                    obj.numWorkers, c.NumWorkers);
             end
 
-            log = SFRFsLogger.getLogger();
+            p = gcp('nocreate');
 
-            if log.isInfoEnabled()
-                log.info('Running with %d workers.', ...
-                    obj.numWorkersInternal);
+            % Enforce exact pool size (restart pool if size differs)
+            if isempty(p) || p.NumWorkers ~= obj.numWorkers
+                if ~isempty(p), delete(p); end
+                parpool('Processes', obj.numWorkers);
             end
 
             nWorkers = numel(memberFiles);
@@ -231,5 +249,39 @@ classdef (Abstract) EnsembleProcessor < handle
                 throwAsCaller(ME);
             end
         end
+
+        function filesOut = sortFilesBySizeDesc(filesIn)
+        % sortFilesBySizeDesc  Sort file paths by size (descending).
+        %
+        %   filesOut = sortFilesBySizeDesc(filesIn) sorts the input file 
+        %   list from largest to smallest, using file size in bytes.
+        
+            arguments
+                filesIn
+            end
+        
+            isString = isstring(filesIn);
+            files = cellstr(filesIn);
+        
+            n = numel(files);
+            sizes = zeros(n, 1);
+        
+            for k = 1:n
+                info = dir(files{k});
+                if isempty(info)
+                    error('sfrfs:EnsembleProcessor:FileNotFound', ...
+                        'File not found: %s', files{k});
+                end
+                sizes(k) = info.bytes;
+            end
+        
+            [~, idx] = sort(sizes, 'descend');
+            filesOut = files(idx);
+        
+            if isString
+                filesOut = string(filesOut);
+            end
+        end
+
     end
 end

@@ -24,6 +24,28 @@ classdef SFRFsEnsembleBroker < EnsembleBroker
     
     methods
         function obj = SFRFsEnsembleBroker(args)
+        % SFRFsEnsembleBroker Construct an SFRF-aware ensemble broker.
+        %
+        % obj = SFRFsEnsembleBroker(Name=Value, ...)
+        %
+        % Name–Value arguments:
+        %   EnsembleObject            Ensemble-like object providing access 
+        %                             to member files and metadata.
+        %   GetFilesFunction          Function handle returning member file
+        %                             list when applied to the ensemble.
+        %   TemporalSnapshotColumns   Cell array of temporal signal column
+        %                             names.
+        %   SpectralSuffix            Suffix for spectral (FFT) columns
+        %                             (default: "_FFT").
+        %   sfrfsSuffix               Suffix for SFRF columns
+        %                             (default: "_SFRFs").
+        %
+        % API note (naming consistency):
+        %   Name–Value parameters in this constructor use a legacy 
+        %   CamelCase naming style (except 'sfrfsSuffix') for backward 
+        %   compatibility.
+        %   A uniform lower camelCase convention is planned for a future
+        %   major release.
             arguments
                 args.EnsembleObject {mustBeNonempty}
                 args.GetFilesFunction function_handle

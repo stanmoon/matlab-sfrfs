@@ -179,7 +179,12 @@ classdef SFRFsEnsembleProcessor < EnsembleProcessor
         % See also: SFRFsCompute/compute
         
             % Extract operating condition(constant in run-to-failure tests)
-            oc = memberTable(1, {'Speed', 'Load'});
+            import tables.OperatingConditionsTableSchema
+            kSpeed = OperatingConditionsTableSchema.SPEED;
+            kLoad  = OperatingConditionsTableSchema.LOAD;
+
+            oc = memberTable(1, [kSpeed, kLoad]);
+
         
             % Extract FFT spectral column name for the current signal
             spectralCol = ...
@@ -215,7 +220,11 @@ classdef SFRFsEnsembleProcessor < EnsembleProcessor
         %   tbl - Table extended or updated with the specified SFRF column.
         
             % Convert SFRF table cell array to matrix for easier handling
-            responseRF = cell2mat(responseTable.SFRFs);
+            import tables.GainFunctionsTableSchema
+            kSfrfs = GainFunctionsTableSchema.SFRFS;
+
+            responseRF = cell2mat(responseTable.(kSfrfs));
+
         
             % Determine size for cell partitioning
             nFaultModes = size(responseRF, 1);

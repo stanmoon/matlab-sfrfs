@@ -220,160 +220,144 @@ classdef (Abstract) FaultFrequencyBands < handle
 
         function bands = extractBands(faultBandsTable, row)
         %EXTRACTBANDS Extract and sort band matrices from a table row.
-        %   bands = extractBands(faultBandsTable, row) extracts band 
-        %   information from the specified row of faultBandsTable and 
-        %   returns a struct with metadata and sorted matrices for center 
-        %   and surround frequency bands.
-        %
-        %   Parameters:
-        %       faultBandsTable - Table containing fault band data, 
-        %                         including a 'ReceptiveFieldBands' column 
-        %                         with band definitions.
-        %       row             - Row index (positive integer) specifying 
-        %                         which row to extract and process.
-        %
-        %   Output:
-        %       bands - Struct with fields:
-        %           FaultGroup                   - Fault group identifier
-        %           Speed                        - Operating speed
-        %           Load                         - Operating load
-        %           NumberOfBands                - Number of bands in this 
-        %                                          row
-        %           MinFreqColumn                - Index for minimum 
-        %                                          frequency
-        %           MaxFreqColumn                - Index for maximum 
-        %                                          frequency
-        %           HarmonicColumn               - Index for harmonic 
-        %                                          column
-        %           SidebandColumn               - Index for sideband 
-        %                                          column
-        %           CharacteristicFrequencyIndex - Index of characteristic 
-        % band
-        %           CenterBandsMatrix            - Sorted matrix for center 
-        %                                          bands
-        %           SurroundBandsMatrix          - Sorted matrix for 
-        %                                          surround bands
-        %
         %   The band matrices are sorted lexicographically by minimum 
         %   frequency, harmonic, and sideband index.
-        %
-        %   Example:
-        %     speeds = [35; 37.5; 40];
-        %     loads  = [12; 11; 10];
-        %     operatingConditions = ...
-        %       createOperatingConditions(speeds, loads);
-        %     bearingParams = bearingParameters(...
-        %       'NumRollingElements',8,...
-        %       'BallDiameter',7.92,...
-        %       'PitchDiameter',34.55,...
-        %       'ContactAngle',0);
-        %     sfrfsParams = sfrfsParameters(...
-        %       'NumHarmonics', 10,... 
-        %       'NumSidebands', 2,... 
-        %       'SigmaCenter', [4, 6],... 
-        %       'SigmaSurround', [12, 1]);
-        %     faultBandsTable = computeFaultFrequencyBands(...
-        %       operatingConditions, ...
-        %       bearingParams, ...
-        %       sfrfsParams);
-        %       bands = extractBands(faultBandsTable, 2);
-        %   See also: bearingParameters, createOperatingConditions,
-        %     sfrfsParameters, computeFaultFrequencyBands
-        
+
             arguments
                 faultBandsTable table
                 row (1,1) {mustBeInteger, mustBePositive}
             end
-        
+
             if row > height(faultBandsTable)
-                error('sfrfs:extractBands:Badsubscript',...
-                    'Row index exceeds number of table rows.');
+                error("sfrfs:extractBands:Badsubscript", ...
+                    "Row index exceeds number of table rows.");
             end
-        
-            % Extract the nested cell array structure
-            faultGroup = faultBandsTable{row,'FaultGroup'};
-            speed = faultBandsTable{row,'Speed'};
-            load = faultBandsTable{row,'Load'};
 
+            import tables.FaultBandsTableSchema
+            import structs.FaultBandsExtractSchema
+            import dicts.BandMapSchema
+            import structs.OpponentBandsSchema
 
-            cellarraybands = faultBandsTable{row, 'ReceptiveFieldBands'};
+            % Schema keys (table)
+            kFaultGroupT = FaultBandsTableSchema.FAULTGROUP;
+            kSpeedT = FaultBandsTableSchema.SPEED;
+            kLoadT = FaultBandsTableSchema.LOAD;
+            kRfbT = FaultBandsTableSchema.RECEPTIVEFIELDBANDS;
 
-            % Normalise to 1×N cell array of containers.Map
-            if isa(cellarraybands, 'containers.Map')
-                % Single map → wrap into cell
+            % Schema keys (band map)
+            kBands = BandMapSchema.BANDS;
+            kHar = BandMapSchema.HARMONIC;
+            kSide = BandMapSchema.SIDEBAND;
+
+            % Schema keys (opponent bands struct)
+            kCenterBand = OpponentBandsSchema.CENTER;
+            kSurBand = OpponentBandsSchema.SURROUND;
+
+            % Schema keys (output struct)
+            kFaultGroup = FaultBandsExtractSchema.FAULTGROUP;
+            kSpeed = FaultBandsExtractSchema.SPEED;
+            kLoad = FaultBandsExtractSchema.LOAD;
+
+            kN = FaultBandsExtractSchema.NUMBEROFBANDS;
+
+            kMinCol = FaultBandsExtractSchema.MINFREQCOLUMN;
+            kMaxCol = FaultBandsExtractSchema.MAXFREQCOLUMN;
+            kHarCol = FaultBandsExtractSchema.HARMONICCOLUMN;
+            kSideCol = FaultBandsExtractSchema.SIDEBANDCOLUMN;
+
+            kCfIdx = FaultBandsExtractSchema.CHARACTERISTICFREQUENCYINDEX;
+
+            kCenterMat = FaultBandsExtractSchema.CENTERBANDSMATRIX;
+            kSurMat = FaultBandsExtractSchema.SURROUNDBANDSMATRIX;
+
+            faultGroup = faultBandsTable{row, kFaultGroupT};
+            speed = faultBandsTable{row, kSpeedT};
+            load = faultBandsTable{row, kLoadT};
+
+            cellarraybands = faultBandsTable{row, kRfbT};
+
+            if isa(cellarraybands, "containers.Map")
                 cellarraybands = {cellarraybands};
 
             elseif iscell(cellarraybands)
-
-                % Unwrap single nested cell: {{maps...}}
                 if isscalar(cellarraybands) && iscell(cellarraybands{1})
                     cellarraybands = cellarraybands{1};
                 end
 
-                % Final safety: must be cell of maps
-                if ~all(cellfun(@(x) ...
-                        isa(x,'containers.Map'), cellarraybands))
-                    error('sfrfs:extractBands:InvalidBandContainer', ...
-                        'ReceptiveFieldBands must contain containers.Map');
+                isMap = cellfun(@(x) isa(x, "containers.Map"), ...
+                    cellarraybands);
+                if ~all(isMap)
+                    error("sfrfs:extractBands:InvalidBandContainer", ...
+                        "%s must contain containers.Map objects.", kRfbT);
                 end
             else
-                error('sfrfs:extractBands:InvalidBandContainer', ...
-                    'Unexpected type in ReceptiveFieldBands.');
+                error("sfrfs:extractBands:InvalidBandContainer", ...
+                    "Unexpected type in %s.", kRfbT);
             end
 
             N = numel(cellarraybands);
-        
-            % Create info object for the user
+
             bands = struct();
-            bands.FaultGroup = faultGroup;
-            bands.Speed = speed;
-            bands.Load = load;
-            bands.NumberOfBands = N;
-            bands.MinFreqColumn = 1;
-            bands.MaxFreqColumn = 2;
-            bands.HarmonicColumn = 3;
-            bands.SidebandColumn = 4;
-            bands.CharacteristicFrequencyIndex = NaN; 
-        
-            % create the double matrix to contain the output
-            bands.CenterBandsMatrix = [zeros(N,4),(1:N)'];
-            bands.SurroundBandsMatrix = bands.CenterBandsMatrix;
-        
-            % fill the matrix first, in the order they are in the cell 
-            % array
-            for i=1:N
-                celldict = cellarraybands{i};
-                bands.CenterBandsMatrix(i,bands.MinFreqColumn) = ...
-                    celldict('Bands').Center(1);
-                bands.CenterBandsMatrix(i,bands.MaxFreqColumn) = ...
-                    celldict('Bands').Center(2);
-                bands.CenterBandsMatrix(i,bands.HarmonicColumn) = ...
-                    celldict('Harmonic');
-                bands.CenterBandsMatrix(i,bands.SidebandColumn) = ...
-                    celldict('Sideband');
-                bands.SurroundBandsMatrix(i,bands.MinFreqColumn) = ...
-                    celldict('Bands').Surround(1);
-                bands.SurroundBandsMatrix(i,bands.MaxFreqColumn) = ...
-                    celldict('Bands').Surround(2);
-                bands.SurroundBandsMatrix(i,bands.HarmonicColumn) = ...
-                    celldict('Harmonic');
-                bands.SurroundBandsMatrix(i,bands.SidebandColumn) = ...
-                    celldict('Sideband');      
-                if celldict('Harmonic') == 1 && celldict('Sideband') == 0
-                    bands.CharacteristicFrequencyIndex = i;
+            bands.(kFaultGroup) = faultGroup;
+            bands.(kSpeed) = speed;
+            bands.(kLoad) = load;
+
+            bands.(kN) = N;
+
+            bands.(kMinCol) = 1;
+            bands.(kMaxCol) = 2;
+            bands.(kHarCol) = 3;
+            bands.(kSideCol) = 4;
+
+            bands.(kCfIdx) = NaN;
+
+            minCol = bands.(kMinCol);
+            maxCol = bands.(kMaxCol);
+            harCol = bands.(kHarCol);
+            sideCol = bands.(kSideCol);
+
+            centerMat = [zeros(N, 4), (1:N)'];
+            surMat = centerMat;
+
+            characteristicOriginalIdx = NaN;
+
+            for i = 1:N
+                m = cellarraybands{i};
+                b = m(kBands);
+
+                centerMat(i, minCol) = b.(kCenterBand)(1);
+                centerMat(i, maxCol) = b.(kCenterBand)(2);
+
+                surMat(i, minCol) = b.(kSurBand)(1);
+                surMat(i, maxCol) = b.(kSurBand)(2);
+
+                h = m(kHar);
+                sb = m(kSide);
+
+                centerMat(i, harCol) = h;
+                centerMat(i, sideCol) = sb;
+
+                surMat(i, harCol) = h;
+                surMat(i, sideCol) = sb;
+
+                if h == 1 && sb == 0
+                    characteristicOriginalIdx = i;
                 end
             end
-            
-            % Sort lexicographically by lower frequency, harmonic, then 
-            % sideband
-            sortedMat = sortrows(bands.CenterBandsMatrix, ...
-                [bands.MinFreqColumn, bands.HarmonicColumn, ...
-                 bands.SidebandColumn]);
-            % remove auxiliary column
-            bands.CenterBandsMatrix = sortedMat(:,1:end-1);
-            bands.SurroundBandsMatrix = ...
-                bands.SurroundBandsMatrix(sortedMat(:,end), 1:end-1);
+
+            sortedCenter = sortrows(centerMat, [minCol, harCol, sideCol]);
+            perm = sortedCenter(:, end);
+
+            bands.(kCenterMat) = sortedCenter(:, 1:end-1);
+            bands.(kSurMat) = surMat(perm, 1:end-1);
+
+            if ~isnan(characteristicOriginalIdx)
+                bands.(kCfIdx) = ...
+                    find(perm == characteristicOriginalIdx, 1);
+            end
+
             bands = orderfields(bands);
         end
+
     end
 end
