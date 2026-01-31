@@ -8,3 +8,6 @@ deploymentLog.html
 *.m~
 *.autosave
 
+tmp/
+resources/
+
