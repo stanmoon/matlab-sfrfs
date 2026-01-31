@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>Contents</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="Contents.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -78,37 +78,43 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <div class="content">
 <pre class="codeinput">
 <span class="comment">% SFRFs Toolbox - Core Toolbox Folder</span>
-<span class="comment">% Version 1.0.0</span>
+<span class="comment">% Version 1.1.0</span>
 <span class="comment">%</span>
 <span class="comment">% Core API classes, utilities, and live documentation for the</span>
 <span class="comment">% Spectral Fault Receptive Fields (SFRFs) toolbox.</span>
 <span class="comment">%</span>
 <span class="comment">% Core Classes and Functions</span>
-<span class="comment">%   BearingFrequencyBands          Bearing fault frequency bands</span>
-<span class="comment">%   EnsembleBroker                 Ensemble data access and metadata</span>
-<span class="comment">%   EnsembleDatastoreRegistry      Registry of ensemble datastore objects</span>
-<span class="comment">%   EnsembleProcessor              Abstract ensemble processor</span>
-<span class="comment">%   EnsembleUtil                   Utilities for ensemble data handling</span>
-<span class="comment">%   FaultFrequencyBands            Base class for frequency-band models</span>
-<span class="comment">%   FFTEnsembleProcessor           FFT-based ensemble processing</span>
-<span class="comment">%   FrequencyMask                  Frequency-domain masking utilities</span>
-<span class="comment">%   OperatingConditions            Operating-condition metadata</span>
-<span class="comment">%   ParametersRollingBearings      Rolling-bearing geometry parameters</span>
-<span class="comment">%   ParametersSnapshot             Metadata for time/freq snapshots</span>
-<span class="comment">%   ReceptiveFieldGainFunctions    Gain functions for SFRF models</span>
-<span class="comment">%   SFRFsCompute                   Core SFRF computation</span>
-<span class="comment">%   SFRFsEnsembleBroker            SFRF-specific ensemble broker</span>
-<span class="comment">%   SFRFsEnsembleProcessor         Ensemble-level SFRF computation</span>
-<span class="comment">%   SFRFsLogger                    Logging utilities</span>
-<span class="comment">%   SFRFsParameters                Base class for SFRF parameters</span>
-<span class="comment">%   SFRFsParametersRollingBearings Parameters for bearing SFRFs</span>
+<span class="comment">%   BearingFrequencyBands           Bearing fault frequency bands</span>
+<span class="comment">%   FaultFrequencyBands             Base class for frequency-band models</span>
+<span class="comment">%   ParametersRollingBearings       Rolling-bearing geometry parameters</span>
+<span class="comment">%   SFRFsParametersRollingBearings  Parameters for bearing SFRFs</span>
 <span class="comment">%</span>
-<span class="comment">% Packages and Subfolders</span>
-<span class="comment">%   +data                  Helpers for XJTU-SY ensembles and file handling</span>
-<span class="comment">%   +optim                 Optimization helpers (future extensions)</span>
-<span class="comment">%   doc/                   Live scripts: guides, API docs, release notes</span>
-<span class="comment">%   internal/resources     Internal toolbox resources</span>
-<span class="comment">%   resources              Function signatures, logging configuration</span>
+<span class="comment">%   MaskParameters                  Abstract mask parameter base class</span>
+<span class="comment">%   GaussianMaskParameters          Gaussian spectral mask parameters</span>
+<span class="comment">%   SuperGaussianMaskParameters     Super-Gaussian spectral mask parameters</span>
+<span class="comment">%   FrequencyMask                   Frequency-domain spectral masking</span>
+<span class="comment">%</span>
+<span class="comment">%   ReceptiveFieldGainFunctions     Receptive field gain functions (RFGFs)</span>
+<span class="comment">%   ReceptiveFieldResponseFunctions Response functions for SFRFs</span>
+<span class="comment">%   ContrastMappings                Center&ndash;surround contrast operators</span>
+<span class="comment">%   CenterSurroundCompute           Center&ndash;surround contrast computation</span>
+<span class="comment">%</span>
+<span class="comment">%   SFRFsParameters                 Base class for SFRF parameters</span>
+<span class="comment">%   SFRFsCompute                    Core SFRF computation</span>
+<span class="comment">%</span>
+<span class="comment">%   EnsembleProcessor               Abstract ensemble processor</span>
+<span class="comment">%   FFTEnsembleProcessor            FFT-based ensemble processing</span>
+<span class="comment">%   SFRFsEnsembleProcessor          Ensemble-level SFRF computation</span>
+<span class="comment">%</span>
+<span class="comment">%   EnsembleBroker                  Ensemble data access and mediation</span>
+<span class="comment">%   SFRFsEnsembleBroker             SFRF-specific ensemble broker</span>
+<span class="comment">%   EnsembleDatastoreRegistry       Registry of ensemble datastore objects</span>
+<span class="comment">%   EnsembleUtil                    Utilities for ensemble data handling</span>
+<span class="comment">%</span>
+<span class="comment">%   OperatingConditions             Operating-condition metadata</span>
+<span class="comment">%   OperatingConditionSelection    Selection of operating conditions</span>
+<span class="comment">%   FaultConditionSelector          Selection of fault conditions</span>
+<span class="comment">%   ParametersSnapshot              Metada</span>
 </pre>
 <p class="footer">
 <br>
@@ -119,38 +125,43 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <!--
 ##### SOURCE BEGIN #####
 % SFRFs Toolbox - Core Toolbox Folder
-% Version 1.0.0
+% Version 1.1.0
 %
 % Core API classes, utilities, and live documentation for the
 % Spectral Fault Receptive Fields (SFRFs) toolbox.
 %
 % Core Classes and Functions
-%   BearingFrequencyBands          Bearing fault frequency bands
-%   EnsembleBroker                 Ensemble data access and metadata
-%   EnsembleDatastoreRegistry      Registry of ensemble datastore objects
-%   EnsembleProcessor              Abstract ensemble processor
-%   EnsembleUtil                   Utilities for ensemble data handling
-%   FaultFrequencyBands            Base class for frequency-band models
-%   FFTEnsembleProcessor           FFT-based ensemble processing
-%   FrequencyMask                  Frequency-domain masking utilities
-%   OperatingConditions            Operating-condition metadata
-%   ParametersRollingBearings      Rolling-bearing geometry parameters
-%   ParametersSnapshot             Metadata for time/freq snapshots
-%   ReceptiveFieldGainFunctions    Gain functions for SFRF models
-%   SFRFsCompute                   Core SFRF computation
-%   SFRFsEnsembleBroker            SFRF-specific ensemble broker
-%   SFRFsEnsembleProcessor         Ensemble-level SFRF computation
-%   SFRFsLogger                    Logging utilities
-%   SFRFsParameters                Base class for SFRF parameters
-%   SFRFsParametersRollingBearings Parameters for bearing SFRFs
+%   BearingFrequencyBands           Bearing fault frequency bands
+%   FaultFrequencyBands             Base class for frequency-band models
+%   ParametersRollingBearings       Rolling-bearing geometry parameters
+%   SFRFsParametersRollingBearings  Parameters for bearing SFRFs
 %
-% Packages and Subfolders
-%   +data                  Helpers for XJTU-SY ensembles and file handling
-%   +optim                 Optimization helpers (future extensions)
-%   doc/                   Live scripts: guides, API docs, release notes
-%   internal/resources     Internal toolbox resources
-%   resources              Function signatures, logging configuration
-
+%   MaskParameters                  Abstract mask parameter base class
+%   GaussianMaskParameters          Gaussian spectral mask parameters
+%   SuperGaussianMaskParameters     Super-Gaussian spectral mask parameters
+%   FrequencyMask                   Frequency-domain spectral masking
+%
+%   ReceptiveFieldGainFunctions     Receptive field gain functions (RFGFs)
+%   ReceptiveFieldResponseFunctions Response functions for SFRFs
+%   ContrastMappings                Center–surround contrast operators
+%   CenterSurroundCompute           Center–surround contrast computation
+%
+%   SFRFsParameters                 Base class for SFRF parameters
+%   SFRFsCompute                    Core SFRF computation
+%
+%   EnsembleProcessor               Abstract ensemble processor
+%   FFTEnsembleProcessor            FFT-based ensemble processing
+%   SFRFsEnsembleProcessor          Ensemble-level SFRF computation
+%
+%   EnsembleBroker                  Ensemble data access and mediation
+%   SFRFsEnsembleBroker             SFRF-specific ensemble broker
+%   EnsembleDatastoreRegistry       Registry of ensemble datastore objects
+%   EnsembleUtil                    Utilities for ensemble data handling
+%
+%   OperatingConditions             Operating-condition metadata
+%   OperatingConditionSelection    Selection of operating conditions
+%   FaultConditionSelector          Selection of fault conditions
+%   ParametersSnapshot              Metada
 
 ##### SOURCE END #####
 -->

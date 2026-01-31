@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>TestSFRFsParametersRollingBearings</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="TestSFRFsParametersRollingBearings.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -255,6 +255,375 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             testCase.verifyError(f, <span class="keyword">...</span>
                 <span class="string">'MATLAB:validators:mustBeLessThanOrEqual'</span>);
         <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMode1ValidConstructionWithMasks(testCase)
+            <span class="comment">% New interface: buildSFRFsParameters</span>
+            pNoSidebands = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order=3, numSidebands=0, numHarmonics=8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                inhibitionFactor=0.6);
+
+            pFull = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order=3, numSidebands=4, numHarmonics=8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>,12,<span class="string">'beta'</span>,4), <span class="keyword">...</span>
+                inhibitionFactor=0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pNoSidebands, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pFull, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pFull, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pNoSidebands);
+
+            testCase.verifyEqual(obj.outerRace, pNoSidebands);
+            testCase.verifyEqual(obj.innerRace, pFull);
+            testCase.verifyEqual(obj.ball, pFull);
+            testCase.verifyEqual(obj.cage, pNoSidebands);
+
+            <span class="comment">% Sanity: mask objects exist and are MaskParameters</span>
+            testCase.verifyTrue( <span class="keyword">...</span>
+                isa(obj.innerRace.centerMask, <span class="string">'MaskParameters'</span>));
+            testCase.verifyTrue( <span class="keyword">...</span>
+                isa(obj.innerRace.surroundMask, <span class="string">'MaskParameters'</span>));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMode2ValidConstructionWithMasks(testCase)
+            <span class="comment">% SameForAllFaultTypes with mask interface</span>
+            shared = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 3, <span class="keyword">...</span>
+                numSidebands = 4 , <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>,12,<span class="string">'beta'</span>,4), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, shared);
+
+            <span class="comment">% OuterRace and Cage must be forced to 0 sidebands</span>
+            testCase.verifyEqual(obj.outerRace.numSidebands, 0);
+            testCase.verifyEqual(obj.cage.numSidebands, 0);
+
+            <span class="comment">% Inner + Ball preserve shared sidebands</span>
+            testCase.verifyEqual( <span class="keyword">...</span>
+                obj.innerRace.numSidebands, shared.numSidebands);
+            testCase.verifyEqual( <span class="keyword">...</span>
+                obj.ball.numSidebands, shared.numSidebands);
+
+            <span class="comment">% Masks preserved</span>
+            testCase.verifyTrue( <span class="keyword">...</span>
+                isa(obj.innerRace.centerMask, <span class="string">'MaskParameters'</span>));
+            testCase.verifyTrue(isa( <span class="keyword">...</span>
+                obj.innerRace.surroundMask, <span class="string">'MaskParameters'</span>));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testOuterRaceSidebandsNotAllowedLegacy(testCase)
+            <span class="comment">% Legacy interface: outerRace must have 0 sidebands</span>
+            pOuterBad = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="string">'numSidebands'</span>, 2, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            pOk = testCase.completeParams;
+            pNoSb = testCase.paramsNoSidebands;
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pOuterBad, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pNoSb);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                 <span class="string">'InvalidNumSidebands'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testCageSidebandsNotAllowedLegacy(testCase)
+        <span class="comment">% Legacy interface: cage must have 0 sidebands</span>
+            pCageBad = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="string">'numSidebands'</span>, 1, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            pOk = testCase.completeParams;
+            pNoSb = testCase.paramsNoSidebands;
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pNoSb, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pCageBad);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                <span class="string">'sfrfs:SFRFsParametersRollingBearings:InvalidNumSidebands'</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testOuterRaceSidebandsNotAllowedMasks(testCase)
+        <span class="comment">% Mask interface: outerRace must have 0 sidebands</span>
+            pOuterBad = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 2, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            pOk = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 4, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>,12,<span class="string">'beta'</span>,4), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            pNoSb = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 0, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                inhibitionFactor=0.6);
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pOuterBad, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pNoSb);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                 <span class="string">'InvalidNumSidebands'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testCageSidebandsNotAllowedMasks(testCase)
+        <span class="comment">% Mask interface: cage must have 0 sidebands</span>
+            pCageBad = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 1, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            pOk = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 4, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>,12,<span class="string">'beta'</span>,4), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            pNoSb = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 1, <span class="keyword">...</span>
+                numSidebands = 0, <span class="keyword">...</span>
+                numHarmonics = 8, <span class="keyword">...</span>
+                centerMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,7), <span class="keyword">...</span>
+                surroundMask = <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                inhibitionFactor = 0.6);
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pNoSb, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pCageBad);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                 <span class="string">'InvalidNumSidebands'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMissingCoreFieldsShouldError(testCase)
+        <span class="comment">% Missing core field numHarmonics (legacy path)</span>
+            p = struct( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 0, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, p, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      testCase.paramsNoSidebands);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                 <span class="string">'validateInputs:MissingSFRFsParameters'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMissingMaskFieldsShouldError(testCase)
+        <span class="comment">% Core is present, but mask fields are missing</span>
+            p = struct( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 0, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+                <span class="comment">% missing centerMask and surroundMask</span>
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, p, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      testCase.paramsNoSidebands);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                 <span class="string">'validateInputs:MissingSFRFsParameters'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMixedLegacyAndMaskStructShouldError(testCase)
+        <span class="comment">% Mixed struct: has both sigma* and *Mask fields and</span>
+        <span class="comment">% they are incosistent.</span>
+            p = struct( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 0, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="keyword">...</span>
+                <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>, <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,5,<span class="string">'sigmaRule'</span>,9), <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,12,<span class="string">'sigmaRule'</span>,3), <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            f = @() SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, p, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      testCase.completeParams, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      testCase.paramsNoSidebands);
+
+            testCase.verifyError(f, <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span><span class="keyword">...</span>
+                <span class="string">'validateInputs:DuplicateCenterParameterization'</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMode1LegacyParamsShouldPass(testCase)
+        <span class="comment">% Legacy constructor output should be accepted.</span>
+
+            pNoSb = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="string">'numSidebands'</span>, 0, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            pOk = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 2, <span class="string">'numSidebands'</span>, 4, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pNoSb, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pNoSb);
+
+            testCase.verifyEqual(obj.outerRace, pNoSb);
+            testCase.verifyEqual(obj.innerRace, pOk);
+            testCase.verifyEqual(obj.ball,      pOk);
+            testCase.verifyEqual(obj.cage,      pNoSb);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> testMode1MaskParamsShouldPass(testCase)
+        <span class="comment">% New interface (mask-based) should be accepted.</span>
+
+            pNoSb = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 1, <span class="string">'numSidebands'</span>, 0, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>,   <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>, 5, <span class="string">'sigmaRule'</span>, 7), <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>,7, <span class="string">'sigmaRule'</span>, 3), <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            pOk = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 2, <span class="string">'numSidebands'</span>, 4, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>,   <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>, 5, <span class="string">'sigmaRule'</span>, 7), <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>, 7, <span class="string">'beta'</span>, 4), <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'outerRace'</span>, pNoSb, <span class="keyword">...</span>
+                <span class="string">'innerRace'</span>, pOk, <span class="keyword">...</span>
+                <span class="string">'ball'</span>,      pOk, <span class="keyword">...</span>
+                <span class="string">'cage'</span>,      pNoSb);
+
+            testCase.verifyEqual(obj.outerRace, pNoSb);
+            testCase.verifyEqual(obj.innerRace, pOk);
+            testCase.verifyEqual(obj.ball,      pOk);
+            testCase.verifyEqual(obj.cage,      pNoSb);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> testMode2LegacySameForAllShouldPass(testCase)
+        <span class="comment">% Legacy constructor output should be accepted.</span>
+        <span class="comment">% Also checks outerRace/cage sidebands forced to 0.</span>
+
+            shared = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="string">'numSidebands'</span>, 4, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'sigmaCenter'</span>, [5 7], <span class="string">'sigmaSurround'</span>, [12 3], <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, shared);
+
+            testCase.verifyEqual(obj.innerRace, shared);
+            testCase.verifyEqual(obj.ball,      shared);
+
+            <span class="comment">% OuterRace &amp; Cage must be forced to 0 sidebands</span>
+            expectedNoSb = shared;
+            expectedNoSb.numSidebands = 0;
+
+            testCase.verifyEqual(obj.outerRace, expectedNoSb);
+            testCase.verifyEqual(obj.cage,      expectedNoSb);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> testMode2MaskSameForAllShouldPass(testCase)
+        <span class="comment">% Mask-based interface should be accepted.</span>
+        <span class="comment">% Also checks outerRace/cage sidebands forced to 0.</span>
+
+            shared = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="string">'numSidebands'</span>, 4, <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>,   <span class="keyword">...</span>
+                GaussianMaskParameters(<span class="string">'bandwidth'</span>, 5, <span class="string">'sigmaRule'</span>, 7), <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, <span class="keyword">...</span>
+                SuperGaussianMaskParameters(<span class="string">'alpha'</span>, 12, <span class="string">'beta'</span>, 4), <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
+
+            obj = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                <span class="string">'SameForAllFaultTypes'</span>, shared);
+
+            testCase.verifyEqual(obj.innerRace, shared);
+            testCase.verifyEqual(obj.ball,      shared);
+
+            expectedNoSb = shared;
+            expectedNoSb.numSidebands = 0;
+
+            testCase.verifyEqual(obj.outerRace, expectedNoSb);
+            testCase.verifyEqual(obj.cage,      expectedNoSb);
+        <span class="keyword">end</span>
+
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 </pre>
@@ -444,6 +813,375 @@ classdef TestSFRFsParametersRollingBearings < matlab.unittest.TestCase
             testCase.verifyError(f, ...
                 'MATLAB:validators:mustBeLessThanOrEqual');
         end
+
+        function testMode1ValidConstructionWithMasks(testCase)
+            % New interface: buildSFRFsParameters
+            pNoSidebands = SFRFsParameters.buildSFRFsParameters( ...
+                order=3, numSidebands=0, numHarmonics=8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                inhibitionFactor=0.6);
+        
+            pFull = SFRFsParameters.buildSFRFsParameters( ...
+                order=3, numSidebands=4, numHarmonics=8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                SuperGaussianMaskParameters('alpha',12,'beta',4), ...
+                inhibitionFactor=0.6);
+        
+            obj = SFRFsParametersRollingBearings( ...
+                'outerRace', pNoSidebands, ...
+                'innerRace', pFull, ...
+                'ball',      pFull, ...
+                'cage',      pNoSidebands);
+        
+            testCase.verifyEqual(obj.outerRace, pNoSidebands);
+            testCase.verifyEqual(obj.innerRace, pFull);
+            testCase.verifyEqual(obj.ball, pFull);
+            testCase.verifyEqual(obj.cage, pNoSidebands);
+        
+            % Sanity: mask objects exist and are MaskParameters
+            testCase.verifyTrue( ...
+                isa(obj.innerRace.centerMask, 'MaskParameters'));
+            testCase.verifyTrue( ...
+                isa(obj.innerRace.surroundMask, 'MaskParameters'));
+        end
+        
+        function testMode2ValidConstructionWithMasks(testCase)
+            % SameForAllFaultTypes with mask interface
+            shared = SFRFsParameters.buildSFRFsParameters( ...
+                order = 3, ...
+                numSidebands = 4 , ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                SuperGaussianMaskParameters('alpha',12,'beta',4), ...
+                inhibitionFactor = 0.6);
+        
+            obj = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', shared);
+        
+            % OuterRace and Cage must be forced to 0 sidebands
+            testCase.verifyEqual(obj.outerRace.numSidebands, 0);
+            testCase.verifyEqual(obj.cage.numSidebands, 0);
+        
+            % Inner + Ball preserve shared sidebands
+            testCase.verifyEqual( ...
+                obj.innerRace.numSidebands, shared.numSidebands);
+            testCase.verifyEqual( ...
+                obj.ball.numSidebands, shared.numSidebands);
+        
+            % Masks preserved
+            testCase.verifyTrue( ...
+                isa(obj.innerRace.centerMask, 'MaskParameters'));
+            testCase.verifyTrue(isa( ...
+                obj.innerRace.surroundMask, 'MaskParameters'));
+        end
+        
+        function testOuterRaceSidebandsNotAllowedLegacy(testCase)
+            % Legacy interface: outerRace must have 0 sidebands
+            pOuterBad = SFRFsParameters.createSFRFsParameters( ...
+                'order', 1, 'numSidebands', 2, 'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], 'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+        
+            pOk = testCase.completeParams; 
+            pNoSb = testCase.paramsNoSidebands;
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', pOuterBad, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pNoSb);
+        
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:' ...
+                 'InvalidNumSidebands']);
+        end
+        
+        function testCageSidebandsNotAllowedLegacy(testCase)
+        % Legacy interface: cage must have 0 sidebands
+            pCageBad = SFRFsParameters.createSFRFsParameters( ...
+                'order', 1, 'numSidebands', 1, 'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], 'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+        
+            pOk = testCase.completeParams;
+            pNoSb = testCase.paramsNoSidebands;
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', pNoSb, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pCageBad);
+        
+            testCase.verifyError(f, ...
+                'sfrfs:SFRFsParametersRollingBearings:InvalidNumSidebands');
+        end
+        
+        function testOuterRaceSidebandsNotAllowedMasks(testCase)
+        % Mask interface: outerRace must have 0 sidebands
+            pOuterBad = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 2, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                inhibitionFactor = 0.6);
+        
+            pOk = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 4, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                SuperGaussianMaskParameters('alpha',12,'beta',4), ...
+                inhibitionFactor = 0.6);
+        
+            pNoSb = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 0, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                inhibitionFactor=0.6);
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', pOuterBad, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pNoSb);
+        
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:' ...
+                 'InvalidNumSidebands']);
+        end
+        
+        function testCageSidebandsNotAllowedMasks(testCase)
+        % Mask interface: cage must have 0 sidebands
+            pCageBad = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 1, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                inhibitionFactor = 0.6);
+        
+            pOk = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 4, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                SuperGaussianMaskParameters('alpha',12,'beta',4), ...
+                inhibitionFactor = 0.6);
+        
+            pNoSb = SFRFsParameters.buildSFRFsParameters( ...
+                order = 1, ...
+                numSidebands = 0, ...
+                numHarmonics = 8, ...
+                centerMask = ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',7), ...
+                surroundMask = ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                inhibitionFactor = 0.6);
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', pNoSb, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pCageBad);
+        
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:' ...
+                 'InvalidNumSidebands']);
+        end
+        
+        function testMissingCoreFieldsShouldError(testCase)
+        % Missing core field numHarmonics (legacy path)
+            p = struct( ...
+                'order', 1, ...
+                'numSidebands', 0, ...
+                'sigmaCenter', [5 7], ...
+                'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', p, ...
+                'innerRace', testCase.completeParams, ...
+                'ball',      testCase.completeParams, ...
+                'cage',      testCase.paramsNoSidebands);
+        
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:' ...
+                 'validateInputs:MissingSFRFsParameters']);
+        end
+        
+        function testMissingMaskFieldsShouldError(testCase)
+        % Core is present, but mask fields are missing
+            p = struct( ...
+                'order', 1, ...
+                'numSidebands', 0, ...
+                'numHarmonics', 8, ...
+                'inhibitionFactor', 0.6);
+                % missing centerMask and surroundMask
+        
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', p, ...
+                'innerRace', testCase.completeParams, ...
+                'ball',      testCase.completeParams, ...
+                'cage',      testCase.paramsNoSidebands);
+
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:' ...
+                 'validateInputs:MissingSFRFsParameters']);
+        end
+
+        function testMixedLegacyAndMaskStructShouldError(testCase)
+        % Mixed struct: has both sigma* and *Mask fields and
+        % they are incosistent.
+            p = struct( ...
+                'order', 1, ...
+                'numSidebands', 0, ...
+                'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], ...
+                'sigmaSurround', [12 3], ...
+                'centerMask', ...
+                GaussianMaskParameters('bandwidth',5,'sigmaRule',9), ...
+                'surroundMask', ...
+                GaussianMaskParameters('bandwidth',12,'sigmaRule',3), ...
+                'inhibitionFactor', 0.6);
+
+            f = @() SFRFsParametersRollingBearings( ...
+                'outerRace', p, ...
+                'innerRace', testCase.completeParams, ...
+                'ball',      testCase.completeParams, ...
+                'cage',      testCase.paramsNoSidebands);
+
+            testCase.verifyError(f, ...
+                ['sfrfs:SFRFsParametersRollingBearings:'...
+                'validateInputs:DuplicateCenterParameterization']);
+        end
+
+        function testMode1LegacyParamsShouldPass(testCase)
+        % Legacy constructor output should be accepted.
+
+            pNoSb = SFRFsParameters.createSFRFsParameters( ...
+                'order', 1, 'numSidebands', 0, 'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], 'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+
+            pOk = SFRFsParameters.createSFRFsParameters( ...
+                'order', 2, 'numSidebands', 4, 'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], 'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+
+            obj = SFRFsParametersRollingBearings( ...
+                'outerRace', pNoSb, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pNoSb);
+
+            testCase.verifyEqual(obj.outerRace, pNoSb);
+            testCase.verifyEqual(obj.innerRace, pOk);
+            testCase.verifyEqual(obj.ball,      pOk);
+            testCase.verifyEqual(obj.cage,      pNoSb);
+        end
+
+
+        function testMode1MaskParamsShouldPass(testCase)
+        % New interface (mask-based) should be accepted.
+
+            pNoSb = SFRFsParameters.buildSFRFsParameters( ...
+                'order', 1, 'numSidebands', 0, 'numHarmonics', 8, ...
+                'centerMask',   ...
+                GaussianMaskParameters('bandwidth', 5, 'sigmaRule', 7), ...
+                'surroundMask', ...
+                GaussianMaskParameters('bandwidth',7, 'sigmaRule', 3), ...
+                'inhibitionFactor', 0.6);
+
+            pOk = SFRFsParameters.buildSFRFsParameters( ...
+                'order', 2, 'numSidebands', 4, 'numHarmonics', 8, ...
+                'centerMask',   ...
+                GaussianMaskParameters('bandwidth', 5, 'sigmaRule', 7), ...
+                'surroundMask', ...
+                SuperGaussianMaskParameters('alpha', 7, 'beta', 4), ...
+                'inhibitionFactor', 0.6);
+
+            obj = SFRFsParametersRollingBearings( ...
+                'outerRace', pNoSb, ...
+                'innerRace', pOk, ...
+                'ball',      pOk, ...
+                'cage',      pNoSb);
+
+            testCase.verifyEqual(obj.outerRace, pNoSb);
+            testCase.verifyEqual(obj.innerRace, pOk);
+            testCase.verifyEqual(obj.ball,      pOk);
+            testCase.verifyEqual(obj.cage,      pNoSb);
+        end
+
+
+        function testMode2LegacySameForAllShouldPass(testCase)
+        % Legacy constructor output should be accepted.
+        % Also checks outerRace/cage sidebands forced to 0.
+
+            shared = SFRFsParameters.createSFRFsParameters( ...
+                'order', 3, 'numSidebands', 4, 'numHarmonics', 8, ...
+                'sigmaCenter', [5 7], 'sigmaSurround', [12 3], ...
+                'inhibitionFactor', 0.6);
+
+            obj = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', shared);
+
+            testCase.verifyEqual(obj.innerRace, shared);
+            testCase.verifyEqual(obj.ball,      shared);
+
+            % OuterRace & Cage must be forced to 0 sidebands
+            expectedNoSb = shared;
+            expectedNoSb.numSidebands = 0;
+
+            testCase.verifyEqual(obj.outerRace, expectedNoSb);
+            testCase.verifyEqual(obj.cage,      expectedNoSb);
+        end
+
+
+        function testMode2MaskSameForAllShouldPass(testCase)
+        % Mask-based interface should be accepted.
+        % Also checks outerRace/cage sidebands forced to 0.
+
+            shared = SFRFsParameters.buildSFRFsParameters( ...
+                'order', 3, 'numSidebands', 4, 'numHarmonics', 8, ...
+                'centerMask',   ...
+                GaussianMaskParameters('bandwidth', 5, 'sigmaRule', 7), ...
+                'surroundMask', ...
+                SuperGaussianMaskParameters('alpha', 12, 'beta', 4), ...
+                'inhibitionFactor', 0.6);
+
+            obj = SFRFsParametersRollingBearings( ...
+                'SameForAllFaultTypes', shared);
+
+            testCase.verifyEqual(obj.innerRace, shared);
+            testCase.verifyEqual(obj.ball,      shared);
+
+            expectedNoSb = shared;
+            expectedNoSb.numSidebands = 0;
+
+            testCase.verifyEqual(obj.outerRace, expectedNoSb);
+            testCase.verifyEqual(obj.cage,      expectedNoSb);
+        end
+
     end
 end
 

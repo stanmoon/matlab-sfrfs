@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>GaussianMaskParameters</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="GaussianMaskParameters.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> GaussianMaskParameters &lt; MaskParameters
+<span class="comment">% GaussianMaskParameters</span>
+<span class="comment">%</span>
+<span class="comment">% Parameter container for Gaussian mask profiles.</span>
+<span class="comment">%</span>
+<span class="comment">% The associated (continuous) Gaussian mask profile is:</span>
+<span class="comment">%</span>
+<span class="comment">%   G(f) = exp( -1/2 * ((f - f_c) / sigma)^2 )</span>
+<span class="comment">%</span>
+<span class="comment">% where:</span>
+<span class="comment">%   - f_c     is the mask center frequency (defined externally),</span>
+<span class="comment">%   - sigma   is derived from the reference bandwidth and sigmaRule as</span>
+<span class="comment">%             sigma = bandwidth / (2 * sigmaRule).</span>
+<span class="comment">%</span>
+<span class="comment">% This class stores parameters in the inherited struct dictionary while</span>
+<span class="comment">% providing a stable, explicit ontology for the Gaussian family.</span>
+<span class="comment">%</span>
+<span class="comment">% Expected parameter keys (conventions are local to this toolbox):</span>
+<span class="comment">%   - bandwidth   : positive scalar, in Hz (reference width)</span>
+<span class="comment">%   - sigmaRule   : positive scalar, dimensionless</span>
+<span class="comment">%   - normalize   : logical scalar (optional)</span>
+<span class="comment">%</span>
+<span class="comment">% Notes:</span>
+<span class="comment">%   - Mask evaluation and discretization are handled elsewhere</span>
+<span class="comment">%     (e.g., FrequencyMask.gaussian).</span>
+<span class="comment">%</span>
+
+    <span class="keyword">properties</span> (Constant)
+        BANDWIDTH_PARAM_NAME  = <span class="string">'bandwidth'</span>
+        SIGMARULE_PARAM_NAME  = <span class="string">'sigmaRule'</span>
+        NORMALIZE_PARAM_NAME  = <span class="string">'normalize'</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        bandwidth
+        sigmaRule
+        normalize
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = GaussianMaskParameters(args)
+            <span class="comment">% Construct Gaussian mask parameters.</span>
+            <span class="keyword">arguments</span>
+                args.bandwidth <span class="typesection">(1,1) double {mustBePositive}</span> = 4
+                args.sigmaRule <span class="typesection">(1,1) double {mustBePositive}</span> = 3
+                args.normalize <span class="typesection">(1,1) logical </span>= false
+            <span class="keyword">end</span>
+
+            p = struct( <span class="keyword">...</span>
+                GaussianMaskParameters.BANDWIDTH_PARAM_NAME, <span class="keyword">...</span>
+                args.bandwidth, <span class="keyword">...</span>
+                GaussianMaskParameters.SIGMARULE_PARAM_NAME, <span class="keyword">...</span>
+                args.sigmaRule, <span class="keyword">...</span>
+                GaussianMaskParameters.NORMALIZE_PARAM_NAME, <span class="keyword">...</span>
+                args.normalize);
+
+            obj@MaskParameters(p);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> bw = getReferenceBandwidth(obj)
+            <span class="comment">% Return the reference bandwidth (Hz).</span>
+            bw = obj.bandwidth;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> v = get.bandwidth(obj)
+            <span class="comment">% Reference bandwidth.</span>
+            v = obj.params.(GaussianMaskParameters.BANDWIDTH_PARAM_NAME);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> v = get.sigmaRule(obj)
+            <span class="comment">% Sigma rule.</span>
+            v = obj.params.(GaussianMaskParameters.SIGMARULE_PARAM_NAME);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> v = get.normalize(obj)
+            <span class="comment">% Normalization flag.</span>
+            v = obj.params.(GaussianMaskParameters.NORMALIZE_PARAM_NAME);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef GaussianMaskParameters < MaskParameters
+% GaussianMaskParameters
+%
+% Parameter container for Gaussian mask profiles.
+%
+% The associated (continuous) Gaussian mask profile is:
+%
+%   G(f) = exp( -1/2 * ((f - f_c) / sigma)^2 )
+%
+% where:
+%   - f_c     is the mask center frequency (defined externally),
+%   - sigma   is derived from the reference bandwidth and sigmaRule as
+%             sigma = bandwidth / (2 * sigmaRule).
+%
+% This class stores parameters in the inherited struct dictionary while
+% providing a stable, explicit ontology for the Gaussian family.
+%
+% Expected parameter keys (conventions are local to this toolbox):
+%   - bandwidth   : positive scalar, in Hz (reference width)
+%   - sigmaRule   : positive scalar, dimensionless
+%   - normalize   : logical scalar (optional)
+%
+% Notes:
+%   - Mask evaluation and discretization are handled elsewhere
+%     (e.g., FrequencyMask.gaussian).
+%
+
+    properties (Constant)
+        BANDWIDTH_PARAM_NAME  = 'bandwidth'
+        SIGMARULE_PARAM_NAME  = 'sigmaRule'
+        NORMALIZE_PARAM_NAME  = 'normalize'
+    end
+
+    properties (Dependent)
+        bandwidth
+        sigmaRule
+        normalize
+    end
+
+    methods
+        function obj = GaussianMaskParameters(args)
+            % Construct Gaussian mask parameters.
+            arguments
+                args.bandwidth (1,1) double {mustBePositive} = 4
+                args.sigmaRule (1,1) double {mustBePositive} = 3
+                args.normalize (1,1) logical = false
+            end
+
+            p = struct( ...
+                GaussianMaskParameters.BANDWIDTH_PARAM_NAME, ...
+                args.bandwidth, ...
+                GaussianMaskParameters.SIGMARULE_PARAM_NAME, ...
+                args.sigmaRule, ...
+                GaussianMaskParameters.NORMALIZE_PARAM_NAME, ...
+                args.normalize);
+
+            obj@MaskParameters(p);
+        end
+
+        function bw = getReferenceBandwidth(obj)
+            % Return the reference bandwidth (Hz).
+            bw = obj.bandwidth;
+        end
+
+        function v = get.bandwidth(obj)
+            % Reference bandwidth.
+            v = obj.params.(GaussianMaskParameters.BANDWIDTH_PARAM_NAME);
+        end
+
+        function v = get.sigmaRule(obj)
+            % Sigma rule.
+            v = obj.params.(GaussianMaskParameters.SIGMARULE_PARAM_NAME);
+        end
+
+        function v = get.normalize(obj)
+            % Normalization flag.
+            v = obj.params.(GaussianMaskParameters.NORMALIZE_PARAM_NAME);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

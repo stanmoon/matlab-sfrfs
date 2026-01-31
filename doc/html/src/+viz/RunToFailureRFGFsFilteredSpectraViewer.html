@@ -1,0 +1,587 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>RunToFailureRFGFsFilteredSpectraViewer</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="RunToFailureRFGFsFilteredSpectraViewer.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> RunToFailureRFGFsFilteredSpectraViewer &lt; handle
+<span class="comment">%RunToFailureRFGFsFilteredSpectraViewer</span>
+<span class="comment">%</span>
+<span class="comment">% Current implementation:</span>
+<span class="comment">%   - All computation is delegated to CenterSurroundCompute.compute().</span>
+<span class="comment">%   - The viewer renders response matrices as log10 images.</span>
+<span class="comment">%</span>
+<span class="comment">% Contrast rendering note:</span>
+<span class="comment">%   The contrast provider is responsible for semantic consistency of the</span>
+<span class="comment">%   returned contrast response (including its sign convention). This viewer</span>
+<span class="comment">%   only adapts signed contrasts for log visualization:</span>
+<span class="comment">%     - If contrast contains negative values, it renders either the</span>
+<span class="comment">%       positive or negative component (selected via invertGainSign).</span>
+<span class="comment">%     - If contrast is nonnegative, it is rendered directly and</span>
+<span class="comment">%       invertGainSign has no effect.</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        memberTable <span class="typesection">table </span>= table()
+        snapshotParameters <span class="typesection">ParametersSnapshot </span>= ParametersSnapshot.empty
+        rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+            matlab.graphics.axis.Axes.empty()
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        csc <span class="typesection">CenterSurroundCompute </span>= CenterSurroundCompute.empty()
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = RunToFailureRFGFsFilteredSpectraViewer(args)
+            <span class="keyword">arguments</span>
+                args.memberTable <span class="typesection">table {mustBeNonempty}</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot {mustBeNonempty}</span>
+                args.rfgfs <span class="typesection">ReceptiveFieldGainFunctions {mustBeNonempty}</span>
+                args.parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+                    matlab.graphics.axis.Axes.empty()
+            <span class="keyword">end</span>
+
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.csc = CenterSurroundCompute( <span class="keyword">...</span>
+                snapshotParameters=obj.snapshotParameters, <span class="keyword">...</span>
+                rfgfs=obj.rfgfs);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ax = renderFiltered(obj, args)
+        <span class="comment">%renderFiltered Render response image for a fault condition selection.</span>
+        <span class="comment">%</span>
+        <span class="comment">% ax = renderFiltered(Name=Value, ...)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Selection (choose one):</span>
+        <span class="comment">%   - row</span>
+        <span class="comment">%   - faultType + selection</span>
+        <span class="comment">%</span>
+        <span class="comment">% Name-Value:</span>
+        <span class="comment">%   spectralColumn - FFT cell column in memberTable.</span>
+        <span class="comment">%   row            - Row index into gainFunctionsTable.</span>
+        <span class="comment">%   faultType      - Fault type key used to resolve fault group.</span>
+        <span class="comment">%   selection      - OperatingConditionSelection for row resolve.</span>
+        <span class="comment">%   maskType       - CENTER | SURROUND | CONTRAST</span>
+        <span class="comment">%   freqRangeHz    - [fMin fMax] or [NaN NaN] for full range.</span>
+        <span class="comment">%   titleText      - Optional title.</span>
+        <span class="comment">%   log10Floor     - Floor in log10 units (default: -5).</span>
+        <span class="comment">%   invertGainSign - For contrast: show negative lobe (default: false)</span>
+
+            <span class="keyword">arguments</span>
+                obj
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+
+                args.row <span class="typesection">double </span>= []
+                args.faultType <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.selection <span class="typesection">OperatingConditionSelection </span>= <span class="keyword">...</span>
+                    OperatingConditionSelection.empty()
+
+                args.maskType <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.freqRangeHz <span class="typesection">(1,2) double </span>= [NaN NaN]
+                args.titleText <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.log10Floor <span class="typesection">(1,1) double </span>= -5
+                args.invertGainSign <span class="typesection">(1,1) logical </span>= false
+            <span class="keyword">end</span>
+
+
+            <span class="keyword">if</span> ~isfinite(args.log10Floor)
+                error(<span class="string">"sfrfs:viz:InvalidFloor"</span>, <span class="keyword">...</span>
+                    <span class="string">"log10Floor must be a finite scalar."</span>);
+            <span class="keyword">end</span>
+
+            import <span class="string">structs.FrequencyBankMasksSchema</span>
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
+            kCon    = FrequencyBankMasksSchema.CONTRAST;
+
+            <span class="keyword">if</span> args.maskType == <span class="string">""</span>
+                maskType = kCon;
+            <span class="keyword">else</span>
+                maskType = args.maskType;
+            <span class="keyword">end</span>
+
+            allowed = [kCenter, kSur, kCon];
+            <span class="keyword">if</span> ~any(maskType == allowed)
+                error(<span class="string">"sfrfs:viz:InvalidMaskType"</span>, <span class="keyword">...</span>
+                    <span class="string">"maskType must be one of: %s."</span>, <span class="keyword">...</span>
+                    strjoin(allowed, <span class="string">", "</span>));
+            <span class="keyword">end</span>
+
+            ax = obj.getAxes();
+
+            f = obj.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+
+            nBins = numel(f);
+            nHalf = floor(nBins/2) + 1;
+
+            rf = @(Xin, ~) abs(Xin) ./ nBins;
+
+            [contrast, Rc, Rs] = obj.csc.compute( <span class="keyword">...</span>
+                memberTable=obj.memberTable, <span class="keyword">...</span>
+                spectralColumn=args.spectralColumn, <span class="keyword">...</span>
+                row=args.row, <span class="keyword">...</span>
+                faultType=args.faultType, <span class="keyword">...</span>
+                selection=args.selection, <span class="keyword">...</span>
+                receptiveFieldResponseFunction=rf, <span class="keyword">...</span>
+                contrastMapping=function_handle.empty());
+
+            <span class="keyword">if</span> maskType == kCenter
+                A = Rc;
+            <span class="keyword">elseif</span> maskType == kSur
+                A = Rs;
+            <span class="keyword">else</span>
+                A = contrast;
+
+                <span class="comment">% If contrast is signed, select which lobe to visualize.</span>
+                <span class="comment">% If contrast is nonnegative, render directly.</span>
+                hasNeg = any(A(:) &lt; 0);
+                <span class="keyword">if</span> hasNeg
+                    <span class="keyword">if</span> args.invertGainSign
+                        A = max(-A, 0);
+                    <span class="keyword">else</span>
+                        A = max(A, 0);
+                    <span class="keyword">end</span>
+                <span class="keyword">else</span>
+                    A = max(A, 0);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+
+            f = f(1:nHalf);
+            A = A(1:nHalf, :);
+
+            fr = args.freqRangeHz;
+            obj.validateFreqRange(fr);
+
+            <span class="keyword">if</span> ~all(isnan(fr))
+                idx = (f &gt;= fr(1)) &amp; (f &lt;= fr(2));
+
+                <span class="keyword">if</span> ~any(idx)
+                    error(<span class="string">"sfrfs:viz:EmptyFreqRange"</span>, <span class="keyword">...</span>
+                        <span class="string">"freqRangeHz does not overlap available axis."</span>);
+                <span class="keyword">end</span>
+
+                f = f(idx);
+                A = A(idx, :);
+            <span class="keyword">end</span>
+
+            floorVal = 10^args.log10Floor;
+            Z = log10(max(A, floorVal));
+
+            imagesc(ax, 1:size(Z, 2), f, Z);
+            axis(ax, <span class="string">"xy"</span>);
+            colormap(ax, jet);
+
+            xlabel(ax, <span class="string">"Snapshot"</span>);
+            ylabel(ax, <span class="string">"Frequency (Hz)"</span>);
+
+            title(ax, obj.defaultTitle(maskType, args.titleText));
+
+            cb = colorbar(ax);
+            cb.Label.String = <span class="string">"log_{10}(response)"</span>;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> ax = getAxes(obj)
+            <span class="keyword">if</span> isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure(<span class="string">"Name"</span>, <span class="keyword">...</span>
+                    <span class="string">"RunToFailureRFGFsFilteredSpectraViewer"</span>);
+                ax = axes(fig);
+                obj.parent = ax;
+            <span class="keyword">else</span>
+                ax = obj.parent;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> t = defaultTitle(~, maskType, titleText)
+            <span class="keyword">arguments</span>
+                ~
+                maskType <span class="typesection">(1,1) string</span>
+                titleText <span class="typesection">(1,1) string</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> titleText ~= <span class="string">""</span>
+                t = titleText;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            import <span class="string">structs.FrequencyBankMasksSchema</span>
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
+
+            <span class="keyword">if</span> maskType == kCenter
+                t = <span class="string">"Filtered spectrum (center)"</span>;
+            <span class="keyword">elseif</span> maskType == kSur
+                t = <span class="string">"Filtered spectrum (surround)"</span>;
+            <span class="keyword">else</span>
+                t = <span class="string">"Filtered spectrum (contrast)"</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateFreqRange(~, fr)
+            <span class="keyword">if</span> numel(fr) ~= 2
+                error(<span class="string">"sfrfs:viz:InvalidFreqRange"</span>, <span class="keyword">...</span>
+                    <span class="string">"freqRangeHz must be [fMin fMax] or [NaN NaN]."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> all(isnan(fr))
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> any(~isfinite(fr))
+                error(<span class="string">"sfrfs:viz:InvalidFreqRange"</span>, <span class="keyword">...</span>
+                    <span class="string">"freqRangeHz must be finite [fMin fMax] or [NaN NaN]."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> fr(1) &gt;= fr(2)
+                error(<span class="string">"sfrfs:viz:InvalidFreqRange"</span>, <span class="keyword">...</span>
+                    <span class="string">"freqRangeHz must satisfy fMin &lt; fMax."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef RunToFailureRFGFsFilteredSpectraViewer < handle
+%RunToFailureRFGFsFilteredSpectraViewer
+%
+% Current implementation:
+%   - All computation is delegated to CenterSurroundCompute.compute().
+%   - The viewer renders response matrices as log10 images.
+%
+% Contrast rendering note:
+%   The contrast provider is responsible for semantic consistency of the
+%   returned contrast response (including its sign convention). This viewer
+%   only adapts signed contrasts for log visualization:
+%     - If contrast contains negative values, it renders either the 
+%       positive or negative component (selected via invertGainSign).
+%     - If contrast is nonnegative, it is rendered directly and
+%       invertGainSign has no effect.
+
+    properties (SetAccess = private)
+        memberTable table = table()
+        snapshotParameters ParametersSnapshot = ParametersSnapshot.empty
+        rfgfs ReceptiveFieldGainFunctions
+    end
+
+    properties
+        parent matlab.graphics.axis.Axes = ...
+            matlab.graphics.axis.Axes.empty()
+    end
+
+    properties (Access = private)
+        csc CenterSurroundCompute = CenterSurroundCompute.empty()
+    end
+
+    methods
+        function obj = RunToFailureRFGFsFilteredSpectraViewer(args)
+            arguments
+                args.memberTable table {mustBeNonempty}
+                args.snapshotParameters ParametersSnapshot {mustBeNonempty}
+                args.rfgfs ReceptiveFieldGainFunctions {mustBeNonempty}
+                args.parent matlab.graphics.axis.Axes = ...
+                    matlab.graphics.axis.Axes.empty()
+            end
+
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.csc = CenterSurroundCompute( ...
+                snapshotParameters=obj.snapshotParameters, ...
+                rfgfs=obj.rfgfs);
+        end
+
+        function ax = renderFiltered(obj, args)
+        %renderFiltered Render response image for a fault condition selection.
+        %
+        % ax = renderFiltered(Name=Value, ...)
+        %
+        % Selection (choose one):
+        %   - row
+        %   - faultType + selection
+        %
+        % Name-Value:
+        %   spectralColumn - FFT cell column in memberTable.
+        %   row            - Row index into gainFunctionsTable.
+        %   faultType      - Fault type key used to resolve fault group.
+        %   selection      - OperatingConditionSelection for row resolve.
+        %   maskType       - CENTER | SURROUND | CONTRAST
+        %   freqRangeHz    - [fMin fMax] or [NaN NaN] for full range.
+        %   titleText      - Optional title.
+        %   log10Floor     - Floor in log10 units (default: -5).
+        %   invertGainSign - For contrast: show negative lobe (default: false)
+
+            arguments
+                obj
+                args.spectralColumn (1,1) string
+
+                args.row double = []
+                args.faultType (1,1) string = ""
+                args.selection OperatingConditionSelection = ...
+                    OperatingConditionSelection.empty()
+
+                args.maskType (1,1) string = ""
+                args.freqRangeHz (1,2) double = [NaN NaN]
+                args.titleText (1,1) string = ""
+                args.log10Floor (1,1) double = -5
+                args.invertGainSign (1,1) logical = false
+            end
+
+
+            if ~isfinite(args.log10Floor)
+                error("sfrfs:viz:InvalidFloor", ...
+                    "log10Floor must be a finite scalar.");
+            end
+
+            import structs.FrequencyBankMasksSchema
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
+            kCon    = FrequencyBankMasksSchema.CONTRAST;
+
+            if args.maskType == ""
+                maskType = kCon;
+            else
+                maskType = args.maskType;
+            end
+
+            allowed = [kCenter, kSur, kCon];
+            if ~any(maskType == allowed)
+                error("sfrfs:viz:InvalidMaskType", ...
+                    "maskType must be one of: %s.", ...
+                    strjoin(allowed, ", "));
+            end
+
+            ax = obj.getAxes();
+
+            f = obj.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+
+            nBins = numel(f);
+            nHalf = floor(nBins/2) + 1;
+
+            rf = @(Xin, ~) abs(Xin) ./ nBins;
+
+            [contrast, Rc, Rs] = obj.csc.compute( ...
+                memberTable=obj.memberTable, ...
+                spectralColumn=args.spectralColumn, ...
+                row=args.row, ...
+                faultType=args.faultType, ...
+                selection=args.selection, ...
+                receptiveFieldResponseFunction=rf, ...
+                contrastMapping=function_handle.empty());
+
+            if maskType == kCenter
+                A = Rc;
+            elseif maskType == kSur
+                A = Rs;
+            else
+                A = contrast;
+
+                % If contrast is signed, select which lobe to visualize.
+                % If contrast is nonnegative, render directly.
+                hasNeg = any(A(:) < 0);
+                if hasNeg
+                    if args.invertGainSign
+                        A = max(-A, 0);
+                    else
+                        A = max(A, 0);
+                    end
+                else
+                    A = max(A, 0);
+                end
+            end
+
+
+            f = f(1:nHalf);
+            A = A(1:nHalf, :);
+
+            fr = args.freqRangeHz;
+            obj.validateFreqRange(fr);
+
+            if ~all(isnan(fr))
+                idx = (f >= fr(1)) & (f <= fr(2));
+
+                if ~any(idx)
+                    error("sfrfs:viz:EmptyFreqRange", ...
+                        "freqRangeHz does not overlap available axis.");
+                end
+
+                f = f(idx);
+                A = A(idx, :);
+            end
+
+            floorVal = 10^args.log10Floor;
+            Z = log10(max(A, floorVal));
+
+            imagesc(ax, 1:size(Z, 2), f, Z);
+            axis(ax, "xy");
+            colormap(ax, jet);
+
+            xlabel(ax, "Snapshot");
+            ylabel(ax, "Frequency (Hz)");
+
+            title(ax, obj.defaultTitle(maskType, args.titleText));
+
+            cb = colorbar(ax);
+            cb.Label.String = "log_{10}(response)";
+        end
+    end
+
+    methods (Access = private)
+        function ax = getAxes(obj)
+            if isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure("Name", ...
+                    "RunToFailureRFGFsFilteredSpectraViewer");
+                ax = axes(fig);
+                obj.parent = ax;
+            else
+                ax = obj.parent;
+            end
+        end
+
+        function t = defaultTitle(~, maskType, titleText)
+            arguments
+                ~
+                maskType (1,1) string
+                titleText (1,1) string
+            end
+
+            if titleText ~= ""
+                t = titleText;
+                return
+            end
+
+            import structs.FrequencyBankMasksSchema
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
+
+            if maskType == kCenter
+                t = "Filtered spectrum (center)";
+            elseif maskType == kSur
+                t = "Filtered spectrum (surround)";
+            else
+                t = "Filtered spectrum (contrast)";
+            end
+        end
+
+        function validateFreqRange(~, fr)
+            if numel(fr) ~= 2
+                error("sfrfs:viz:InvalidFreqRange", ...
+                    "freqRangeHz must be [fMin fMax] or [NaN NaN].");
+            end
+
+            if all(isnan(fr))
+                return
+            end
+
+            if any(~isfinite(fr))
+                error("sfrfs:viz:InvalidFreqRange", ...
+                    "freqRangeHz must be finite [fMin fMax] or [NaN NaN].");
+            end
+
+            if fr(1) >= fr(2)
+                error("sfrfs:viz:InvalidFreqRange", ...
+                    "freqRangeHz must satisfy fMin < fMax.");
+            end
+        end
+
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

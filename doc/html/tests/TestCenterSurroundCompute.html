@@ -1,0 +1,393 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestCenterSurroundCompute</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="TestCenterSurroundCompute.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestCenterSurroundCompute &lt; matlab.unittest.TestCase
+    <span class="comment">% TestCenterSurroundCompute</span>
+    <span class="comment">%</span>
+    <span class="comment">% Unit tests for CenterSurroundCompute.</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> testComputeByRowProducesFiniteOutputs(tc)
+            [sp, rfgfs, T, f] = tc.buildObjects();
+
+            cs = CenterSurroundCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                rfgfs              = rfgfs);
+
+            row = 1;
+
+            [contrast, Rc, Rs, C, S, DoG] = cs.compute( <span class="keyword">...</span>
+                memberTable    = T, <span class="keyword">...</span>
+                spectralColumn = <span class="string">"FFT"</span>, <span class="keyword">...</span>
+                row            = row);
+
+            tc.verifyEqual(size(C), size(f));
+            tc.verifyEqual(size(S), size(f));
+            tc.verifyEqual(size(DoG), size(f));
+
+            tc.verifySize(contrast, size(Rc));
+            tc.verifySize(contrast, size(Rs));
+
+            tc.verifyTrue(all(isfinite(C)));
+            tc.verifyTrue(all(isfinite(S)));
+            tc.verifyTrue(all(isfinite(DoG)));
+
+            tc.verifyTrue(all(isfinite(Rc)));
+            tc.verifyTrue(all(isfinite(Rs)));
+            tc.verifyTrue(all(isfinite(contrast)));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testComputeByFaultTypeSelectionIfAvailable(tc)
+            [sp, rfgfs, T, ~] = tc.buildObjects();
+
+            <span class="keyword">if</span> ~isprop(rfgfs, <span class="string">"frequencyBands"</span>)
+                tc.assumeFail(<span class="string">"RFGFs fixture lacks frequencyBands."</span>);
+            <span class="keyword">end</span>
+
+            cs = CenterSurroundCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                rfgfs              = rfgfs);
+
+            sel = OperatingConditionSelection( <span class="keyword">...</span>
+                speed = 35, <span class="keyword">...</span>
+                load  = 12);
+
+            ft = tc.pickFaultTypeName(rfgfs);
+
+            <span class="keyword">if</span> strlength(ft) == 0
+                tc.assumeFail(<span class="string">"No faultType name available."</span>);
+            <span class="keyword">end</span>
+
+            [contrast, Rc, Rs] = cs.compute( <span class="keyword">...</span>
+                memberTable    = T, <span class="keyword">...</span>
+                spectralColumn = <span class="string">"FFT"</span>, <span class="keyword">...</span>
+                faultType      = ft, <span class="keyword">...</span>
+                selection      = sel);
+
+            tc.verifySize(contrast, size(Rc));
+            tc.verifySize(contrast, size(Rs));
+            tc.verifyTrue(all(isfinite(contrast)));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> [sp, rfgfs, T, f] = buildObjects(tc)
+
+            sp = ParametersSnapshot( <span class="keyword">...</span>
+                samplingFrequency = 25600, <span class="keyword">...</span>
+                duration          = 1.28, <span class="keyword">...</span>
+                stride            = 60);
+
+            f = sp.getFrequencyDomain();
+
+            bp = ParametersRollingBearings( <span class="keyword">...</span>
+                numRollingElements = 8, <span class="keyword">...</span>
+                ballDiameter       = 7.92, <span class="keyword">...</span>
+                pitchDiameter      = 34.55, <span class="keyword">...</span>
+                contactAngle       = 0);
+
+            shared = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order            = 0, <span class="keyword">...</span>
+                numSidebands     = 2, <span class="keyword">...</span>
+                numHarmonics     = 10, <span class="keyword">...</span>
+                centerMask       = GaussianMaskParameters( <span class="keyword">...</span>
+                    bandwidth = 4, <span class="keyword">...</span>
+                    sigmaRule = 1.0253), <span class="keyword">...</span>
+                surroundMask     = GaussianMaskParameters( <span class="keyword">...</span>
+                    bandwidth = 12, <span class="keyword">...</span>
+                    sigmaRule = 0.8905), <span class="keyword">...</span>
+                inhibitionFactor = 0.8647);
+
+            sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                SameForAllFaultTypes = shared);
+
+            oc = OperatingConditions([35], [12]);
+
+            bfb = BearingFrequencyBands( <span class="keyword">...</span>
+                bearingParams       = bp, <span class="keyword">...</span>
+                sfrfsParams         = sfrfsParams, <span class="keyword">...</span>
+                operatingConditions = oc);
+
+            bfb.computeBands();
+
+            rfgfs = ReceptiveFieldGainFunctions(bfb);
+            rfgfs.computeGainFunctions(f);
+
+            T = tc.buildSyntheticMemberTable(f, 50);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> T = buildSyntheticMemberTable(~, f, n)
+            nBins = numel(f);
+
+            FFT = cell(n, 1);
+            <span class="keyword">for</span> i = 1:n
+                x = abs(randn(nBins, 1));
+                x = x + 0.05 * (f(:) / max(f));
+                FFT{i} = x;
+            <span class="keyword">end</span>
+
+            T = table((1:n).', FFT, <span class="keyword">...</span>
+                VariableNames = [<span class="string">"SnapshotIndex"</span>, <span class="string">"FFT"</span>]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ft = pickFaultTypeName(~, rfgfs)
+            ft = <span class="string">""</span>;
+
+            fb = rfgfs.frequencyBands;
+            <span class="keyword">if</span> ~isprop(fb, <span class="string">"sfrfsParams"</span>)
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+
+            sp = fb.sfrfsParams;
+
+            <span class="keyword">if</span> isa(sp, <span class="string">"SFRFsParametersRollingBearings"</span>)
+                <span class="keyword">try</span>
+                    ft = SFRFsParametersRollingBearings. <span class="keyword">...</span>
+                        OUTER_RACE_FAULT_TYPE_NAME;
+                <span class="keyword">catch</span>
+                    ft = <span class="string">""</span>;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestCenterSurroundCompute < matlab.unittest.TestCase
+    % TestCenterSurroundCompute
+    %
+    % Unit tests for CenterSurroundCompute.
+
+    methods (Test)
+        function testComputeByRowProducesFiniteOutputs(tc)
+            [sp, rfgfs, T, f] = tc.buildObjects();
+
+            cs = CenterSurroundCompute( ...
+                snapshotParameters = sp, ...
+                rfgfs              = rfgfs);
+
+            row = 1;
+
+            [contrast, Rc, Rs, C, S, DoG] = cs.compute( ...
+                memberTable    = T, ...
+                spectralColumn = "FFT", ...
+                row            = row);
+
+            tc.verifyEqual(size(C), size(f));
+            tc.verifyEqual(size(S), size(f));
+            tc.verifyEqual(size(DoG), size(f));
+
+            tc.verifySize(contrast, size(Rc));
+            tc.verifySize(contrast, size(Rs));
+
+            tc.verifyTrue(all(isfinite(C)));
+            tc.verifyTrue(all(isfinite(S)));
+            tc.verifyTrue(all(isfinite(DoG)));
+
+            tc.verifyTrue(all(isfinite(Rc)));
+            tc.verifyTrue(all(isfinite(Rs)));
+            tc.verifyTrue(all(isfinite(contrast)));
+        end
+
+        function testComputeByFaultTypeSelectionIfAvailable(tc)
+            [sp, rfgfs, T, ~] = tc.buildObjects();
+
+            if ~isprop(rfgfs, "frequencyBands")
+                tc.assumeFail("RFGFs fixture lacks frequencyBands.");
+            end
+
+            cs = CenterSurroundCompute( ...
+                snapshotParameters = sp, ...
+                rfgfs              = rfgfs);
+
+            sel = OperatingConditionSelection( ...
+                speed = 35, ...
+                load  = 12);
+
+            ft = tc.pickFaultTypeName(rfgfs);
+
+            if strlength(ft) == 0
+                tc.assumeFail("No faultType name available.");
+            end
+
+            [contrast, Rc, Rs] = cs.compute( ...
+                memberTable    = T, ...
+                spectralColumn = "FFT", ...
+                faultType      = ft, ...
+                selection      = sel);
+
+            tc.verifySize(contrast, size(Rc));
+            tc.verifySize(contrast, size(Rs));
+            tc.verifyTrue(all(isfinite(contrast)));
+        end
+    end
+
+    methods (Access = private)
+        function [sp, rfgfs, T, f] = buildObjects(tc)
+
+            sp = ParametersSnapshot( ...
+                samplingFrequency = 25600, ...
+                duration          = 1.28, ...
+                stride            = 60);
+
+            f = sp.getFrequencyDomain();
+
+            bp = ParametersRollingBearings( ...
+                numRollingElements = 8, ...
+                ballDiameter       = 7.92, ...
+                pitchDiameter      = 34.55, ...
+                contactAngle       = 0);
+
+            shared = SFRFsParameters.buildSFRFsParameters( ...
+                order            = 0, ...
+                numSidebands     = 2, ...
+                numHarmonics     = 10, ...
+                centerMask       = GaussianMaskParameters( ...
+                    bandwidth = 4, ...
+                    sigmaRule = 1.0253), ...
+                surroundMask     = GaussianMaskParameters( ...
+                    bandwidth = 12, ...
+                    sigmaRule = 0.8905), ...
+                inhibitionFactor = 0.8647);
+
+            sfrfsParams = SFRFsParametersRollingBearings( ...
+                SameForAllFaultTypes = shared);
+
+            oc = OperatingConditions([35], [12]);
+
+            bfb = BearingFrequencyBands( ...
+                bearingParams       = bp, ...
+                sfrfsParams         = sfrfsParams, ...
+                operatingConditions = oc);
+
+            bfb.computeBands();
+
+            rfgfs = ReceptiveFieldGainFunctions(bfb);
+            rfgfs.computeGainFunctions(f);
+
+            T = tc.buildSyntheticMemberTable(f, 50);
+        end
+
+        function T = buildSyntheticMemberTable(~, f, n)
+            nBins = numel(f);
+
+            FFT = cell(n, 1);
+            for i = 1:n
+                x = abs(randn(nBins, 1));
+                x = x + 0.05 * (f(:) / max(f));
+                FFT{i} = x;
+            end
+
+            T = table((1:n).', FFT, ...
+                VariableNames = ["SnapshotIndex", "FFT"]);
+        end
+
+        function ft = pickFaultTypeName(~, rfgfs)
+            ft = "";
+
+            fb = rfgfs.frequencyBands;
+            if ~isprop(fb, "sfrfsParams")
+                return;
+            end
+
+            sp = fb.sfrfsParams;
+
+            if isa(sp, "SFRFsParametersRollingBearings")
+                try
+                    ft = SFRFsParametersRollingBearings. ...
+                        OUTER_RACE_FAULT_TYPE_NAME;
+                catch
+                    ft = "";
+                end
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

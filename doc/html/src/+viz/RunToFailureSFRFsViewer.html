@@ -1,0 +1,383 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>RunToFailureSFRFsViewer</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="RunToFailureSFRFsViewer.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> RunToFailureSFRFsViewer &lt; handle
+<span class="comment">%RunToFailureSFRFsViewer  Visualize SFRFs over snapshots (run-to-failure).</span>
+<span class="comment">%</span>
+<span class="comment">% Design:</span>
+<span class="comment">%   - All computation is delegated to CenterSurroundCompute.compute().</span>
+<span class="comment">%   - This viewer only plots the returned SFRF vector over snapshots.</span>
+<span class="comment">%</span>
+<span class="comment">% Exploratory injection:</span>
+<span class="comment">%   - receptiveFieldResponseFunction and contrastMapping are forwarded</span>
+<span class="comment">%     verbatim to the compute layer, which defines defaults when empty.</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        memberTable <span class="typesection">table </span>= table()
+        snapshotParameters <span class="typesection">ParametersSnapshot </span>= ParametersSnapshot.empty()
+        rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+            matlab.graphics.axis.Axes.empty()
+        <span class="comment">% Axes. If empty or invalid, renderSFRF() creates figure+axes.</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        csc <span class="typesection">CenterSurroundCompute </span>= CenterSurroundCompute.empty()
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = RunToFailureSFRFsViewer(args)
+            <span class="keyword">arguments</span>
+                args.memberTable <span class="typesection">table {mustBeNonempty}</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot {mustBeNonempty}</span>
+                args.rfgfs <span class="typesection">ReceptiveFieldGainFunctions {mustBeNonempty}</span>
+                args.parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+                    matlab.graphics.axis.Axes.empty()
+            <span class="keyword">end</span>
+
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.csc = CenterSurroundCompute( <span class="keyword">...</span>
+                snapshotParameters=obj.snapshotParameters, <span class="keyword">...</span>
+                rfgfs=obj.rfgfs);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ax = renderSFRF(obj, args)
+        <span class="comment">%renderSFRF Plot SFRF over snapshots.</span>
+        <span class="comment">%</span>
+        <span class="comment">% ax = renderSFRF(Name=Value, ...)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Selection (choose one):</span>
+        <span class="comment">%   - row</span>
+        <span class="comment">%   - faultType + selection</span>
+        <span class="comment">%</span>
+        <span class="comment">% Name-Value:</span>
+        <span class="comment">%   spectralColumn                 - FFT cell column in memberTable.</span>
+        <span class="comment">%   row                            - Row in gainFunctionsTable.</span>
+        <span class="comment">%   faultType                      - Key to resolve fault group.</span>
+        <span class="comment">%   selection                      - OperatingConditionSelection.</span>
+        <span class="comment">%   titleText                      - Optional title.</span>
+        <span class="comment">%   receptiveFieldResponseFunction - rf(X, f) -&gt; r(1,nSnap).</span>
+        <span class="comment">%   contrastMapping                - cm(Rc, Rs, p) -&gt; c(1,nSnap).</span>
+
+            <span class="keyword">arguments</span>
+                obj
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+
+                args.row <span class="typesection">double </span>= []
+                args.faultType <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.selection <span class="typesection">OperatingConditionSelection </span>= <span class="keyword">...</span>
+                    OperatingConditionSelection.empty()
+
+                args.titleText <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+
+                args.receptiveFieldResponseFunction <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.contrastMapping <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    function_handle.empty()
+            <span class="keyword">end</span>
+
+            obj.validateSelection(args);
+            ax = obj.getAxes();
+            cla(ax);
+
+            sfrf = obj.csc.compute( <span class="keyword">...</span>
+                memberTable=obj.memberTable, <span class="keyword">...</span>
+                spectralColumn=args.spectralColumn, <span class="keyword">...</span>
+                row=args.row, <span class="keyword">...</span>
+                faultType=args.faultType, <span class="keyword">...</span>
+                selection=args.selection, <span class="keyword">...</span>
+                receptiveFieldResponseFunction= <span class="keyword">...</span>
+                    args.receptiveFieldResponseFunction, <span class="keyword">...</span>
+                contrastMapping=args.contrastMapping);
+
+            y = sfrf(:);
+            x = (1:numel(y)).';
+
+            plot(ax, x, y);
+            grid(ax, <span class="string">"on"</span>);
+
+            xlabel(ax, <span class="string">"Snapshot"</span>);
+            ylabel(ax, <span class="string">"SFRF"</span>);
+            title(ax, obj.defaultTitle(args.titleText));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> ax = getAxes(obj)
+            <span class="keyword">if</span> isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure(<span class="string">"Name"</span>, <span class="string">"RunToFailureSFRFsViewer"</span>);
+                ax = axes(fig);
+                obj.parent = ax;
+            <span class="keyword">else</span>
+                ax = obj.parent;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateSelection(~, args)
+            hasRow = ~isempty(args.row);
+            hasKey = (args.faultType ~= <span class="string">""</span>);
+            hasSel = ~isempty(args.selection);
+
+            <span class="keyword">if</span> hasRow &amp;&amp; (hasKey || hasSel)
+                error(<span class="string">"sfrfs:viz:AmbiguousSelection"</span>, <span class="keyword">...</span>
+                    <span class="string">"Specify either row OR faultType + selection."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~hasRow &amp;&amp; ~(hasKey &amp;&amp; hasSel)
+                error(<span class="string">"sfrfs:viz:MissingSelection"</span>, <span class="keyword">...</span>
+                    <span class="string">"Specify row OR faultType + selection."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> t = defaultTitle(~, titleText)
+            <span class="keyword">if</span> titleText ~= <span class="string">""</span>
+                t = titleText;
+            <span class="keyword">else</span>
+                t = <span class="string">"SFRF"</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef RunToFailureSFRFsViewer < handle
+%RunToFailureSFRFsViewer  Visualize SFRFs over snapshots (run-to-failure).
+%
+% Design:
+%   - All computation is delegated to CenterSurroundCompute.compute().
+%   - This viewer only plots the returned SFRF vector over snapshots.
+%
+% Exploratory injection:
+%   - receptiveFieldResponseFunction and contrastMapping are forwarded
+%     verbatim to the compute layer, which defines defaults when empty.
+
+    properties (SetAccess = private)
+        memberTable table = table()
+        snapshotParameters ParametersSnapshot = ParametersSnapshot.empty()
+        rfgfs ReceptiveFieldGainFunctions
+    end
+
+    properties
+        parent matlab.graphics.axis.Axes = ...
+            matlab.graphics.axis.Axes.empty()
+        % Axes. If empty or invalid, renderSFRF() creates figure+axes.
+    end
+
+    properties (Access = private)
+        csc CenterSurroundCompute = CenterSurroundCompute.empty()
+    end
+
+    methods
+        function obj = RunToFailureSFRFsViewer(args)
+            arguments
+                args.memberTable table {mustBeNonempty}
+                args.snapshotParameters ParametersSnapshot {mustBeNonempty}
+                args.rfgfs ReceptiveFieldGainFunctions {mustBeNonempty}
+                args.parent matlab.graphics.axis.Axes = ...
+                    matlab.graphics.axis.Axes.empty()
+            end
+
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.csc = CenterSurroundCompute( ...
+                snapshotParameters=obj.snapshotParameters, ...
+                rfgfs=obj.rfgfs);
+        end
+
+        function ax = renderSFRF(obj, args)
+        %renderSFRF Plot SFRF over snapshots.
+        %
+        % ax = renderSFRF(Name=Value, ...)
+        %
+        % Selection (choose one):
+        %   - row
+        %   - faultType + selection
+        %
+        % Name-Value:
+        %   spectralColumn                 - FFT cell column in memberTable.
+        %   row                            - Row in gainFunctionsTable.
+        %   faultType                      - Key to resolve fault group.
+        %   selection                      - OperatingConditionSelection.
+        %   titleText                      - Optional title.
+        %   receptiveFieldResponseFunction - rf(X, f) -> r(1,nSnap).
+        %   contrastMapping                - cm(Rc, Rs, p) -> c(1,nSnap).
+
+            arguments
+                obj
+                args.spectralColumn (1,1) string
+            
+                args.row double = []
+                args.faultType (1,1) string = ""
+                args.selection OperatingConditionSelection = ...
+                    OperatingConditionSelection.empty()
+            
+                args.titleText (1,1) string = ""
+            
+                args.receptiveFieldResponseFunction (1,1) ...
+                    function_handle = ...
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.contrastMapping function_handle = ...
+                    function_handle.empty()
+            end
+
+            obj.validateSelection(args);
+            ax = obj.getAxes();
+            cla(ax);
+
+            sfrf = obj.csc.compute( ...
+                memberTable=obj.memberTable, ...
+                spectralColumn=args.spectralColumn, ...
+                row=args.row, ...
+                faultType=args.faultType, ...
+                selection=args.selection, ...
+                receptiveFieldResponseFunction= ...
+                    args.receptiveFieldResponseFunction, ...
+                contrastMapping=args.contrastMapping);
+
+            y = sfrf(:);
+            x = (1:numel(y)).';
+
+            plot(ax, x, y);
+            grid(ax, "on");
+
+            xlabel(ax, "Snapshot");
+            ylabel(ax, "SFRF");
+            title(ax, obj.defaultTitle(args.titleText));
+        end
+    end
+
+    methods (Access = private)
+        function ax = getAxes(obj)
+            if isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure("Name", "RunToFailureSFRFsViewer");
+                ax = axes(fig);
+                obj.parent = ax;
+            else
+                ax = obj.parent;
+            end
+        end
+
+        function validateSelection(~, args)
+            hasRow = ~isempty(args.row);
+            hasKey = (args.faultType ~= "");
+            hasSel = ~isempty(args.selection);
+
+            if hasRow && (hasKey || hasSel)
+                error("sfrfs:viz:AmbiguousSelection", ...
+                    "Specify either row OR faultType + selection.");
+            end
+
+            if ~hasRow && ~(hasKey && hasSel)
+                error("sfrfs:viz:MissingSelection", ...
+                    "Specify row OR faultType + selection.");
+            end
+        end
+
+        function t = defaultTitle(~, titleText)
+            if titleText ~= ""
+                t = titleText;
+            else
+                t = "SFRF";
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

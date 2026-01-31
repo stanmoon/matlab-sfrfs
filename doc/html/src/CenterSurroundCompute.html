@@ -1,0 +1,821 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>CenterSurroundCompute</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="CenterSurroundCompute.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> CenterSurroundCompute &lt; handle
+<span class="comment">%CenterSurroundCompute  Compute center/surround responses via RFGFs.</span>
+<span class="comment">%</span>
+<span class="comment">% Stores snapshot parameters and RFGFs handle, and computes receptive-field</span>
+<span class="comment">% responses on stacked spectra extracted from a run-to-failure member</span>
+<span class="comment">% table.</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        paramsSnapshot <span class="typesection">ParametersSnapshot</span>
+        rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Dependent)
+        samplingFrequency <span class="typesection">double</span>
+        sfrfsParams <span class="typesection">SFRFsParameters</span>
+        rfgfsTable <span class="typesection">table</span>
+        operatingConditions <span class="typesection">table</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = CenterSurroundCompute(args)
+            <span class="keyword">arguments</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot</span>
+                args.rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+            <span class="keyword">end</span>
+            obj.paramsSnapshot = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.samplingFrequency(obj)
+            val = obj.paramsSnapshot.samplingFrequency;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.sfrfsParams(obj)
+            val = obj.rfgfs.frequencyBands.sfrfsParams;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.rfgfsTable(obj)
+            val = obj.rfgfs.gainFunctionsTable;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> val = get.operatingConditions(obj)
+            val = obj.rfgfs.frequencyBands.operatingConditions;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [contrast, centerResponse, surroundResponse, <span class="keyword">...</span>
+            centerMask, surroundMask, contrastMask] = <span class="keyword">...</span>
+            compute(obj, args)
+        <span class="comment">%compute Compute center, surround, and contrast responses.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   [contrast, centerResponse, surroundResponse, ...</span>
+        <span class="comment">%       centerMask, surroundMask, contrastMask] = ...</span>
+        <span class="comment">%       compute(Name=Value)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Computes receptive-field responses by applying spectral masks to</span>
+        <span class="comment">% stacked spectra and evaluating a configurable response function.</span>
+        <span class="comment">% A contrast response is then derived via a</span>
+        <span class="comment">% configurable contrast mapping.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Selection (choose one):</span>
+        <span class="comment">%   - row</span>
+        <span class="comment">%   - faultType + selection</span>
+        <span class="comment">%</span>
+        <span class="comment">% Name-Value:</span>
+        <span class="comment">%   memberTable  - Run-to-failure member table.</span>
+        <span class="comment">%   spectralColumn</span>
+        <span class="comment">%                - FFT column in memberTable.</span>
+        <span class="comment">%   row          - Row in gainFunctionsTable.</span>
+        <span class="comment">%   faultType    - Fault type to resolve group.</span>
+        <span class="comment">%   selection    - OperatingConditionSelection.</span>
+        <span class="comment">%   receptiveFieldResponseFunction</span>
+        <span class="comment">%                - Handle: r = fcn(X, f).</span>
+        <span class="comment">%   contrastMapping</span>
+        <span class="comment">%                - Handle or empty (default).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Outputs:</span>
+        <span class="comment">%   centerResponse</span>
+        <span class="comment">%                - Response of center-masked spectra.</span>
+        <span class="comment">%   surroundResponse</span>
+        <span class="comment">%                - Response of surround-masked spectra.</span>
+        <span class="comment">%   contrast     - Response obtained via the contrast mapping.</span>
+        <span class="comment">%   centerMask   - Center gain mask over frequency.</span>
+        <span class="comment">%   surroundMask - Surround gain mask over frequency.</span>
+        <span class="comment">%   contrastMask - DoG-like gain: centerMask - k*surroundMask.</span>
+
+            <span class="keyword">arguments</span>
+                obj
+                args.memberTable <span class="typesection">table {mustBeNonempty}</span>
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+
+                args.row <span class="typesection">double </span>= []
+                args.faultType <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.selection <span class="typesection">OperatingConditionSelection </span>= <span class="keyword">...</span>
+                    OperatingConditionSelection.empty()
+
+                args.receptiveFieldResponseFunction <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.integralAbs()
+
+                args.contrastMapping <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    function_handle.empty()
+            <span class="keyword">end</span>
+
+            import <span class="string">tables.GainFunctionsTableSchema</span>
+            import <span class="string">structs.FrequencyBankMasksSchema</span>
+
+            gt = obj.rfgfs.gainFunctionsTable;
+
+            f = obj.paramsSnapshot.getFrequencyDomain();
+            f = f(:);
+
+            X = CenterSurroundCompute.stackSpectra( <span class="keyword">...</span>
+                memberTable=args.memberTable, <span class="keyword">...</span>
+                spectralColumn=args.spectralColumn);
+
+            <span class="keyword">if</span> numel(f) ~= size(X, 1)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'FreqAxisMismatch'</span>], <span class="keyword">...</span>
+                    <span class="string">"FrequencyDomain length must match FFT bins."</span>);
+            <span class="keyword">end</span>
+
+            rowIdx = obj.resolveRow( <span class="keyword">...</span>
+                row=args.row, <span class="keyword">...</span>
+                faultType=args.faultType, <span class="keyword">...</span>
+                selection=args.selection);
+
+            kMasksT = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+            masks = gt.(kMasksT){rowIdx};
+
+            kC = FrequencyBankMasksSchema.CENTER;
+            kS = FrequencyBankMasksSchema.SURROUND;
+
+            C = masks.(kC)(:);
+            S = masks.(kS)(:);
+
+            centerMask = C;
+            surroundMask = S;
+
+            faultGroup = obj.faultGroupForRow(gt, rowIdx);
+            k = obj.getInhibitionFactorFromFaultGroup(faultGroup);
+
+            contrastMask = C - k .* S;
+
+            Xc = X .* C;
+            Xs = X .* S;
+
+            Rc = args.receptiveFieldResponseFunction(Xc, f);
+            Rs = args.receptiveFieldResponseFunction(Xs, f);
+
+            centerResponse = Rc;
+            surroundResponse = Rs;
+
+            <span class="keyword">if</span> isempty(args.contrastMapping)
+                map = ContrastMappings.difference(k=k);
+                contrast = map(Rc, Rs);
+
+            <span class="keyword">else</span>
+                contrast = args.contrastMapping(Rc, Rs);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> rowIdx = resolveRow(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.row <span class="typesection">double</span>
+                args.faultType <span class="typesection">(1,1) string</span>
+                args.selection <span class="typesection">OperatingConditionSelection</span>
+            <span class="keyword">end</span>
+
+            gt = obj.rfgfs.gainFunctionsTable;
+
+            hasRow = ~isempty(args.row);
+            hasKey = (args.faultType ~= <span class="string">""</span>) &amp;&amp; ~isempty(args.selection);
+
+            <span class="keyword">if</span> hasRow == hasKey
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'SelectionRequired'</span>], <span class="keyword">...</span>
+                    <span class="string">"Specify row, or faultType and selection."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> hasRow
+                rowIdx = args.row;
+                obj.validateRow(rowIdx, height(gt));
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            faultGroup = obj.faultTypeToGroup(args.faultType);
+
+            <span class="keyword">try</span>
+                rowIdx = FaultConditionSelector.selectRow( <span class="keyword">...</span>
+                    gt, <span class="keyword">...</span>
+                    faultGroup=faultGroup, <span class="keyword">...</span>
+                    selection=args.selection);
+            <span class="keyword">catch</span> ME
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'RowResolutionFailed'</span>], <span class="keyword">...</span>
+                    <span class="string">"Failed to resolve row: %s"</span>, ME.message);
+            <span class="keyword">end</span>
+
+            obj.validateRow(rowIdx, height(gt));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateRow(~, row, nRows)
+            badRow = ~isscalar(row) || ~isfinite(row) || row &lt;= 0 || <span class="keyword">...</span>
+                (row ~= floor(row));
+            <span class="keyword">if</span> badRow
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'InvalidRow'</span>], <span class="keyword">...</span>
+                    <span class="string">"row must be a positive integer scalar."</span>);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> row &gt; nRows
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'RowIndexOutOfRange'</span>], <span class="keyword">...</span>
+                    <span class="string">"row exceeds table height."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fg = faultTypeToGroup(obj, faultType)
+            fb = obj.rfgfs.frequencyBands;
+
+            <span class="keyword">if</span> isempty(fb) || ~isprop(fb, <span class="string">"faultTypeGroups"</span>)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'FaultTypeGroupsMissing'</span>], <span class="keyword">...</span>
+                    <span class="string">"frequencyBands.faultTypeGroups mapping is missing."</span>);
+            <span class="keyword">end</span>
+
+            m = fb.faultTypeGroups;
+
+            <span class="keyword">if</span> isa(m, <span class="string">"containers.Map"</span>)
+                <span class="keyword">if</span> ~isKey(m, faultType)
+                    error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                           <span class="string">'FaultTypeUnknown'</span>], <span class="keyword">...</span>
+                        <span class="string">"Unknown faultType: %s"</span>, faultType);
+                <span class="keyword">end</span>
+                fg = m(faultType);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(m, <span class="string">"function_handle"</span>)
+                fg = m(faultType);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                   <span class="string">'FaultTypeGroupsUnsupported'</span>], <span class="keyword">...</span>
+                <span class="string">"faultTypeGroups must be a containers.Map or function."</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fg = faultGroupForRow(~, gt, rowIdx)
+            import <span class="string">tables.GainFunctionsTableSchema</span>
+            kFG = GainFunctionsTableSchema.FAULTGROUP;
+
+            <span class="keyword">if</span> ~ismember(kFG, string(gt.Properties.VariableNames))
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'MissingFaultGroupColumn'</span>], <span class="keyword">...</span>
+                    <span class="string">"FaultGroup column missing in gainFunctionsTable."</span>);
+            <span class="keyword">end</span>
+
+            fg = gt.(kFG)(rowIdx);
+
+            <span class="keyword">if</span> isempty(fg) || ~isscalar(fg) || ~isfinite(fg)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'FaultGroupUnavailable'</span>], <span class="keyword">...</span>
+                    <span class="string">"FaultGroup value invalid at the selected row."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> k = getInhibitionFactorFromFaultGroup(obj, faultGroup)
+            fb = obj.rfgfs.frequencyBands;
+            <span class="keyword">if</span> isempty(fb)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'MissingFrequencyBands'</span>], <span class="keyword">...</span>
+                    <span class="string">"frequencyBands not available on rfgfs."</span>);
+            <span class="keyword">end</span>
+
+            faultType = obj.resolveFaultTypeName(fb, faultGroup);
+
+            p = fb.sfrfsParams.getParamsForFaultType(faultType);
+            <span class="keyword">if</span> ~isfield(p, <span class="string">"inhibitionFactor"</span>)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'MissingInhibitionFactor'</span>], <span class="keyword">...</span>
+                    <span class="string">"inhibitionFactor missing in fault params."</span>);
+            <span class="keyword">end</span>
+
+            k = p.inhibitionFactor;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> faultType = resolveFaultTypeName(~, fb, faultGroup)
+            m = fb.faultGroupToTypeName;
+
+            <span class="keyword">if</span> isa(m, <span class="string">"function_handle"</span>)
+                faultType = m(faultGroup);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(m, <span class="string">"containers.Map"</span>)
+                <span class="keyword">if</span> ~isKey(m, faultGroup)
+                    error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                           <span class="string">'FaultGroupKeyMissing'</span>], <span class="keyword">...</span>
+                        <span class="string">"FaultGroup not present in map."</span>);
+                <span class="keyword">end</span>
+                faultType = m(faultGroup);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isstruct(m)
+                key = matlab.lang.makeValidName(string(faultGroup));
+                <span class="keyword">if</span> ~isfield(m, key)
+                    error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                           <span class="string">'FaultGroupFieldMissing'</span>], <span class="keyword">...</span>
+                        <span class="string">"FaultGroup not present in struct."</span>);
+                <span class="keyword">end</span>
+                faultType = m.(key);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                   <span class="string">'FaultGroupToTypeNameUnsupported'</span>], <span class="keyword">...</span>
+                <span class="string">"Unsupported faultGroupToTypeName type."</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+        <span class="keyword">function</span> X = stackSpectra(args)
+            <span class="keyword">arguments</span>
+                args.memberTable <span class="typesection">table {mustBeNonempty}</span>
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+            <span class="keyword">end</span>
+
+            col = char(args.spectralColumn);
+
+            <span class="keyword">if</span> ~ismember(col, args.memberTable.Properties.VariableNames)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'MissingColumn'</span>], <span class="keyword">...</span>
+                    <span class="string">"Spectral column '%s' not found."</span>, col);
+            <span class="keyword">end</span>
+
+            c = args.memberTable.(col);
+
+            <span class="keyword">if</span> ~iscell(c) || isempty(c)
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'InvalidColumn'</span>], <span class="keyword">...</span>
+                    <span class="string">"Column '%s' must be a nonempty cell array."</span>, col);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~all(cellfun(@(x) isnumeric(x) &amp;&amp; ~isempty(x), c))
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'InvalidCells'</span>], <span class="keyword">...</span>
+                    <span class="string">"Column '%s' must contain numeric FFT vectors."</span>, col);
+            <span class="keyword">end</span>
+
+            ref = size(c{1});
+            <span class="keyword">if</span> ~all(cellfun(@(x) isequal(size(x), ref), c))
+                error([<span class="string">'sfrfs:CenterSurroundCompute:'</span> <span class="keyword">...</span>
+                       <span class="string">'SizeMismatch'</span>], <span class="keyword">...</span>
+                    <span class="string">"FFT vectors in '%s' have inconsistent sizes."</span>, col);
+            <span class="keyword">end</span>
+
+            X = [c{:}];
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef CenterSurroundCompute < handle
+%CenterSurroundCompute  Compute center/surround responses via RFGFs.
+%
+% Stores snapshot parameters and RFGFs handle, and computes receptive-field
+% responses on stacked spectra extracted from a run-to-failure member 
+% table.
+
+    properties (SetAccess = private)
+        paramsSnapshot ParametersSnapshot
+        rfgfs ReceptiveFieldGainFunctions
+    end
+
+    properties (Dependent)
+        samplingFrequency double
+        sfrfsParams SFRFsParameters
+        rfgfsTable table
+        operatingConditions table
+    end
+
+    methods
+        function obj = CenterSurroundCompute(args)
+            arguments
+                args.snapshotParameters ParametersSnapshot
+                args.rfgfs ReceptiveFieldGainFunctions
+            end
+            obj.paramsSnapshot = args.snapshotParameters;
+            obj.rfgfs = args.rfgfs;
+        end
+
+        function val = get.samplingFrequency(obj)
+            val = obj.paramsSnapshot.samplingFrequency;
+        end
+
+        function val = get.sfrfsParams(obj)
+            val = obj.rfgfs.frequencyBands.sfrfsParams;
+        end
+
+        function val = get.rfgfsTable(obj)
+            val = obj.rfgfs.gainFunctionsTable;
+        end
+
+        function val = get.operatingConditions(obj)
+            val = obj.rfgfs.frequencyBands.operatingConditions;
+        end
+
+        function [contrast, centerResponse, surroundResponse, ...
+            centerMask, surroundMask, contrastMask] = ...
+            compute(obj, args)
+        %compute Compute center, surround, and contrast responses.
+        %
+        %   [contrast, centerResponse, surroundResponse, ...
+        %       centerMask, surroundMask, contrastMask] = ...
+        %       compute(Name=Value)
+        %
+        % Computes receptive-field responses by applying spectral masks to 
+        % stacked spectra and evaluating a configurable response function. 
+        % A contrast response is then derived via a
+        % configurable contrast mapping.
+        %
+        % Selection (choose one):
+        %   - row
+        %   - faultType + selection
+        %
+        % Name-Value:
+        %   memberTable  - Run-to-failure member table.
+        %   spectralColumn
+        %                - FFT column in memberTable.
+        %   row          - Row in gainFunctionsTable.
+        %   faultType    - Fault type to resolve group.
+        %   selection    - OperatingConditionSelection.
+        %   receptiveFieldResponseFunction
+        %                - Handle: r = fcn(X, f).
+        %   contrastMapping
+        %                - Handle or empty (default).
+        %
+        % Outputs:
+        %   centerResponse
+        %                - Response of center-masked spectra.
+        %   surroundResponse
+        %                - Response of surround-masked spectra.
+        %   contrast     - Response obtained via the contrast mapping.
+        %   centerMask   - Center gain mask over frequency.
+        %   surroundMask - Surround gain mask over frequency.
+        %   contrastMask - DoG-like gain: centerMask - k*surroundMask.
+
+            arguments
+                obj
+                args.memberTable table {mustBeNonempty}
+                args.spectralColumn (1,1) string
+
+                args.row double = []
+                args.faultType (1,1) string = ""
+                args.selection OperatingConditionSelection = ...
+                    OperatingConditionSelection.empty()
+
+                args.receptiveFieldResponseFunction (1,1) ...
+                    function_handle = ...
+                    ReceptiveFieldResponseFunctions.integralAbs()
+
+                args.contrastMapping function_handle = ...
+                    function_handle.empty()
+            end
+
+            import tables.GainFunctionsTableSchema
+            import structs.FrequencyBankMasksSchema
+
+            gt = obj.rfgfs.gainFunctionsTable;
+
+            f = obj.paramsSnapshot.getFrequencyDomain();
+            f = f(:);
+
+            X = CenterSurroundCompute.stackSpectra( ...
+                memberTable=args.memberTable, ...
+                spectralColumn=args.spectralColumn);
+
+            if numel(f) ~= size(X, 1)
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'FreqAxisMismatch'], ...
+                    "FrequencyDomain length must match FFT bins.");
+            end
+
+            rowIdx = obj.resolveRow( ...
+                row=args.row, ...
+                faultType=args.faultType, ...
+                selection=args.selection);
+
+            kMasksT = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+            masks = gt.(kMasksT){rowIdx};
+
+            kC = FrequencyBankMasksSchema.CENTER;
+            kS = FrequencyBankMasksSchema.SURROUND;
+
+            C = masks.(kC)(:);
+            S = masks.(kS)(:);
+
+            centerMask = C;
+            surroundMask = S;
+
+            faultGroup = obj.faultGroupForRow(gt, rowIdx);
+            k = obj.getInhibitionFactorFromFaultGroup(faultGroup);
+
+            contrastMask = C - k .* S;
+
+            Xc = X .* C;
+            Xs = X .* S;
+
+            Rc = args.receptiveFieldResponseFunction(Xc, f);
+            Rs = args.receptiveFieldResponseFunction(Xs, f);
+
+            centerResponse = Rc;
+            surroundResponse = Rs;
+
+            if isempty(args.contrastMapping)
+                map = ContrastMappings.difference(k=k);
+                contrast = map(Rc, Rs);
+
+            else
+                contrast = args.contrastMapping(Rc, Rs);
+            end
+        end
+    end
+
+    methods (Access = private)
+        function rowIdx = resolveRow(obj, args)
+            arguments
+                obj
+                args.row double
+                args.faultType (1,1) string
+                args.selection OperatingConditionSelection
+            end
+
+            gt = obj.rfgfs.gainFunctionsTable;
+
+            hasRow = ~isempty(args.row);
+            hasKey = (args.faultType ~= "") && ~isempty(args.selection);
+
+            if hasRow == hasKey
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'SelectionRequired'], ...
+                    "Specify row, or faultType and selection.");
+            end
+
+            if hasRow
+                rowIdx = args.row;
+                obj.validateRow(rowIdx, height(gt));
+                return
+            end
+
+            faultGroup = obj.faultTypeToGroup(args.faultType);
+
+            try
+                rowIdx = FaultConditionSelector.selectRow( ...
+                    gt, ...
+                    faultGroup=faultGroup, ...
+                    selection=args.selection);
+            catch ME
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'RowResolutionFailed'], ...
+                    "Failed to resolve row: %s", ME.message);
+            end
+
+            obj.validateRow(rowIdx, height(gt));
+        end
+
+        function validateRow(~, row, nRows)
+            badRow = ~isscalar(row) || ~isfinite(row) || row <= 0 || ...
+                (row ~= floor(row));
+            if badRow
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'InvalidRow'], ...
+                    "row must be a positive integer scalar.");
+            end
+            if row > nRows
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'RowIndexOutOfRange'], ...
+                    "row exceeds table height.");
+            end
+        end
+
+        function fg = faultTypeToGroup(obj, faultType)
+            fb = obj.rfgfs.frequencyBands;
+
+            if isempty(fb) || ~isprop(fb, "faultTypeGroups")
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'FaultTypeGroupsMissing'], ...
+                    "frequencyBands.faultTypeGroups mapping is missing.");
+            end
+
+            m = fb.faultTypeGroups;
+
+            if isa(m, "containers.Map")
+                if ~isKey(m, faultType)
+                    error(['sfrfs:CenterSurroundCompute:' ...
+                           'FaultTypeUnknown'], ...
+                        "Unknown faultType: %s", faultType);
+                end
+                fg = m(faultType);
+                return
+            end
+
+            if isa(m, "function_handle")
+                fg = m(faultType);
+                return
+            end
+
+            error(['sfrfs:CenterSurroundCompute:' ...
+                   'FaultTypeGroupsUnsupported'], ...
+                "faultTypeGroups must be a containers.Map or function.");
+        end
+
+        function fg = faultGroupForRow(~, gt, rowIdx)
+            import tables.GainFunctionsTableSchema
+            kFG = GainFunctionsTableSchema.FAULTGROUP;
+
+            if ~ismember(kFG, string(gt.Properties.VariableNames))
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'MissingFaultGroupColumn'], ...
+                    "FaultGroup column missing in gainFunctionsTable.");
+            end
+
+            fg = gt.(kFG)(rowIdx);
+
+            if isempty(fg) || ~isscalar(fg) || ~isfinite(fg)
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'FaultGroupUnavailable'], ...
+                    "FaultGroup value invalid at the selected row.");
+            end
+        end
+
+        function k = getInhibitionFactorFromFaultGroup(obj, faultGroup)
+            fb = obj.rfgfs.frequencyBands;
+            if isempty(fb)
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'MissingFrequencyBands'], ...
+                    "frequencyBands not available on rfgfs.");
+            end
+
+            faultType = obj.resolveFaultTypeName(fb, faultGroup);
+
+            p = fb.sfrfsParams.getParamsForFaultType(faultType);
+            if ~isfield(p, "inhibitionFactor")
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'MissingInhibitionFactor'], ...
+                    "inhibitionFactor missing in fault params.");
+            end
+
+            k = p.inhibitionFactor;
+        end
+
+        function faultType = resolveFaultTypeName(~, fb, faultGroup)
+            m = fb.faultGroupToTypeName;
+
+            if isa(m, "function_handle")
+                faultType = m(faultGroup);
+                return
+            end
+
+            if isa(m, "containers.Map")
+                if ~isKey(m, faultGroup)
+                    error(['sfrfs:CenterSurroundCompute:' ...
+                           'FaultGroupKeyMissing'], ...
+                        "FaultGroup not present in map.");
+                end
+                faultType = m(faultGroup);
+                return
+            end
+
+            if isstruct(m)
+                key = matlab.lang.makeValidName(string(faultGroup));
+                if ~isfield(m, key)
+                    error(['sfrfs:CenterSurroundCompute:' ...
+                           'FaultGroupFieldMissing'], ...
+                        "FaultGroup not present in struct.");
+                end
+                faultType = m.(key);
+                return
+            end
+
+            error(['sfrfs:CenterSurroundCompute:' ...
+                   'FaultGroupToTypeNameUnsupported'], ...
+                "Unsupported faultGroupToTypeName type.");
+        end
+    end
+
+    methods (Static, Access = private)
+        function X = stackSpectra(args)
+            arguments
+                args.memberTable table {mustBeNonempty}
+                args.spectralColumn (1,1) string
+            end
+
+            col = char(args.spectralColumn);
+
+            if ~ismember(col, args.memberTable.Properties.VariableNames)
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'MissingColumn'], ...
+                    "Spectral column '%s' not found.", col);
+            end
+
+            c = args.memberTable.(col);
+
+            if ~iscell(c) || isempty(c)
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'InvalidColumn'], ...
+                    "Column '%s' must be a nonempty cell array.", col);
+            end
+
+            if ~all(cellfun(@(x) isnumeric(x) && ~isempty(x), c))
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'InvalidCells'], ...
+                    "Column '%s' must contain numeric FFT vectors.", col);
+            end
+
+            ref = size(c{1});
+            if ~all(cellfun(@(x) isequal(size(x), ref), c))
+                error(['sfrfs:CenterSurroundCompute:' ...
+                       'SizeMismatch'], ...
+                    "FFT vectors in '%s' have inconsistent sizes.", col);
+            end
+
+            X = [c{:}];
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

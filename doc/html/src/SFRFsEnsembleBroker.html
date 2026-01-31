@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>SFRFsEnsembleBroker</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="SFRFsEnsembleBroker.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -103,6 +103,28 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
     <span class="keyword">methods</span>
         <span class="keyword">function</span> obj = SFRFsEnsembleBroker(args)
+        <span class="comment">% SFRFsEnsembleBroker Construct an SFRF-aware ensemble broker.</span>
+        <span class="comment">%</span>
+        <span class="comment">% obj = SFRFsEnsembleBroker(Name=Value, ...)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Name&ndash;Value arguments:</span>
+        <span class="comment">%   EnsembleObject            Ensemble-like object providing access</span>
+        <span class="comment">%                             to member files and metadata.</span>
+        <span class="comment">%   GetFilesFunction          Function handle returning member file</span>
+        <span class="comment">%                             list when applied to the ensemble.</span>
+        <span class="comment">%   TemporalSnapshotColumns   Cell array of temporal signal column</span>
+        <span class="comment">%                             names.</span>
+        <span class="comment">%   SpectralSuffix            Suffix for spectral (FFT) columns</span>
+        <span class="comment">%                             (default: "_FFT").</span>
+        <span class="comment">%   sfrfsSuffix               Suffix for SFRF columns</span>
+        <span class="comment">%                             (default: "_SFRFs").</span>
+        <span class="comment">%</span>
+        <span class="comment">% API note (naming consistency):</span>
+        <span class="comment">%   Name&ndash;Value parameters in this constructor use a legacy</span>
+        <span class="comment">%   CamelCase naming style (except 'sfrfsSuffix') for backward</span>
+        <span class="comment">%   compatibility.</span>
+        <span class="comment">%   A uniform lower camelCase convention is planned for a future</span>
+        <span class="comment">%   major release.</span>
             <span class="keyword">arguments</span>
                 args.EnsembleObject <span class="typesection">{mustBeNonempty}</span>
                 args.GetFilesFunction <span class="typesection">function_handle</span>
@@ -188,6 +210,28 @@ classdef SFRFsEnsembleBroker < EnsembleBroker
     
     methods
         function obj = SFRFsEnsembleBroker(args)
+        % SFRFsEnsembleBroker Construct an SFRF-aware ensemble broker.
+        %
+        % obj = SFRFsEnsembleBroker(Name=Value, ...)
+        %
+        % Name–Value arguments:
+        %   EnsembleObject            Ensemble-like object providing access 
+        %                             to member files and metadata.
+        %   GetFilesFunction          Function handle returning member file
+        %                             list when applied to the ensemble.
+        %   TemporalSnapshotColumns   Cell array of temporal signal column
+        %                             names.
+        %   SpectralSuffix            Suffix for spectral (FFT) columns
+        %                             (default: "_FFT").
+        %   sfrfsSuffix               Suffix for SFRF columns
+        %                             (default: "_SFRFs").
+        %
+        % API note (naming consistency):
+        %   Name–Value parameters in this constructor use a legacy 
+        %   CamelCase naming style (except 'sfrfsSuffix') for backward 
+        %   compatibility.
+        %   A uniform lower camelCase convention is planned for a future
+        %   major release.
             arguments
                 args.EnsembleObject {mustBeNonempty}
                 args.GetFilesFunction function_handle

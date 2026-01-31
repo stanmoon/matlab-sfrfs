@@ -1,0 +1,385 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>ContrastMappings</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="ContrastMappings.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> ContrastMappings
+<span class="comment">%ContrastMappings  A standard library of contrast mappings for</span>
+<span class="comment">% center-surround opponency.</span>
+<span class="comment">% Each static method returns a function handle callable as:</span>
+<span class="comment">%   c = map(Rc, Rs)</span>
+<span class="comment">%   c = map(Rc, Rs, params)</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   Rc     - center response (scalar or vector)</span>
+<span class="comment">%   Rs     - surround response (same size as Rc)</span>
+<span class="comment">%   params - optional scalar struct with mapping parameters. Fields depend</span>
+<span class="comment">%            on the mapping; unused fields are ignored.</span>
+<span class="comment">%</span>
+<span class="comment">% Output:</span>
+<span class="comment">%   c      - contrast value(s), same size as Rc/Rs.</span>
+<span class="comment">%</span>
+<span class="comment">% Usage note:</span>
+<span class="comment">%   Mapping handles may optionally accept a third input argument for</span>
+<span class="comment">%   parameterization. How parameters are bound or provided is left to the</span>
+<span class="comment">%   mapping implementation.</span>
+
+
+    <span class="keyword">methods</span> (Static)
+        <span class="keyword">function</span> map = difference(args)
+        <span class="comment">%difference Linear contrast: Rc - k*Rs.</span>
+            <span class="keyword">arguments</span>
+                args.k <span class="typesection">(1, 1) double </span>= 1
+            <span class="keyword">end</span>
+
+            k0 = args.k;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doDifference( <span class="keyword">...</span>
+                Rc, Rs, ContrastMappings.resolveParam(varargin, <span class="string">"k"</span>, k0));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> map = ratio(args)
+        <span class="comment">%ratio Relative contrast: Rc / (k*Rs + eps).</span>
+            <span class="keyword">arguments</span>
+                args.k   <span class="typesection">(1, 1) double </span>= 1
+                args.eps <span class="typesection">(1, 1) double {mustBePositive}</span> = 1e-12
+            <span class="keyword">end</span>
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doRatio( <span class="keyword">...</span>
+                Rc, Rs, <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"k"</span>, k0), <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"eps"</span>, e0));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> map = logRatio(args)
+        <span class="comment">%logRatio Log contrast: log((Rc+eps)/(k*Rs+eps)).</span>
+            <span class="keyword">arguments</span>
+                args.k   <span class="typesection">(1, 1) double </span>= 1
+                args.eps <span class="typesection">(1, 1) double {mustBePositive}</span> = 1e-12
+            <span class="keyword">end</span>
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doLogRatio( <span class="keyword">...</span>
+                Rc, Rs, <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"k"</span>, k0), <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"eps"</span>, e0));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> map = normalizedDifference(args)
+        <span class="comment">%normalizedDifference (Rc-k*Rs)/(Rc+k*Rs+eps).</span>
+            <span class="keyword">arguments</span>
+                args.k   <span class="typesection">(1, 1) double </span>= 1
+                args.eps <span class="typesection">(1, 1) double {mustBePositive}</span> = 1e-12
+            <span class="keyword">end</span>
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doNormDiff( <span class="keyword">...</span>
+                Rc, Rs, <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"k"</span>, k0), <span class="keyword">...</span>
+                ContrastMappings.resolveParam(varargin, <span class="string">"eps"</span>, e0));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> v = resolveParam(vin, name, default)
+            <span class="keyword">arguments</span>
+                vin <span class="typesection">cell</span>
+                name <span class="typesection">(1, 1) string</span>
+                default
+            <span class="keyword">end</span>
+
+            <span class="comment">% vin is varargin from the mapping handle.</span>
+            <span class="keyword">if</span> isempty(vin)
+                v = default;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            params = vin{1};
+
+            <span class="keyword">if</span> isempty(params)
+                v = default;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isstruct(params) || ~isscalar(params)
+                error(<span class="string">"sfrfs:ContrastMappings:InvalidParams"</span>, <span class="keyword">...</span>
+                    <span class="string">"params must be a scalar struct (or empty)."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isfield(params, name) &amp;&amp; ~isempty(params.(name))
+                v = params.(name);
+            <span class="keyword">else</span>
+                v = default;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> c = doDifference(Rc, Rs, k)
+            c = Rc - k .* Rs;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> c = doRatio(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = Rc ./ (k .* Rs + epsVal);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> c = doLogRatio(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = log((Rc + epsVal) ./ (k .* Rs + epsVal));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> c = doNormDiff(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = (Rc - k .* Rs) ./ (Rc + k .* Rs + epsVal);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateEps(epsVal)
+            <span class="keyword">if</span> ~(isscalar(epsVal) &amp;&amp; isfinite(epsVal) &amp;&amp; epsVal &gt; 0)
+                error(<span class="string">"sfrfs:ContrastMappings:InvalidEps"</span>, <span class="keyword">...</span>
+                    <span class="string">"eps must be a positive finite scalar."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef ContrastMappings
+%ContrastMappings  A standard library of contrast mappings for 
+% center-surround opponency.
+% Each static method returns a function handle callable as:
+%   c = map(Rc, Rs)
+%   c = map(Rc, Rs, params)
+%
+% Inputs:
+%   Rc     - center response (scalar or vector)
+%   Rs     - surround response (same size as Rc)
+%   params - optional scalar struct with mapping parameters. Fields depend
+%            on the mapping; unused fields are ignored.
+%
+% Output:
+%   c      - contrast value(s), same size as Rc/Rs.
+%
+% Usage note:
+%   Mapping handles may optionally accept a third input argument for
+%   parameterization. How parameters are bound or provided is left to the
+%   mapping implementation.
+
+
+    methods (Static)
+        function map = difference(args)
+        %difference Linear contrast: Rc - k*Rs.
+            arguments
+                args.k (1, 1) double = 1
+            end
+
+            k0 = args.k;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doDifference( ...
+                Rc, Rs, ContrastMappings.resolveParam(varargin, "k", k0));
+        end
+
+        function map = ratio(args)
+        %ratio Relative contrast: Rc / (k*Rs + eps).
+            arguments
+                args.k   (1, 1) double = 1
+                args.eps (1, 1) double {mustBePositive} = 1e-12
+            end
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doRatio( ...
+                Rc, Rs, ...
+                ContrastMappings.resolveParam(varargin, "k", k0), ...
+                ContrastMappings.resolveParam(varargin, "eps", e0));
+        end
+
+        function map = logRatio(args)
+        %logRatio Log contrast: log((Rc+eps)/(k*Rs+eps)).
+            arguments
+                args.k   (1, 1) double = 1
+                args.eps (1, 1) double {mustBePositive} = 1e-12
+            end
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doLogRatio( ...
+                Rc, Rs, ...
+                ContrastMappings.resolveParam(varargin, "k", k0), ...
+                ContrastMappings.resolveParam(varargin, "eps", e0));
+        end
+
+        function map = normalizedDifference(args)
+        %normalizedDifference (Rc-k*Rs)/(Rc+k*Rs+eps).
+            arguments
+                args.k   (1, 1) double = 1
+                args.eps (1, 1) double {mustBePositive} = 1e-12
+            end
+
+            k0 = args.k;
+            e0 = args.eps;
+
+            map = @(Rc, Rs, varargin) ContrastMappings.doNormDiff( ...
+                Rc, Rs, ...
+                ContrastMappings.resolveParam(varargin, "k", k0), ...
+                ContrastMappings.resolveParam(varargin, "eps", e0));
+        end
+    end
+
+    methods (Static, Access = private)
+        
+        function v = resolveParam(vin, name, default)
+            arguments
+                vin cell
+                name (1, 1) string
+                default
+            end
+        
+            % vin is varargin from the mapping handle.
+            if isempty(vin)
+                v = default;
+                return
+            end
+        
+            params = vin{1};
+        
+            if isempty(params)
+                v = default;
+                return
+            end
+        
+            if ~isstruct(params) || ~isscalar(params)
+                error("sfrfs:ContrastMappings:InvalidParams", ...
+                    "params must be a scalar struct (or empty).");
+            end
+        
+            if isfield(params, name) && ~isempty(params.(name))
+                v = params.(name);
+            else
+                v = default;
+            end
+        end
+
+
+        function c = doDifference(Rc, Rs, k)
+            c = Rc - k .* Rs;
+        end
+
+        function c = doRatio(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = Rc ./ (k .* Rs + epsVal);
+        end
+
+        function c = doLogRatio(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = log((Rc + epsVal) ./ (k .* Rs + epsVal));
+        end
+
+        function c = doNormDiff(Rc, Rs, k, epsVal)
+            ContrastMappings.validateEps(epsVal);
+            c = (Rc - k .* Rs) ./ (Rc + k .* Rs + epsVal);
+        end
+
+        function validateEps(epsVal)
+            if ~(isscalar(epsVal) && isfinite(epsVal) && epsVal > 0)
+                error("sfrfs:ContrastMappings:InvalidEps", ...
+                    "eps must be a positive finite scalar.");
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

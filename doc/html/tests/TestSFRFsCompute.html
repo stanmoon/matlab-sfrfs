@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>TestSFRFsCompute</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="TestSFRFsCompute.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -112,14 +112,22 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="string">'PitchDiameter'</span>, 34.55, <span class="keyword">...</span>
                 <span class="string">'ContactAngle'</span>, 0);
 
-            <span class="comment">% SFRFs parameters</span>
-            sharedParams = SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
+            centerMask = GaussianMaskParameters( <span class="keyword">...</span>
+                <span class="string">'bandwidth'</span>, 5, <span class="keyword">...</span>
+                <span class="string">'sigmaRule'</span>, 7);
+
+            surroundMask = GaussianMaskParameters( <span class="keyword">...</span>
+                <span class="string">'bandwidth'</span>, 12, <span class="keyword">...</span>
+                <span class="string">'sigmaRule'</span>, 3);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
                 <span class="string">'order'</span>, 3, <span class="keyword">...</span>
                 <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
                 <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
-                <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
-                <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>, centerMask, <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, surroundMask, <span class="keyword">...</span>
                 <span class="string">'inhibitionFactor'</span>, 0.6);
+
 
             sp = SFRFsParametersRollingBearings( <span class="keyword">...</span>
                 <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
@@ -344,14 +352,22 @@ classdef TestSFRFsCompute < matlab.unittest.TestCase
                 'PitchDiameter', 34.55, ...
                 'ContactAngle', 0);
             
-            % SFRFs parameters
-            sharedParams = SFRFsParameters.createSFRFsParameters( ...
+            centerMask = GaussianMaskParameters( ...
+                'bandwidth', 5, ...
+                'sigmaRule', 7);
+
+            surroundMask = GaussianMaskParameters( ...
+                'bandwidth', 12, ...
+                'sigmaRule', 3);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( ...
                 'order', 3, ...
                 'numSidebands', 4, ...
                 'numHarmonics', 8, ...
-                'sigmaCenter', [5, 7], ...
-                'sigmaSurround', [12, 3], ...
+                'centerMask', centerMask, ...
+                'surroundMask', surroundMask, ...
                 'inhibitionFactor', 0.6);
+
             
             sp = SFRFsParametersRollingBearings( ...
                 'SameForAllFaultTypes', sharedParams);

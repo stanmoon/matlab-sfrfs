@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>FFTEnsembleProcessor</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="FFTEnsembleProcessor.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -202,10 +202,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 colName = temporalCols{i};
                 spectralColName = ensemble.mapToSpectralColumn(colName);
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="keyword">...</span>
-                        sprintf(<span class="keyword">...</span>
-                        <span class="string">"Computing FFT for column %s..."</span> + colName));
+                    log.fine(sprintf(<span class="keyword">...</span>
+                        <span class="string">'Computing FFT for column %s...'</span>, colName));
                 <span class="keyword">end</span>
+
                 <span class="comment">% Concatenate all snapshots</span>
                 x = [memberTable.(colName){:}];
                 X = fft(x, [], 1);
@@ -356,10 +356,10 @@ classdef FFTEnsembleProcessor < EnsembleProcessor
                 colName = temporalCols{i};
                 spectralColName = ensemble.mapToSpectralColumn(colName);
                 if log.isFineEnabled()
-                    log.fine(...
-                        sprintf(...
-                        "Computing FFT for column %s..." + colName));
+                    log.fine(sprintf(...
+                        'Computing FFT for column %s...', colName));
                 end
+
                 % Concatenate all snapshots
                 x = [memberTable.(colName){:}]; 
                 X = fft(x, [], 1);
@@ -376,7 +376,6 @@ classdef FFTEnsembleProcessor < EnsembleProcessor
         end
     end
 end
-
 ##### SOURCE END #####
 -->
 </body>

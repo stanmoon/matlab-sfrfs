@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>EnsembleProcessor</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="EnsembleProcessor.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -219,24 +219,42 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 error(<span class="string">'sfrfs:EnsembleProcessor:EmptyEnsemble'</span>,<span class="keyword">...</span>
                       <span class="string">'Cannot process: Ensemble has not been assigned.'</span>);
             <span class="keyword">end</span>
-            memberFiles = obj.ensemble.getFiles();
+            memberFiles = EnsembleProcessor.sortFilesBySizeDesc( <span class="keyword">...</span>
+                obj.ensemble.getFiles());
             params = obj.getProcessParams();
             mtvn = obj.ensemble.memberTableVarName;
             sortf = obj.ensemble.sortField;
 
             compute = parallel.pool.Constant(@() computeHandle);
 
-            <span class="comment">% Dimension pool</span>
+            <span class="comment">% Dimension parallel pool</span>
 
-            <span class="keyword">if</span> isempty(gcp(<span class="string">'nocreate'</span>))
-                parpool(obj.numWorkers);
+            c = parcluster(<span class="string">'Processes'</span>);
+
+            <span class="comment">% Fail fast on worker-count misconfiguration (no silent clamp)</span>
+            <span class="keyword">if</span> obj.numWorkers &gt; c.NumWorkers
+                log = SFRFsLogger.getLogger();
+                <span class="keyword">if</span> log.isSevereEnabled()
+                    log.severe([ <span class="keyword">...</span>
+                        <span class="string">'Parallel worker misconfiguration: '</span> <span class="keyword">...</span>
+                        <span class="string">'requested=%d, maxSupported=%d, profile=%s'</span>], <span class="keyword">...</span>
+                        obj.numWorkers, c.NumWorkers, <span class="string">'Processes'</span>);
+
+                <span class="keyword">end</span>
+
+                error(<span class="string">'sfrfs:EnsembleProcessor:TooManyWorkers'</span>, <span class="keyword">...</span>
+                    [<span class="string">'Requested %d workers but ''Processes'' supports '</span> <span class="keyword">...</span>
+                     <span class="string">'at most %d. Reduce numWorkers or increase '</span> <span class="keyword">...</span>
+                     <span class="string">'cluster NumWorkers.'</span>], <span class="keyword">...</span>
+                    obj.numWorkers, c.NumWorkers);
             <span class="keyword">end</span>
 
-            log = SFRFsLogger.getLogger();
+            p = gcp(<span class="string">'nocreate'</span>);
 
-            <span class="keyword">if</span> log.isInfoEnabled()
-                log.info(<span class="string">'Running with %d workers.'</span>, <span class="keyword">...</span>
-                    obj.numWorkersInternal);
+            <span class="comment">% Enforce exact pool size (restart pool if size differs)</span>
+            <span class="keyword">if</span> isempty(p) || p.NumWorkers ~= obj.numWorkers
+                <span class="keyword">if</span> ~isempty(p), delete(p); <span class="keyword">end</span>
+                parpool(<span class="string">'Processes'</span>, obj.numWorkers);
             <span class="keyword">end</span>
 
             nWorkers = numel(memberFiles);
@@ -310,6 +328,40 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 throwAsCaller(ME);
             <span class="keyword">end</span>
         <span class="keyword">end</span>
+
+        <span class="keyword">function</span> filesOut = sortFilesBySizeDesc(filesIn)
+        <span class="comment">% sortFilesBySizeDesc  Sort file paths by size (descending).</span>
+        <span class="comment">%</span>
+        <span class="comment">%   filesOut = sortFilesBySizeDesc(filesIn) sorts the input file</span>
+        <span class="comment">%   list from largest to smallest, using file size in bytes.</span>
+
+            <span class="keyword">arguments</span>
+                filesIn
+            <span class="keyword">end</span>
+
+            isString = isstring(filesIn);
+            files = cellstr(filesIn);
+
+            n = numel(files);
+            sizes = zeros(n, 1);
+
+            <span class="keyword">for</span> k = 1:n
+                info = dir(files{k});
+                <span class="keyword">if</span> isempty(info)
+                    error(<span class="string">'sfrfs:EnsembleProcessor:FileNotFound'</span>, <span class="keyword">...</span>
+                        <span class="string">'File not found: %s'</span>, files{k});
+                <span class="keyword">end</span>
+                sizes(k) = info.bytes;
+            <span class="keyword">end</span>
+
+            [~, idx] = sort(sizes, <span class="string">'descend'</span>);
+            filesOut = files(idx);
+
+            <span class="keyword">if</span> isString
+                filesOut = string(filesOut);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 </pre>
@@ -463,24 +515,42 @@ classdef (Abstract) EnsembleProcessor < handle
                 error('sfrfs:EnsembleProcessor:EmptyEnsemble',...
                       'Cannot process: Ensemble has not been assigned.');
             end
-            memberFiles = obj.ensemble.getFiles();
+            memberFiles = EnsembleProcessor.sortFilesBySizeDesc( ...
+                obj.ensemble.getFiles());
             params = obj.getProcessParams();
             mtvn = obj.ensemble.memberTableVarName;
             sortf = obj.ensemble.sortField;
 
             compute = parallel.pool.Constant(@() computeHandle);
 
-            % Dimension pool
+            % Dimension parallel pool
 
-            if isempty(gcp('nocreate'))
-                parpool(obj.numWorkers);
+            c = parcluster('Processes');
+
+            % Fail fast on worker-count misconfiguration (no silent clamp)
+            if obj.numWorkers > c.NumWorkers
+                log = SFRFsLogger.getLogger();
+                if log.isSevereEnabled()
+                    log.severe([ ...
+                        'Parallel worker misconfiguration: ' ...
+                        'requested=%d, maxSupported=%d, profile=%s'], ...
+                        obj.numWorkers, c.NumWorkers, 'Processes');
+
+                end
+
+                error('sfrfs:EnsembleProcessor:TooManyWorkers', ...
+                    ['Requested %d workers but ''Processes'' supports ' ...
+                     'at most %d. Reduce numWorkers or increase ' ...
+                     'cluster NumWorkers.'], ...
+                    obj.numWorkers, c.NumWorkers);
             end
 
-            log = SFRFsLogger.getLogger();
+            p = gcp('nocreate');
 
-            if log.isInfoEnabled()
-                log.info('Running with %d workers.', ...
-                    obj.numWorkersInternal);
+            % Enforce exact pool size (restart pool if size differs)
+            if isempty(p) || p.NumWorkers ~= obj.numWorkers
+                if ~isempty(p), delete(p); end
+                parpool('Processes', obj.numWorkers);
             end
 
             nWorkers = numel(memberFiles);
@@ -554,6 +624,40 @@ classdef (Abstract) EnsembleProcessor < handle
                 throwAsCaller(ME);
             end
         end
+
+        function filesOut = sortFilesBySizeDesc(filesIn)
+        % sortFilesBySizeDesc  Sort file paths by size (descending).
+        %
+        %   filesOut = sortFilesBySizeDesc(filesIn) sorts the input file 
+        %   list from largest to smallest, using file size in bytes.
+        
+            arguments
+                filesIn
+            end
+        
+            isString = isstring(filesIn);
+            files = cellstr(filesIn);
+        
+            n = numel(files);
+            sizes = zeros(n, 1);
+        
+            for k = 1:n
+                info = dir(files{k});
+                if isempty(info)
+                    error('sfrfs:EnsembleProcessor:FileNotFound', ...
+                        'File not found: %s', files{k});
+                end
+                sizes(k) = info.bytes;
+            end
+        
+            [~, idx] = sort(sizes, 'descend');
+            filesOut = files(idx);
+        
+            if isString
+                filesOut = string(filesOut);
+            end
+        end
+
     end
 end
 

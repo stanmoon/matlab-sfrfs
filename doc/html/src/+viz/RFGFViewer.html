@@ -1,0 +1,945 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>RFGFViewer</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="RFGFViewer.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> RFGFViewer &lt; handle
+<span class="comment">%RFGFViewer  Embeddable viewer for receptive field gain functions (RFGFs).</span>
+<span class="comment">%</span>
+<span class="comment">%   viewer = RFGFViewer(Name=Value, ...)</span>
+<span class="comment">%   ax = viewer.render(Name=Value, ...)</span>
+<span class="comment">%</span>
+<span class="comment">% Constructor configures rendering preferences.</span>
+<span class="comment">% render() is parameterized by selection:</span>
+<span class="comment">%   - row</span>
+<span class="comment">%   - faultType + selection</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        parent = []
+        <span class="comment">% Axes/UIAxes. If empty or invalid, render() creates figure+axes.</span>
+
+        frequencyLimits <span class="typesection">double </span>= []
+        <span class="comment">% [fmin fmax] in Hz, or [] for auto.</span>
+
+        showCenter   <span class="typesection">(1,1) logical </span>= true
+        showSurround <span class="typesection">(1,1) logical </span>= true
+        showContrast <span class="typesection">(1,1) logical </span>= true
+
+        titleText  <span class="typesection">(1,1) string  </span>= <span class="string">""</span>
+        showTitle  <span class="typesection">(1,1) logical </span>= true
+        showLegend <span class="typesection">(1,1) logical </span>= true
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = RFGFViewer(args)
+            <span class="keyword">arguments</span>
+                args.rfgfs <span class="typesection">ReceptiveFieldGainFunctions</span>
+                args.parent = []
+                args.frequencyLimits <span class="typesection">double </span>= []
+                args.titleText  <span class="typesection">(1,1) string  </span>= <span class="string">""</span>
+                args.showTitle  <span class="typesection">(1,1) logical </span>= true
+                args.showLegend <span class="typesection">(1,1) logical </span>= true
+            <span class="keyword">end</span>
+
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.frequencyLimits = args.frequencyLimits;
+            obj.validateFrequencyLimits(obj.frequencyLimits);
+
+            obj.titleText = args.titleText;
+            obj.showTitle = args.showTitle;
+            obj.showLegend = args.showLegend;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> attach(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.parent
+            <span class="keyword">end</span>
+            obj.parent = args.parent;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ax = render(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+
+                <span class="comment">% Selection (choose one): row vs (faulType + selection)</span>
+                args.row <span class="typesection">double </span>= []
+                args.faultType <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+                args.selection <span class="typesection">OperatingConditionSelection </span>= <span class="keyword">...</span>
+                    OperatingConditionSelection.empty()
+
+                <span class="comment">% Optional rendering options:</span>
+                args.parent = []
+                args.frequencyLimits <span class="typesection">double </span>= []
+                args.titleText <span class="typesection">(1,1) string </span>= <span class="string">""</span>
+            <span class="keyword">end</span>
+
+            gt = obj.rfgfs.gainFunctionsTable;
+            <span class="keyword">if</span> isempty(gt) || height(gt) == 0
+                error(<span class="string">"sfrfs:viz:RFGFViewer:EmptyGainFunctionsTable"</span>, <span class="keyword">...</span>
+                    <span class="string">"gainFunctionsTable is empty."</span>);
+            <span class="keyword">end</span>
+
+            f = obj.rfgfs.frequencyDomain;
+            <span class="keyword">if</span> isempty(f)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:EmptyFrequencyDomain"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyDomain is empty."</span>);
+            <span class="keyword">end</span>
+
+            [rowIdx, faultGroup] = obj.resolveRowAndFaultGroup( <span class="keyword">...</span>
+                gt, args.row, args.faultType, args.selection);
+
+            masks = gt.FrequencyBankMasks{rowIdx};
+            [c, s] = obj.extractMasks(masks, f);
+
+            k = obj.getInhibitionFactorFromFaultGroup(faultGroup);
+
+            ax = obj.ensureAxes(args.parent);
+            cla(ax);
+            hold(ax, <span class="string">"on"</span>);
+
+            <span class="keyword">if</span> obj.showCenter
+                plot(ax, f, c, <span class="keyword">...</span>
+                    <span class="string">"LineStyle"</span>, <span class="string">"-"</span>, <span class="keyword">...</span>
+                    <span class="string">"LineWidth"</span>, 1.5, <span class="keyword">...</span>
+                    <span class="string">"Color"</span>, [0.0 0.6 0.0], <span class="keyword">...</span>
+                    <span class="string">"DisplayName"</span>, <span class="string">"Center"</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> obj.showSurround
+                plot(ax, f, -s, <span class="keyword">...</span>
+                    <span class="string">"LineStyle"</span>, <span class="string">"-"</span>, <span class="keyword">...</span>
+                    <span class="string">"LineWidth"</span>, 1.5, <span class="keyword">...</span>
+                    <span class="string">"Color"</span>, [0.8 0.0 0.0], <span class="keyword">...</span>
+                    <span class="string">"DisplayName"</span>, <span class="string">"-Surround"</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> obj.showContrast
+                contrast = c - k .* s;
+                plot(ax, f, contrast, <span class="keyword">...</span>
+                    <span class="string">"LineStyle"</span>, <span class="string">"-"</span>, <span class="keyword">...</span>
+                    <span class="string">"LineWidth"</span>, 1.8, <span class="keyword">...</span>
+                    <span class="string">"Color"</span>, [0.0 0.0 0.0], <span class="keyword">...</span>
+                    <span class="string">"DisplayName"</span>, obj.contrastLabel(k));
+            <span class="keyword">end</span>
+
+            xlabel(ax, <span class="string">"Frequency (Hz)"</span>);
+            ylabel(ax, <span class="string">"Gain"</span>);
+            grid(ax, <span class="string">"on"</span>);
+
+            lim = obj.resolveLimits(f, args.frequencyLimits);
+            xlim(ax, lim);
+
+            obj.applyTitle(ax, gt, rowIdx, args.titleText);
+
+            <span class="keyword">if</span> obj.showLegend
+                legend(ax, <span class="string">"show"</span>, <span class="keyword">...</span>
+                    <span class="string">"Location"</span>, <span class="string">"southoutside"</span>, <span class="keyword">...</span>
+                    <span class="string">"Orientation"</span>, <span class="string">"horizontal"</span>);
+            <span class="keyword">else</span>
+                legend(ax, <span class="string">"off"</span>);
+            <span class="keyword">end</span>
+
+            hold(ax, <span class="string">"off"</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> [rowIdx, faultGroup] = resolveRowAndFaultGroup( <span class="keyword">...</span>
+                obj, gt, row, faultType, sel)
+
+            hasRow = ~isempty(row);
+            hasKey = (faultType ~= <span class="string">""</span>) &amp;&amp; ~isempty(sel);
+
+            <span class="keyword">if</span> hasRow == hasKey
+                error(<span class="string">"sfrfs:viz:RFGFViewer:SelectionRequired"</span>, <span class="keyword">...</span>
+                    <span class="string">"Specify row, or faultType and selection."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> hasRow
+                obj.validateRow(row, height(gt));
+                rowIdx = row;
+                faultGroup = obj.faultGroupForRow(gt, rowIdx);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            faultGroup = obj.faultTypeToGroup(faultType);
+
+            <span class="keyword">try</span>
+                rowIdx = FaultConditionSelector.selectRow( <span class="keyword">...</span>
+                    gt, faultGroup=faultGroup, selection=sel);
+            <span class="keyword">catch</span> ME
+                error(<span class="string">"sfrfs:viz:RFGFViewer:RowResolutionFailed"</span>, <span class="keyword">...</span>
+                    <span class="string">"Failed to resolve row: %s"</span>, ME.message);
+            <span class="keyword">end</span>
+
+            obj.validateRow(rowIdx, height(gt));
+
+            <span class="comment">% Use table's own FaultGroup for the resolved row, if</span>
+            <span class="comment">% available, otherwise keep the one we used.</span>
+            <span class="keyword">try</span>
+                faultGroup = obj.faultGroupForRow(gt, rowIdx);
+            <span class="keyword">catch</span>
+                <span class="comment">% If the table lacks the column, keep faultGroup as-is.</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateRow(~, row, nRows)
+            <span class="keyword">if</span> ~isscalar(row) || ~isfinite(row) || row &lt;= 0 || <span class="keyword">...</span>
+                    row ~= floor(row)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:InvalidRow"</span>, <span class="keyword">...</span>
+                    <span class="string">"row must be a positive integer scalar."</span>);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> row &gt; nRows
+                error(<span class="string">"sfrfs:viz:RFGFViewer:RowIndexOutOfRange"</span>, <span class="keyword">...</span>
+                    <span class="string">"row exceeds table height."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [c, s] = extractMasks(~, masks, f)
+            <span class="keyword">if</span> ~isstruct(masks) || <span class="keyword">...</span>
+                    ~isfield(masks, <span class="string">"CenterFrequencyBankMask"</span>) || <span class="keyword">...</span>
+                    ~isfield(masks, <span class="string">"SurroundFrequencyBankMask"</span>)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:InvalidFrequencyBankMasks"</span>, <span class="keyword">...</span>
+                    <span class="string">"FrequencyBankMasks entry is invalid."</span>);
+            <span class="keyword">end</span>
+
+            c = masks.CenterFrequencyBankMask(:);
+            s = masks.SurroundFrequencyBankMask(:);
+
+            <span class="keyword">if</span> numel(c) ~= numel(f) || numel(s) ~= numel(f)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:MaskDomainSizeMismatch"</span>, <span class="keyword">...</span>
+                    <span class="string">"Mask length does not match frequency domain."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fg = faultGroupForRow(obj, gt, rowIdx)
+            kFG = obj.colName(<span class="string">"FAULTGROUP"</span>, <span class="string">"FaultGroup"</span>);
+            <span class="keyword">if</span> ~ismember(kFG, string(gt.Properties.VariableNames))
+                error(<span class="string">"sfrfs:viz:RFGFViewer:MissingFaultGroupColumn"</span>, <span class="keyword">...</span>
+                    <span class="string">"FaultGroup column missing."</span>);
+            <span class="keyword">end</span>
+
+            fg = gt.(kFG)(rowIdx);
+
+            <span class="keyword">if</span> isempty(fg) || ~isscalar(fg) || ~isfinite(fg)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:FaultGroupUnavailable"</span>, <span class="keyword">...</span>
+                    <span class="string">"FaultGroup value invalid at the selected row."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fg = faultTypeToGroup(obj, faultType)
+            fb = obj.rfgfs.frequencyBands;
+            <span class="keyword">if</span> isempty(fb)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:MissingFrequencyBands"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyBands not available on rfgfs."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isprop(fb, <span class="string">"faultTypeGroups"</span>)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:FaultTypeGroupsMissing"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyBands has no faultTypeGroups mapping."</span>);
+            <span class="keyword">end</span>
+
+            m = fb.faultTypeGroups;
+
+            <span class="keyword">if</span> isa(m, <span class="string">"containers.Map"</span>)
+                <span class="keyword">if</span> ~isKey(m, faultType)
+                    error(<span class="string">"sfrfs:viz:RFGFViewer:FaultTypeUnknown"</span>, <span class="keyword">...</span>
+                        <span class="string">"Unknown faultType: %s"</span>, faultType);
+                <span class="keyword">end</span>
+                fg = m(faultType);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(m, <span class="string">"function_handle"</span>)
+                fg = m(faultType);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error(<span class="string">"sfrfs:viz:RFGFViewer:FaultTypeGroupsUnsupported"</span>, <span class="keyword">...</span>
+                <span class="string">"faultTypeGroups must be a containers.Map or function."</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> k = getInhibitionFactorFromFaultGroup(obj, faultGroup)
+            fb = obj.rfgfs.frequencyBands;
+            <span class="keyword">if</span> isempty(fb)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:MissingFrequencyBands"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyBands not available on rfgfs."</span>);
+            <span class="keyword">end</span>
+
+            faultType = obj.resolveFaultTypeName(fb, faultGroup);
+
+            p = fb.sfrfsParams.getParamsForFaultType(faultType);
+            <span class="keyword">if</span> ~isfield(p, <span class="string">"inhibitionFactor"</span>)
+                error(<span class="string">"sfrfs:viz:RFGFViewer:MissingInhibitionFactor"</span>, <span class="keyword">...</span>
+                    <span class="string">"inhibitionFactor missing in fault params."</span>);
+            <span class="keyword">end</span>
+
+            k = p.inhibitionFactor;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> faultType = resolveFaultTypeName(~, fb, faultGroup)
+            m = fb.faultGroupToTypeName;
+
+            <span class="keyword">if</span> isa(m, <span class="string">"function_handle"</span>)
+                faultType = m(faultGroup);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(m, <span class="string">"containers.Map"</span>)
+                <span class="keyword">if</span> ~isKey(m, faultGroup)
+                    error(<span class="string">"sfrfs:viz:RFGFViewer:FaultGroupKeyMissing"</span>, <span class="keyword">...</span>
+                        <span class="string">"FaultGroup not present in map."</span>);
+                <span class="keyword">end</span>
+                faultType = m(faultGroup);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isstruct(m)
+                key = matlab.lang.makeValidName(string(faultGroup));
+                <span class="keyword">if</span> ~isfield(m, key)
+                    error(<span class="string">"sfrfs:viz:RFGFViewer:FaultGroupFieldMissing"</span>, <span class="keyword">...</span>
+                        <span class="string">"FaultGroup not present in struct."</span>);
+                <span class="keyword">end</span>
+                faultType = m.(key);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error(<span class="string">"sfrfs:viz:RFGFViewer:FaultGroupToTypeNameUnsupported"</span>, <span class="keyword">...</span>
+                <span class="string">"Unsupported faultGroupToTypeName type."</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ax = ensureAxes(obj, overrideParent)
+            <span class="keyword">if</span> obj.isAxes(overrideParent)
+                ax = overrideParent;
+                obj.parent = ax;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> obj.isAxes(obj.parent)
+                ax = obj.parent;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            fig = figure(<span class="string">"Name"</span>, <span class="string">"RFGFs Viewer"</span>);
+            ax = axes(fig);
+            obj.parent = ax;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isAxes(~, x)
+            tf = ~isempty(x) &amp;&amp; isgraphics(x) &amp;&amp; isvalid(x) &amp;&amp; <span class="keyword">...</span>
+                (isa(x, <span class="string">"matlab.graphics.axis.Axes"</span>) || <span class="keyword">...</span>
+                 isa(x, <span class="string">"matlab.ui.control.UIAxes"</span>));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> validateFrequencyLimits(~, x)
+            <span class="keyword">if</span> isempty(x)
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~isnumeric(x) || ~isreal(x) || any(~isfinite(x(:)))
+                error(<span class="string">"sfrfs:viz:RFGFViewer:InvalidFrequencyLimits"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyLimits must be real and finite, or []."</span>);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~isequal(size(x), [1 2]) || ~(x(1) &lt; x(2))
+                error(<span class="string">"sfrfs:viz:RFGFViewer:InvalidFrequencyLimits"</span>, <span class="keyword">...</span>
+                    <span class="string">"frequencyLimits must be [min max] with min &lt; max."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> lim = resolveLimits(obj, f, override)
+            <span class="keyword">if</span> ~isempty(override)
+                obj.validateFrequencyLimits(override);
+                lim = override;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isempty(obj.frequencyLimits)
+                lim = obj.frequencyLimits;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            lim = [f(1), f(end) / 2];
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> applyTitle(obj, ax, gt, rowIdx, override)
+            <span class="keyword">if</span> ~obj.showTitle
+                title(ax, <span class="string">""</span>);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> override ~= <span class="string">""</span>
+                title(ax, override);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> obj.titleText ~= <span class="string">""</span>
+                title(ax, obj.titleText);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            kDesc = obj.colName(<span class="string">"DESCRIPTION"</span>, <span class="string">"Description"</span>);
+            kSpd  = obj.colName(<span class="string">"SPEED"</span>, <span class="string">"Speed"</span>);
+            kLd   = obj.colName(<span class="string">"LOAD"</span>, <span class="string">"Load"</span>);
+
+            fault = <span class="string">""</span>;
+            spd = NaN;
+            ld  = NaN;
+
+            <span class="keyword">if</span> ismember(kDesc, string(gt.Properties.VariableNames))
+                fault = string(gt.(kDesc)(rowIdx));
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ismember(kSpd, string(gt.Properties.VariableNames))
+                spd = gt.(kSpd)(rowIdx);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ismember(kLd, string(gt.Properties.VariableNames))
+                ld = gt.(kLd)(rowIdx);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> fault ~= <span class="string">""</span> &amp;&amp; ~isnan(spd) &amp;&amp; ~isnan(ld)
+                title(ax, sprintf( <span class="keyword">...</span>
+                    <span class="string">"RFGFs - %s, Speed = %.2f Hz, Load = %.2f"</span>, <span class="keyword">...</span>
+                    fault, spd, ld));
+            <span class="keyword">elseif</span> fault ~= <span class="string">""</span>
+                title(ax, <span class="string">"RFGFs - "</span> + fault);
+            <span class="keyword">else</span>
+                title(ax, <span class="string">"RFGFs"</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> name = colName(~, schemaField, fallback)
+            name = string(fallback);
+            <span class="keyword">try</span>
+                ms = tables.FaultConditionTableMetaSchema;
+                <span class="keyword">if</span> isprop(ms, schemaField)
+                    name = string(ms.(schemaField));
+                <span class="keyword">end</span>
+            <span class="keyword">catch</span>
+                <span class="comment">% Optional schema.</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> lbl = contrastLabel(~, k)
+            lbl = sprintf(<span class="string">"Contrast (c - k*s, k = %.3g)"</span>, k);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef RFGFViewer < handle
+%RFGFViewer  Embeddable viewer for receptive field gain functions (RFGFs).
+%
+%   viewer = RFGFViewer(Name=Value, ...)
+%   ax = viewer.render(Name=Value, ...)
+%
+% Constructor configures rendering preferences.
+% render() is parameterized by selection:
+%   - row
+%   - faultType + selection
+
+    properties (SetAccess = private)
+        rfgfs ReceptiveFieldGainFunctions
+    end
+
+    properties
+        parent = []
+        % Axes/UIAxes. If empty or invalid, render() creates figure+axes.
+
+        frequencyLimits double = []
+        % [fmin fmax] in Hz, or [] for auto.
+
+        showCenter   (1,1) logical = true
+        showSurround (1,1) logical = true
+        showContrast (1,1) logical = true
+
+        titleText  (1,1) string  = ""
+        showTitle  (1,1) logical = true
+        showLegend (1,1) logical = true
+    end
+
+    methods
+        function obj = RFGFViewer(args)
+            arguments
+                args.rfgfs ReceptiveFieldGainFunctions
+                args.parent = []
+                args.frequencyLimits double = []
+                args.titleText  (1,1) string  = ""
+                args.showTitle  (1,1) logical = true
+                args.showLegend (1,1) logical = true
+            end
+
+            obj.rfgfs = args.rfgfs;
+            obj.parent = args.parent;
+
+            obj.frequencyLimits = args.frequencyLimits;
+            obj.validateFrequencyLimits(obj.frequencyLimits);
+
+            obj.titleText = args.titleText;
+            obj.showTitle = args.showTitle;
+            obj.showLegend = args.showLegend;
+        end
+
+        function attach(obj, args)
+            arguments
+                obj
+                args.parent
+            end
+            obj.parent = args.parent;
+        end
+
+        function ax = render(obj, args)
+            arguments
+                obj
+
+                % Selection (choose one): row vs (faulType + selection)
+                args.row double = []
+                args.faultType (1,1) string = ""
+                args.selection OperatingConditionSelection = ...
+                    OperatingConditionSelection.empty()
+
+                % Optional rendering options:
+                args.parent = []
+                args.frequencyLimits double = []
+                args.titleText (1,1) string = ""
+            end
+
+            gt = obj.rfgfs.gainFunctionsTable;
+            if isempty(gt) || height(gt) == 0
+                error("sfrfs:viz:RFGFViewer:EmptyGainFunctionsTable", ...
+                    "gainFunctionsTable is empty.");
+            end
+
+            f = obj.rfgfs.frequencyDomain;
+            if isempty(f)
+                error("sfrfs:viz:RFGFViewer:EmptyFrequencyDomain", ...
+                    "frequencyDomain is empty.");
+            end
+
+            [rowIdx, faultGroup] = obj.resolveRowAndFaultGroup( ...
+                gt, args.row, args.faultType, args.selection);
+
+            masks = gt.FrequencyBankMasks{rowIdx};
+            [c, s] = obj.extractMasks(masks, f);
+
+            k = obj.getInhibitionFactorFromFaultGroup(faultGroup);
+
+            ax = obj.ensureAxes(args.parent);
+            cla(ax);
+            hold(ax, "on");
+
+            if obj.showCenter
+                plot(ax, f, c, ...
+                    "LineStyle", "-", ...
+                    "LineWidth", 1.5, ...
+                    "Color", [0.0 0.6 0.0], ...
+                    "DisplayName", "Center");
+            end
+
+            if obj.showSurround
+                plot(ax, f, -s, ...
+                    "LineStyle", "-", ...
+                    "LineWidth", 1.5, ...
+                    "Color", [0.8 0.0 0.0], ...
+                    "DisplayName", "-Surround");
+            end
+
+            if obj.showContrast
+                contrast = c - k .* s;
+                plot(ax, f, contrast, ...
+                    "LineStyle", "-", ...
+                    "LineWidth", 1.8, ...
+                    "Color", [0.0 0.0 0.0], ...
+                    "DisplayName", obj.contrastLabel(k));
+            end
+
+            xlabel(ax, "Frequency (Hz)");
+            ylabel(ax, "Gain");
+            grid(ax, "on");
+
+            lim = obj.resolveLimits(f, args.frequencyLimits);
+            xlim(ax, lim);
+
+            obj.applyTitle(ax, gt, rowIdx, args.titleText);
+
+            if obj.showLegend
+                legend(ax, "show", ...
+                    "Location", "southoutside", ...
+                    "Orientation", "horizontal");
+            else
+                legend(ax, "off");
+            end
+
+            hold(ax, "off");
+        end
+    end
+
+    methods (Access = private)
+        function [rowIdx, faultGroup] = resolveRowAndFaultGroup( ...
+                obj, gt, row, faultType, sel)
+
+            hasRow = ~isempty(row);
+            hasKey = (faultType ~= "") && ~isempty(sel);
+
+            if hasRow == hasKey
+                error("sfrfs:viz:RFGFViewer:SelectionRequired", ...
+                    "Specify row, or faultType and selection.");
+            end
+
+            if hasRow
+                obj.validateRow(row, height(gt));
+                rowIdx = row;
+                faultGroup = obj.faultGroupForRow(gt, rowIdx);
+                return
+            end
+
+            faultGroup = obj.faultTypeToGroup(faultType);
+
+            try
+                rowIdx = FaultConditionSelector.selectRow( ...
+                    gt, faultGroup=faultGroup, selection=sel);
+            catch ME
+                error("sfrfs:viz:RFGFViewer:RowResolutionFailed", ...
+                    "Failed to resolve row: %s", ME.message);
+            end
+
+            obj.validateRow(rowIdx, height(gt));
+
+            % Use table's own FaultGroup for the resolved row, if
+            % available, otherwise keep the one we used.
+            try
+                faultGroup = obj.faultGroupForRow(gt, rowIdx);
+            catch
+                % If the table lacks the column, keep faultGroup as-is.
+            end
+        end
+
+        function validateRow(~, row, nRows)
+            if ~isscalar(row) || ~isfinite(row) || row <= 0 || ...
+                    row ~= floor(row)
+                error("sfrfs:viz:RFGFViewer:InvalidRow", ...
+                    "row must be a positive integer scalar.");
+            end
+            if row > nRows
+                error("sfrfs:viz:RFGFViewer:RowIndexOutOfRange", ...
+                    "row exceeds table height.");
+            end
+        end
+
+        function [c, s] = extractMasks(~, masks, f)
+            if ~isstruct(masks) || ...
+                    ~isfield(masks, "CenterFrequencyBankMask") || ...
+                    ~isfield(masks, "SurroundFrequencyBankMask")
+                error("sfrfs:viz:RFGFViewer:InvalidFrequencyBankMasks", ...
+                    "FrequencyBankMasks entry is invalid.");
+            end
+
+            c = masks.CenterFrequencyBankMask(:);
+            s = masks.SurroundFrequencyBankMask(:);
+
+            if numel(c) ~= numel(f) || numel(s) ~= numel(f)
+                error("sfrfs:viz:RFGFViewer:MaskDomainSizeMismatch", ...
+                    "Mask length does not match frequency domain.");
+            end
+        end
+
+        function fg = faultGroupForRow(obj, gt, rowIdx)
+            kFG = obj.colName("FAULTGROUP", "FaultGroup");
+            if ~ismember(kFG, string(gt.Properties.VariableNames))
+                error("sfrfs:viz:RFGFViewer:MissingFaultGroupColumn", ...
+                    "FaultGroup column missing.");
+            end
+
+            fg = gt.(kFG)(rowIdx);
+
+            if isempty(fg) || ~isscalar(fg) || ~isfinite(fg)
+                error("sfrfs:viz:RFGFViewer:FaultGroupUnavailable", ...
+                    "FaultGroup value invalid at the selected row.");
+            end
+        end
+
+        function fg = faultTypeToGroup(obj, faultType)
+            fb = obj.rfgfs.frequencyBands;
+            if isempty(fb)
+                error("sfrfs:viz:RFGFViewer:MissingFrequencyBands", ...
+                    "frequencyBands not available on rfgfs.");
+            end
+
+            if ~isprop(fb, "faultTypeGroups")
+                error("sfrfs:viz:RFGFViewer:FaultTypeGroupsMissing", ...
+                    "frequencyBands has no faultTypeGroups mapping.");
+            end
+
+            m = fb.faultTypeGroups;
+
+            if isa(m, "containers.Map")
+                if ~isKey(m, faultType)
+                    error("sfrfs:viz:RFGFViewer:FaultTypeUnknown", ...
+                        "Unknown faultType: %s", faultType);
+                end
+                fg = m(faultType);
+                return
+            end
+
+            if isa(m, "function_handle")
+                fg = m(faultType);
+                return
+            end
+
+            error("sfrfs:viz:RFGFViewer:FaultTypeGroupsUnsupported", ...
+                "faultTypeGroups must be a containers.Map or function.");
+        end
+
+        function k = getInhibitionFactorFromFaultGroup(obj, faultGroup)
+            fb = obj.rfgfs.frequencyBands;
+            if isempty(fb)
+                error("sfrfs:viz:RFGFViewer:MissingFrequencyBands", ...
+                    "frequencyBands not available on rfgfs.");
+            end
+
+            faultType = obj.resolveFaultTypeName(fb, faultGroup);
+
+            p = fb.sfrfsParams.getParamsForFaultType(faultType);
+            if ~isfield(p, "inhibitionFactor")
+                error("sfrfs:viz:RFGFViewer:MissingInhibitionFactor", ...
+                    "inhibitionFactor missing in fault params.");
+            end
+
+            k = p.inhibitionFactor;
+        end
+
+        function faultType = resolveFaultTypeName(~, fb, faultGroup)
+            m = fb.faultGroupToTypeName;
+
+            if isa(m, "function_handle")
+                faultType = m(faultGroup);
+                return
+            end
+
+            if isa(m, "containers.Map")
+                if ~isKey(m, faultGroup)
+                    error("sfrfs:viz:RFGFViewer:FaultGroupKeyMissing", ...
+                        "FaultGroup not present in map.");
+                end
+                faultType = m(faultGroup);
+                return
+            end
+
+            if isstruct(m)
+                key = matlab.lang.makeValidName(string(faultGroup));
+                if ~isfield(m, key)
+                    error("sfrfs:viz:RFGFViewer:FaultGroupFieldMissing", ...
+                        "FaultGroup not present in struct.");
+                end
+                faultType = m.(key);
+                return
+            end
+
+            error("sfrfs:viz:RFGFViewer:FaultGroupToTypeNameUnsupported", ...
+                "Unsupported faultGroupToTypeName type.");
+        end
+
+        function ax = ensureAxes(obj, overrideParent)
+            if obj.isAxes(overrideParent)
+                ax = overrideParent;
+                obj.parent = ax;
+                return
+            end
+
+            if obj.isAxes(obj.parent)
+                ax = obj.parent;
+                return
+            end
+
+            fig = figure("Name", "RFGFs Viewer");
+            ax = axes(fig);
+            obj.parent = ax;
+        end
+
+        function tf = isAxes(~, x)
+            tf = ~isempty(x) && isgraphics(x) && isvalid(x) && ...
+                (isa(x, "matlab.graphics.axis.Axes") || ...
+                 isa(x, "matlab.ui.control.UIAxes"));
+        end
+
+        function validateFrequencyLimits(~, x)
+            if isempty(x)
+                return
+            end
+            if ~isnumeric(x) || ~isreal(x) || any(~isfinite(x(:)))
+                error("sfrfs:viz:RFGFViewer:InvalidFrequencyLimits", ...
+                    "frequencyLimits must be real and finite, or [].");
+            end
+            if ~isequal(size(x), [1 2]) || ~(x(1) < x(2))
+                error("sfrfs:viz:RFGFViewer:InvalidFrequencyLimits", ...
+                    "frequencyLimits must be [min max] with min < max.");
+            end
+        end
+
+        function lim = resolveLimits(obj, f, override)
+            if ~isempty(override)
+                obj.validateFrequencyLimits(override);
+                lim = override;
+                return
+            end
+
+            if ~isempty(obj.frequencyLimits)
+                lim = obj.frequencyLimits;
+                return
+            end
+
+            lim = [f(1), f(end) / 2];
+        end
+
+        function applyTitle(obj, ax, gt, rowIdx, override)
+            if ~obj.showTitle
+                title(ax, "");
+                return
+            end
+
+            if override ~= ""
+                title(ax, override);
+                return
+            end
+
+            if obj.titleText ~= ""
+                title(ax, obj.titleText);
+                return
+            end
+
+            kDesc = obj.colName("DESCRIPTION", "Description");
+            kSpd  = obj.colName("SPEED", "Speed");
+            kLd   = obj.colName("LOAD", "Load");
+
+            fault = "";
+            spd = NaN;
+            ld  = NaN;
+
+            if ismember(kDesc, string(gt.Properties.VariableNames))
+                fault = string(gt.(kDesc)(rowIdx));
+            end
+            if ismember(kSpd, string(gt.Properties.VariableNames))
+                spd = gt.(kSpd)(rowIdx);
+            end
+            if ismember(kLd, string(gt.Properties.VariableNames))
+                ld = gt.(kLd)(rowIdx);
+            end
+
+            if fault ~= "" && ~isnan(spd) && ~isnan(ld)
+                title(ax, sprintf( ...
+                    "RFGFs - %s, Speed = %.2f Hz, Load = %.2f", ...
+                    fault, spd, ld));
+            elseif fault ~= ""
+                title(ax, "RFGFs - " + fault);
+            else
+                title(ax, "RFGFs");
+            end
+        end
+
+        function name = colName(~, schemaField, fallback)
+            name = string(fallback);
+            try
+                ms = tables.FaultConditionTableMetaSchema;
+                if isprop(ms, schemaField)
+                    name = string(ms.(schemaField));
+                end
+            catch
+                % Optional schema.
+            end
+        end
+
+        function lbl = contrastLabel(~, k)
+            lbl = sprintf("Contrast (c - k*s, k = %.3g)", k);
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

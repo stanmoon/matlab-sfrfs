@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>ReceptiveFieldGainFunctions</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="ReceptiveFieldGainFunctions.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -82,16 +82,21 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <span class="comment">% for fault frequency bands based on provided frequencyBands.</span>
 <span class="comment">%</span>
 <span class="comment">%   This class operates on the fault bands and parameters encapsulated</span>
-<span class="comment">%   in a FrequencyBands instance, enabling computation of Gaussian masks or</span>
-<span class="comment">%   gain functions for Spectral Fault Receptive Fields.</span>
+<span class="comment">%   in a FrequencyBands instance, enabling computation of frequency masks</span>
+<span class="comment">%   or gain functions for Spectral Fault Receptive Fields.</span>
 <span class="comment">%</span>
 <span class="comment">% Properties:</span>
 <span class="comment">%   frequencyBands          - Instance of FrequencyBands containing</span>
 <span class="comment">%                             SFRF parameters and precomputed fault bands.</span>
+<span class="comment">%   frequencyDomain         - Frequency grid (Hz) on which the receptive</span>
+<span class="comment">%                             field gain functions were computed.</span>
+<span class="comment">%                             This domain is stored on first computation</span>
+<span class="comment">%                             and defines the immutable spectral support</span>
+<span class="comment">%                             of computed RFGFs.</span>
 <span class="comment">%</span>
 <span class="comment">% Example (with bearing example):</span>
 <span class="comment">%   rfgf = ReceptiveFieldGainFunctions(frequencyBandsObject);</span>
-<span class="comment">%_</span>
+<span class="comment">%</span>
 <span class="comment">% See also BearingFrequencyBands, SFRFsParametersRollingBearings</span>
 
     <span class="keyword">properties</span> (Access = private)
@@ -100,6 +105,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
     <span class="keyword">properties</span>
         gainFunctionsTable <span class="typesection">table </span>= table.empty <span class="comment">% initialize empty table</span>
+        frequencyDomain <span class="typesection">double </span>= [];
     <span class="keyword">end</span>
 
     <span class="keyword">properties</span> (Dependent)
@@ -109,10 +115,6 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
     <span class="keyword">methods</span>
         <span class="keyword">function</span> obj = ReceptiveFieldGainFunctions(frequencyBands)
         <span class="comment">% Constructor storing the frequencyBands instance</span>
-        <span class="comment">%</span>
-        <span class="comment">% Inputs:</span>
-        <span class="comment">%   frequencyBands - An instance of FaultFrequencyBands with</span>
-        <span class="comment">%                           computed fault bands.</span>
             <span class="keyword">arguments</span>
                 frequencyBands <span class="typesection">FaultFrequencyBands</span>
             <span class="keyword">end</span>
@@ -124,119 +126,139 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
         <span class="keyword">end</span>
 
         <span class="keyword">function</span> computeGainFunctions(obj, frequencyDomain)
+        <span class="comment">% computeGainFunctions</span>
         <span class="comment">%</span>
-        <span class="comment">% Computes Gaussian frequency masks for each fault and operational</span>
-        <span class="comment">% condition in the faults frequency bands table available in the</span>
-        <span class="comment">% frequencyBands property.</span>
+        <span class="comment">% Computes frequency masks for each fault and operational</span>
+        <span class="comment">% condition in the faults frequency bands table available in</span>
+        <span class="comment">% the frequencyBands property.</span>
         <span class="comment">%</span>
         <span class="comment">% Inputs:</span>
-        <span class="comment">%   frequencyDomain - Vector of frequency points (Hz) over which to</span>
-        <span class="comment">%                     evaluate gain functions.</span>
-        <span class="comment">%</span>
+        <span class="comment">%   frequencyDomain - Vector of frequency points (Hz) over</span>
+        <span class="comment">%                     which to evaluate gain functions.</span>
 
-            numFreqPoints = length(frequencyDomain);
+            numFreqPoints = numel(frequencyDomain);
             <span class="keyword">if</span> numFreqPoints == 0
                 error( <span class="keyword">...</span>
                     [<span class="string">'sfrfs:ReceptiveFieldGainFunctions:'</span><span class="keyword">...</span>
-                     <span class="string">'computeGainFunctions:EmptyFrequencyDomain'</span>],<span class="keyword">...</span>
+                     <span class="string">'computeGainFunctions:EmptyFrequencyDomain'</span>], <span class="keyword">...</span>
                     <span class="string">'Frequency domain is empty.'</span>);
             <span class="keyword">end</span>
-            <span class="comment">% Initialize masks storage</span>
+
+
+            import <span class="string">tables.FaultBandsTableSchema</span>
+            import <span class="string">tables.GainFunctionsTableSchema</span>
+            import <span class="string">structs.FrequencyBankMasksSchema</span>
+
+            kFaultGroupT = FaultBandsTableSchema.FAULTGROUP;
+            kRfbT        = FaultBandsTableSchema.RECEPTIVEFIELDBANDS;
+
+            kMasksT = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur = FrequencyBankMasksSchema.SURROUND;
+            kCon = FrequencyBankMasksSchema.CONTRAST;
+
             fbt = obj.frequencyBands.bandsTable;
             sfrfsParams = obj.frequencyBands.sfrfsParams;
+
             N = height(fbt);
             masksNewColumn = cell(N, 1);
             log = SFRFsLogger.getLogger();
 
-            <span class="comment">% Main processing loop</span>
             <span class="keyword">for</span> i = 1:N
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="string">"Computing Mask for row: "</span>+string(i));
+                    log.fine(<span class="string">"Computing Mask for row: "</span> + string(i));
                 <span class="keyword">end</span>
 
-                faultGroup = fbt.FaultGroup(i);
+                faultGroup = fbt{i, kFaultGroupT};
 
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="string">"Fault group: "</span>+string(faultGroup));
+                    log.fine(<span class="string">"Fault group: "</span> + string(faultGroup));
                 <span class="keyword">end</span>
 
-
-                faultType = obj.frequencyBands.faultGroupToTypeName(<span class="keyword">...</span>
+                faultType = obj.frequencyBands.faultGroupToTypeName( <span class="keyword">...</span>
                     faultGroup);
 
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="string">"Fault type: "</span>+string(faultType));
+                    log.fine(<span class="string">"Fault type: "</span> + string(faultType));
                 <span class="keyword">end</span>
 
-
-                <span class="comment">% Extract parameters from struct</span>
-                sigmaCenter = sfrfsParams.(faultType).sigmaCenter(2);
-                sigmaSurround = <span class="keyword">...</span>
-                    sfrfsParams.(faultType).sigmaSurround(2);
+                centerMaskParams   = sfrfsParams.(faultType).centerMask;
+                surroundMaskParams = sfrfsParams.(faultType).surroundMask;
 
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="string">"Sigma Center: "</span>+string(sigmaCenter));
-                    log.fine(<span class="string">"Sigma Surround: "</span>+string(sigmaSurround));
+                    log.fine( <span class="keyword">...</span>
+                        <span class="string">"Center mask params: "</span> + <span class="keyword">...</span>
+                        centerMaskParams.toString());
+                    log.fine( <span class="keyword">...</span>
+                        <span class="string">"Surround mask params: "</span> + <span class="keyword">...</span>
+                        surroundMaskParams.toString());
                 <span class="keyword">end</span>
-
 
                 bands = FaultFrequencyBands.extractBands(fbt, i);
 
                 <span class="keyword">if</span> log.isFineEnabled()
-                    log.fine(<span class="string">"Center bands matrix: "</span>+<span class="keyword">...</span>
-                        mat2str(bands.CenterBandsMatrix))
-                    log.fine(<span class="string">"Surround bands matrix: "</span>+<span class="keyword">...</span>
-                        mat2str(bands.SurroundBandsMatrix))
+                    log.fine( <span class="keyword">...</span>
+                        <span class="string">"Center bands matrix: "</span> + <span class="keyword">...</span>
+                        mat2str(bands.CenterBandsMatrix));
+                    log.fine( <span class="keyword">...</span>
+                        <span class="string">"Surround bands matrix: "</span> + <span class="keyword">...</span>
+                        mat2str(bands.SurroundBandsMatrix));
                 <span class="keyword">end</span>
 
-                centermask = <span class="keyword">...</span>
-                    zeros(numFreqPoints, 1, <span class="string">'like'</span>, frequencyDomain);
-                surroundmask = <span class="keyword">...</span>
-                    zeros(numFreqPoints, 1, <span class="string">'like'</span>, frequencyDomain);
+                centermask = zeros( <span class="keyword">...</span>
+                    numFreqPoints, 1, <span class="string">'like'</span>, frequencyDomain);
+                surroundmask = zeros( <span class="keyword">...</span>
+                    numFreqPoints, 1, <span class="string">'like'</span>, frequencyDomain);
 
-
-                <span class="comment">% Process each band</span>
                 <span class="keyword">for</span> j = 1:bands.NumberOfBands
+                    <span class="keyword">if</span> log.isFineEnabled()
+                        log.fine( <span class="keyword">...</span>
+                            <span class="string">"Number of bands: "</span> + <span class="keyword">...</span>
+                            string(bands.NumberOfBands));
+                    <span class="keyword">end</span>
 
-                    log.fine(<span class="string">"Number of bands: "</span>+<span class="keyword">...</span>
-                        string(bands.NumberOfBands));
-
-                    <span class="comment">% Extract the current frequency band for the center</span>
-                    centerband = bands.CenterBandsMatrix(<span class="keyword">...</span>
+                    centerband = bands.CenterBandsMatrix( <span class="keyword">...</span>
                         j, [bands.MinFreqColumn, bands.MaxFreqColumn]);
 
+                    <span class="keyword">if</span> log.isFineEnabled()
+                        log.fine(<span class="string">"Center Band "</span> + mat2str(centerband));
+                    <span class="keyword">end</span>
 
-                    log.fine(<span class="string">"Center Band "</span>+mat2str(centerband));
+                    centermask = max( <span class="keyword">...</span>
+                        centermask, FrequencyMask.evaluate( <span class="keyword">...</span>
+                        frequencyDomain, <span class="keyword">...</span>
+                        centerband, <span class="keyword">...</span>
+                        centerMaskParams));
 
-
-                    <span class="comment">% Compute the mask and consolidate with max operator</span>
-                    <span class="comment">% the use of max is to appropriatelly handle possible</span>
-                    <span class="comment">% band overlaps, similar to Fuzzy logic OR operation</span>
-                    centermask = <span class="keyword">...</span>
-                        max(centermask, FrequencyMask.gaussian( <span class="keyword">...</span>
-                        frequencyDomain, centerband, sigmaCenter));
-
-                    <span class="comment">% Similarly for surround</span>
                     surroundband = bands.SurroundBandsMatrix( <span class="keyword">...</span>
                         j, [bands.MinFreqColumn, bands.MaxFreqColumn]);
 
-                    surroundmask = <span class="keyword">...</span>
-                        max(surroundmask, FrequencyMask.gaussian( <span class="keyword">...</span>
-                        frequencyDomain, surroundband, sigmaSurround));
+                    surroundmask = max( <span class="keyword">...</span>
+                        surroundmask, FrequencyMask.evaluate( <span class="keyword">...</span>
+                        frequencyDomain, <span class="keyword">...</span>
+                        surroundband, <span class="keyword">...</span>
+                        surroundMaskParams));
                 <span class="keyword">end</span>
 
-                <span class="comment">% Store results</span>
-                masksNewColumn{i} = struct(<span class="keyword">...</span>
-                    <span class="string">'CenterFrequencyBankMask'</span>, centermask,<span class="keyword">...</span>
-                    <span class="string">'SurroundFrequencyBankMask'</span>, surroundmask);
+                <span class="comment">% edit, we add the contrast channel too</span>
+                k = sfrfsParams.(faultType).inhibitionFactor;
+
+                contrastmask = centermask - k * surroundmask;
+
+                masksNewColumn{i} = struct( <span class="keyword">...</span>
+                    kCenter, centermask, <span class="keyword">...</span>
+                    kSur,    surroundmask, <span class="keyword">...</span>
+                    kCon,    contrastmask);
+
             <span class="keyword">end</span>
 
-            <span class="comment">% Update and assign output table to property</span>
-            fbt.FrequencyBankMasks = masksNewColumn;
-            <span class="comment">% Drop ReceptiveFieldBands</span>
-            obj.gainFunctionsTable = <span class="keyword">...</span>
-                removevars(fbt, <span class="string">'ReceptiveFieldBands'</span>);
+            fbt.(kMasksT) = masksNewColumn;
 
+            obj.gainFunctionsTable = removevars(fbt, kRfbT);
+
+            <span class="comment">% store frequency domain</span>
+            obj.frequencyDomain = frequencyDomain;
         <span class="keyword">end</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
@@ -254,16 +276,21 @@ classdef ReceptiveFieldGainFunctions < handle
 % for fault frequency bands based on provided frequencyBands.
 %
 %   This class operates on the fault bands and parameters encapsulated
-%   in a FrequencyBands instance, enabling computation of Gaussian masks or 
-%   gain functions for Spectral Fault Receptive Fields.
+%   in a FrequencyBands instance, enabling computation of frequency masks
+%   or gain functions for Spectral Fault Receptive Fields.
 %
 % Properties:
-%   frequencyBands          - Instance of FrequencyBands containing  
+%   frequencyBands          - Instance of FrequencyBands containing
 %                             SFRF parameters and precomputed fault bands.
+%   frequencyDomain         - Frequency grid (Hz) on which the receptive
+%                             field gain functions were computed.
+%                             This domain is stored on first computation
+%                             and defines the immutable spectral support
+%                             of computed RFGFs.
 %
 % Example (with bearing example):
 %   rfgf = ReceptiveFieldGainFunctions(frequencyBandsObject);
-%_
+%
 % See also BearingFrequencyBands, SFRFsParametersRollingBearings
 
     properties (Access = private)
@@ -272,19 +299,16 @@ classdef ReceptiveFieldGainFunctions < handle
 
     properties
         gainFunctionsTable table = table.empty % initialize empty table
+        frequencyDomain double = [];
     end
 
     properties (Dependent)
         frequencyBands FaultFrequencyBands
     end
-    
+
     methods
         function obj = ReceptiveFieldGainFunctions(frequencyBands)
         % Constructor storing the frequencyBands instance
-        %
-        % Inputs:
-        %   frequencyBands - An instance of FaultFrequencyBands with 
-        %                           computed fault bands.
             arguments
                 frequencyBands FaultFrequencyBands
             end
@@ -294,121 +318,141 @@ classdef ReceptiveFieldGainFunctions < handle
         function val = get.frequencyBands(obj)
             val = obj.frequencyBandsInternal;
         end
-        
+
         function computeGainFunctions(obj, frequencyDomain)
+        % computeGainFunctions
         %
-        % Computes Gaussian frequency masks for each fault and operational
-        % condition in the faults frequency bands table available in the
-        % frequencyBands property.
+        % Computes frequency masks for each fault and operational
+        % condition in the faults frequency bands table available in
+        % the frequencyBands property.
         %
         % Inputs:
-        %   frequencyDomain - Vector of frequency points (Hz) over which to 
-        %                     evaluate gain functions.
-        %
-            
-            numFreqPoints = length(frequencyDomain);
+        %   frequencyDomain - Vector of frequency points (Hz) over
+        %                     which to evaluate gain functions.
+
+            numFreqPoints = numel(frequencyDomain);
             if numFreqPoints == 0
                 error( ...
                     ['sfrfs:ReceptiveFieldGainFunctions:'...
-                     'computeGainFunctions:EmptyFrequencyDomain'],...
+                     'computeGainFunctions:EmptyFrequencyDomain'], ...
                     'Frequency domain is empty.');
             end
-            % Initialize masks storage
+
+
+            import tables.FaultBandsTableSchema
+            import tables.GainFunctionsTableSchema
+            import structs.FrequencyBankMasksSchema
+
+            kFaultGroupT = FaultBandsTableSchema.FAULTGROUP;
+            kRfbT        = FaultBandsTableSchema.RECEPTIVEFIELDBANDS;
+
+            kMasksT = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur = FrequencyBankMasksSchema.SURROUND;
+            kCon = FrequencyBankMasksSchema.CONTRAST;
+
             fbt = obj.frequencyBands.bandsTable;
             sfrfsParams = obj.frequencyBands.sfrfsParams;
+
             N = height(fbt);
             masksNewColumn = cell(N, 1);
             log = SFRFsLogger.getLogger();
-            
-            % Main processing loop
+
             for i = 1:N
                 if log.isFineEnabled()
-                    log.fine("Computing Mask for row: "+string(i));
+                    log.fine("Computing Mask for row: " + string(i));
                 end
 
-                faultGroup = fbt.FaultGroup(i);
+                faultGroup = fbt{i, kFaultGroupT};
 
                 if log.isFineEnabled()
-                    log.fine("Fault group: "+string(faultGroup));
+                    log.fine("Fault group: " + string(faultGroup));
                 end
-                
-              
-                faultType = obj.frequencyBands.faultGroupToTypeName(...
+
+                faultType = obj.frequencyBands.faultGroupToTypeName( ...
                     faultGroup);
 
                 if log.isFineEnabled()
-                    log.fine("Fault type: "+string(faultType));
+                    log.fine("Fault type: " + string(faultType));
                 end
-                
-                 
-                % Extract parameters from struct
-                sigmaCenter = sfrfsParams.(faultType).sigmaCenter(2);
-                sigmaSurround = ...
-                    sfrfsParams.(faultType).sigmaSurround(2);
-                
+
+                centerMaskParams   = sfrfsParams.(faultType).centerMask;
+                surroundMaskParams = sfrfsParams.(faultType).surroundMask;
+
                 if log.isFineEnabled()
-                    log.fine("Sigma Center: "+string(sigmaCenter));
-                    log.fine("Sigma Surround: "+string(sigmaSurround));
+                    log.fine( ...
+                        "Center mask params: " + ...
+                        centerMaskParams.toString());
+                    log.fine( ...
+                        "Surround mask params: " + ...
+                        surroundMaskParams.toString());
                 end
-                
 
                 bands = FaultFrequencyBands.extractBands(fbt, i);
 
                 if log.isFineEnabled()
-                    log.fine("Center bands matrix: "+...
-                        mat2str(bands.CenterBandsMatrix))
-                    log.fine("Surround bands matrix: "+...
-                        mat2str(bands.SurroundBandsMatrix))
+                    log.fine( ...
+                        "Center bands matrix: " + ...
+                        mat2str(bands.CenterBandsMatrix));
+                    log.fine( ...
+                        "Surround bands matrix: " + ...
+                        mat2str(bands.SurroundBandsMatrix));
                 end
-                
-                centermask = ...
-                    zeros(numFreqPoints, 1, 'like', frequencyDomain);
-                surroundmask = ...
-                    zeros(numFreqPoints, 1, 'like', frequencyDomain);
 
-                
-                % Process each band
+                centermask = zeros( ...
+                    numFreqPoints, 1, 'like', frequencyDomain);
+                surroundmask = zeros( ...
+                    numFreqPoints, 1, 'like', frequencyDomain);
+
                 for j = 1:bands.NumberOfBands
+                    if log.isFineEnabled()
+                        log.fine( ...
+                            "Number of bands: " + ...
+                            string(bands.NumberOfBands));
+                    end
 
-                    log.fine("Number of bands: "+...
-                        string(bands.NumberOfBands));
-
-                    % Extract the current frequency band for the center
-                    centerband = bands.CenterBandsMatrix(...
+                    centerband = bands.CenterBandsMatrix( ...
                         j, [bands.MinFreqColumn, bands.MaxFreqColumn]);
 
+                    if log.isFineEnabled()
+                        log.fine("Center Band " + mat2str(centerband));
+                    end
 
-                    log.fine("Center Band "+mat2str(centerband));
+                    centermask = max( ...
+                        centermask, FrequencyMask.evaluate( ...
+                        frequencyDomain, ...
+                        centerband, ...
+                        centerMaskParams));
 
-        
-                    % Compute the mask and consolidate with max operator
-                    % the use of max is to appropriatelly handle possible 
-                    % band overlaps, similar to Fuzzy logic OR operation
-                    centermask = ...
-                        max(centermask, FrequencyMask.gaussian( ...
-                        frequencyDomain, centerband, sigmaCenter));
-                    
-                    % Similarly for surround
                     surroundband = bands.SurroundBandsMatrix( ...
                         j, [bands.MinFreqColumn, bands.MaxFreqColumn]);
 
-                    surroundmask = ...
-                        max(surroundmask, FrequencyMask.gaussian( ...
-                        frequencyDomain, surroundband, sigmaSurround));
+                    surroundmask = max( ...
+                        surroundmask, FrequencyMask.evaluate( ...
+                        frequencyDomain, ...
+                        surroundband, ...
+                        surroundMaskParams));
                 end
-                
-                % Store results
-                masksNewColumn{i} = struct(...
-                    'CenterFrequencyBankMask', centermask,...
-                    'SurroundFrequencyBankMask', surroundmask);
-            end
-            
-            % Update and assign output table to property
-            fbt.FrequencyBankMasks = masksNewColumn;
-            % Drop ReceptiveFieldBands
-            obj.gainFunctionsTable = ...
-                removevars(fbt, 'ReceptiveFieldBands');
 
+                % edit, we add the contrast channel too
+                k = sfrfsParams.(faultType).inhibitionFactor;
+
+                contrastmask = centermask - k * surroundmask;
+
+                masksNewColumn{i} = struct( ...
+                    kCenter, centermask, ...
+                    kSur,    surroundmask, ...
+                    kCon,    contrastmask);
+
+            end
+
+            fbt.(kMasksT) = masksNewColumn;
+
+            obj.gainFunctionsTable = removevars(fbt, kRfbT);
+
+            % store frequency domain
+            obj.frequencyDomain = frequencyDomain;
         end
     end
 end

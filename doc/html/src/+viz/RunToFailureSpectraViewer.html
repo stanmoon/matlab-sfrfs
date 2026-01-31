@@ -1,0 +1,415 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>RunToFailureSpectraViewer</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="RunToFailureSpectraViewer.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> RunToFailureSpectraViewer &lt; handle
+<span class="comment">%RunToFailureSpectraViewer  Plot run-to-failure FFT snapshots as an image.</span>
+<span class="comment">%</span>
+<span class="comment">% Renders a member table (one run-to-failure sequence) as an image:</span>
+<span class="comment">%   y-axis: frequency (Hz), first half only (one-sided)</span>
+<span class="comment">%   x-axis: snapshot index (table row order)</span>
+<span class="comment">%</span>
+<span class="comment">% Color encodes log10(|FFT|), normalized by FFT length.</span>
+<span class="comment">%</span>
+<span class="comment">% Preconditions:</span>
+<span class="comment">%   memberTable contains a spectral column with one FFT vector per snapshot</span>
+<span class="comment">%   stored as a cell array, consistent size across snapshots.</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        memberTable <span class="typesection">table </span>= table()
+        snapshotParameters <span class="typesection">ParametersSnapshot </span>= <span class="keyword">...</span>
+            ParametersSnapshot.empty
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+            matlab.graphics.axis.Axes.empty()
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = RunToFailureSpectraViewer(args)
+            <span class="keyword">arguments</span>
+                args.memberTable <span class="typesection">table {mustBeNonempty}</span>
+                args.snapshotParameters <span class="typesection">ParametersSnapshot {mustBeNonempty}</span>
+                args.parent <span class="typesection">matlab.graphics.axis.Axes </span>= <span class="keyword">...</span>
+                    matlab.graphics.axis.Axes.empty()
+            <span class="keyword">end</span>
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.parent = args.parent;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> ax = renderRunToFailure(obj, args)
+        <span class="comment">%renderRunToFailure Render stacked spectra as an image.</span>
+            <span class="keyword">arguments</span>
+                obj
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+                args.titleText <span class="typesection">(1,1) string </span>= <span class="keyword">...</span>
+                    <span class="string">"Run-to-failure spectral snapshots"</span>
+                args.freqRange <span class="typesection">(1,2) double </span>= [NaN NaN]
+                args.log10Floor <span class="typesection">(1,1) double </span>= -5
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isfinite(args.log10Floor)
+                error(<span class="string">"sfrfs:viz:InvalidFloor"</span>, <span class="keyword">...</span>
+                    <span class="string">"log10Floor must be a finite scalar."</span>);
+            <span class="keyword">end</span>
+
+            ax = obj.getAxes();
+
+            f = obj.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+
+            X = obj.extractStacked(spectralColumn = args.spectralColumn);
+
+            <span class="keyword">if</span> numel(f) ~= size(X, 1)
+                error(<span class="string">"sfrfs:viz:FreqAxisMismatch"</span>, <span class="keyword">...</span>
+                    <span class="string">"FrequencyDomain length must match FFT bins."</span>);
+            <span class="keyword">end</span>
+
+            nBins = size(X, 1);
+            nHalf = floor(nBins/2) + 1;
+
+            f = f(1:nHalf);
+            X = X(1:nHalf, :);
+
+            <span class="comment">% Optional frequency range cropping (Hz)</span>
+            fr = args.freqRange;
+            <span class="keyword">if</span> ~all(isnan(fr))
+                <span class="keyword">if</span> numel(fr) ~= 2 || any(~isfinite(fr))
+                    error(<span class="string">"sfrfs:viz:InvalidFreqRange"</span>, <span class="keyword">...</span>
+                        <span class="string">"freqRange must be [fMin fMax] or [NaN NaN]."</span>);
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> fr(1) &gt;= fr(2)
+                    error(<span class="string">"sfrfs:viz:InvalidFreqRange"</span>, <span class="keyword">...</span>
+                        <span class="string">"freqRange must satisfy fMin &lt; fMax."</span>);
+                <span class="keyword">end</span>
+
+                idx = (f &gt;= fr(1)) &amp; (f &lt;= fr(2));
+                <span class="keyword">if</span> ~any(idx)
+                    error(<span class="string">"sfrfs:viz:EmptyFreqRange"</span>, <span class="keyword">...</span>
+                        <span class="string">"freqRangeHz does not overlap available axis."</span>);
+                <span class="keyword">end</span>
+
+                f = f(idx);
+                X = X(idx, :);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Normalize FFT and apply visualization floor</span>
+            X = X ./ nBins;
+
+            floorVal = 10^args.log10Floor;
+            Z = log10(max(abs(X), floorVal));
+
+            imagesc(ax, 1:size(Z, 2), f, Z);
+            axis(ax, <span class="string">'xy'</span>);
+            colormap(ax, jet);
+
+            xlabel(ax, <span class="string">"Snapshot"</span>);
+            ylabel(ax, <span class="string">"Frequency (Hz)"</span>);
+            title(ax, args.titleText);
+
+            cb = colorbar(ax);
+            cb.Label.String = <span class="string">"log_{10}(|FFT|)"</span>;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+        <span class="keyword">function</span> ax = getAxes(obj)
+            <span class="keyword">if</span> isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure(<span class="string">'Name'</span>, <span class="string">'RunToFailureSpectraViewer'</span>);
+                ax = axes(fig);
+                obj.parent = ax;
+            <span class="keyword">else</span>
+                ax = obj.parent;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> X = extractStacked(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+            <span class="keyword">end</span>
+
+            col = char(args.spectralColumn);
+
+            <span class="keyword">if</span> ~ismember(col, obj.memberTable.Properties.VariableNames)
+                error(<span class="string">"sfrfs:viz:MissingColumn"</span>, <span class="keyword">...</span>
+                    <span class="string">"Spectral column '%s' not found."</span>, col);
+            <span class="keyword">end</span>
+
+            c = obj.memberTable.(col);
+
+            <span class="keyword">if</span> ~iscell(c) || isempty(c)
+                error(<span class="string">"sfrfs:viz:InvalidColumn"</span>, <span class="keyword">...</span>
+                    <span class="string">"Column '%s' must be a nonempty cell array."</span>, col);
+            <span class="keyword">end</span>
+
+            ok = all(cellfun(@(x) isnumeric(x) &amp;&amp; ~isempty(x), c));
+            <span class="keyword">if</span> ~ok
+                error(<span class="string">"sfrfs:viz:InvalidCells"</span>, <span class="keyword">...</span>
+                    <span class="string">"Column '%s' must contain numeric FFT vectors."</span>, col);
+            <span class="keyword">end</span>
+
+            sz = cellfun(@size, c, <span class="string">'UniformOutput'</span>, false);
+            ref = sz{1};
+            same = all(cellfun(@(s) isequal(s, ref), sz));
+            <span class="keyword">if</span> ~same
+                error(<span class="string">"sfrfs:viz:SizeMismatch"</span>, <span class="keyword">...</span>
+                    <span class="string">"FFT vectors in '%s' have inconsistent sizes."</span>, col);
+            <span class="keyword">end</span>
+
+            X = [c{:}]; <span class="comment">% [nFreqBins x nSnapshots]</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef RunToFailureSpectraViewer < handle
+%RunToFailureSpectraViewer  Plot run-to-failure FFT snapshots as an image.
+%
+% Renders a member table (one run-to-failure sequence) as an image:
+%   y-axis: frequency (Hz), first half only (one-sided)
+%   x-axis: snapshot index (table row order)
+%
+% Color encodes log10(|FFT|), normalized by FFT length.
+%
+% Preconditions:
+%   memberTable contains a spectral column with one FFT vector per snapshot
+%   stored as a cell array, consistent size across snapshots.
+
+    properties (SetAccess = private)
+        memberTable table = table()
+        snapshotParameters ParametersSnapshot = ...
+            ParametersSnapshot.empty
+    end
+
+    properties
+        parent matlab.graphics.axis.Axes = ...
+            matlab.graphics.axis.Axes.empty()
+    end
+
+    methods
+        function obj = RunToFailureSpectraViewer(args)
+            arguments
+                args.memberTable table {mustBeNonempty}
+                args.snapshotParameters ParametersSnapshot {mustBeNonempty}
+                args.parent matlab.graphics.axis.Axes = ...
+                    matlab.graphics.axis.Axes.empty()
+            end
+            obj.memberTable = args.memberTable;
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.parent = args.parent;
+        end
+
+        function ax = renderRunToFailure(obj, args)
+        %renderRunToFailure Render stacked spectra as an image.
+            arguments
+                obj
+                args.spectralColumn (1,1) string
+                args.titleText (1,1) string = ...
+                    "Run-to-failure spectral snapshots"
+                args.freqRange (1,2) double = [NaN NaN]
+                args.log10Floor (1,1) double = -5
+            end
+
+            if ~isfinite(args.log10Floor)
+                error("sfrfs:viz:InvalidFloor", ...
+                    "log10Floor must be a finite scalar.");
+            end
+
+            ax = obj.getAxes();
+
+            f = obj.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+
+            X = obj.extractStacked(spectralColumn = args.spectralColumn);
+
+            if numel(f) ~= size(X, 1)
+                error("sfrfs:viz:FreqAxisMismatch", ...
+                    "FrequencyDomain length must match FFT bins.");
+            end
+
+            nBins = size(X, 1);
+            nHalf = floor(nBins/2) + 1;
+
+            f = f(1:nHalf);
+            X = X(1:nHalf, :);
+
+            % Optional frequency range cropping (Hz)
+            fr = args.freqRange;
+            if ~all(isnan(fr))
+                if numel(fr) ~= 2 || any(~isfinite(fr))
+                    error("sfrfs:viz:InvalidFreqRange", ...
+                        "freqRange must be [fMin fMax] or [NaN NaN].");
+                end
+                if fr(1) >= fr(2)
+                    error("sfrfs:viz:InvalidFreqRange", ...
+                        "freqRange must satisfy fMin < fMax.");
+                end
+
+                idx = (f >= fr(1)) & (f <= fr(2));
+                if ~any(idx)
+                    error("sfrfs:viz:EmptyFreqRange", ...
+                        "freqRangeHz does not overlap available axis.");
+                end
+
+                f = f(idx);
+                X = X(idx, :);
+            end
+
+            % Normalize FFT and apply visualization floor
+            X = X ./ nBins;
+
+            floorVal = 10^args.log10Floor;
+            Z = log10(max(abs(X), floorVal));
+
+            imagesc(ax, 1:size(Z, 2), f, Z);
+            axis(ax, 'xy');
+            colormap(ax, jet);
+
+            xlabel(ax, "Snapshot");
+            ylabel(ax, "Frequency (Hz)");
+            title(ax, args.titleText);
+
+            cb = colorbar(ax);
+            cb.Label.String = "log_{10}(|FFT|)";
+        end
+    end
+
+    methods (Access = private)
+        function ax = getAxes(obj)
+            if isempty(obj.parent) || ~isvalid(obj.parent)
+                fig = figure('Name', 'RunToFailureSpectraViewer');
+                ax = axes(fig);
+                obj.parent = ax;
+            else
+                ax = obj.parent;
+            end
+        end
+
+        function X = extractStacked(obj, args)
+            arguments
+                obj
+                args.spectralColumn (1,1) string
+            end
+
+            col = char(args.spectralColumn);
+
+            if ~ismember(col, obj.memberTable.Properties.VariableNames)
+                error("sfrfs:viz:MissingColumn", ...
+                    "Spectral column '%s' not found.", col);
+            end
+
+            c = obj.memberTable.(col);
+
+            if ~iscell(c) || isempty(c)
+                error("sfrfs:viz:InvalidColumn", ...
+                    "Column '%s' must be a nonempty cell array.", col);
+            end
+
+            ok = all(cellfun(@(x) isnumeric(x) && ~isempty(x), c));
+            if ~ok
+                error("sfrfs:viz:InvalidCells", ...
+                    "Column '%s' must contain numeric FFT vectors.", col);
+            end
+
+            sz = cellfun(@size, c, 'UniformOutput', false);
+            ref = sz{1};
+            same = all(cellfun(@(s) isequal(s, ref), sz));
+            if ~same
+                error("sfrfs:viz:SizeMismatch", ...
+                    "FFT vectors in '%s' have inconsistent sizes.", col);
+            end
+
+            X = [c{:}]; % [nFreqBins x nSnapshots]
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

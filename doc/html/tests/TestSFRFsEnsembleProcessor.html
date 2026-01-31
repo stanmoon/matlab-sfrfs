@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>TestSFRFsEnsembleProcessor</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="TestSFRFsEnsembleProcessor.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -77,7 +77,8 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <body>
 <div class="content">
 <pre class="codeinput">
-<span class="keyword">classdef</span> TestSFRFsEnsembleProcessor &lt; matlab .unittest.TestCase
+<span class="keyword">classdef</span> TestSFRFsEnsembleProcessor &lt; matlab.unittest.TestCase
+
     <span class="keyword">properties</span>
         snapshotParams <span class="typesection">ParametersSnapshot</span>
         operatingConditions <span class="typesection">OperatingConditions</span>
@@ -93,6 +94,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
         ensembleMockFFT <span class="typesection">EnsembleMock</span>
         speeds <span class="typesection">double</span>
         loads <span class="typesection">double</span>
+        numWorkers <span class="typesection">double</span>
     <span class="keyword">end</span>
 
     <span class="keyword">methods</span> (TestMethodSetup)
@@ -114,14 +116,21 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="string">'pitchDiameter'</span>, 34.55, <span class="keyword">...</span>
                 <span class="string">'contactAngle'</span>, 0);
 
-            sharedParams = <span class="keyword">...</span>
-                SFRFsParameters.createSFRFsParameters( <span class="keyword">...</span>
-                    <span class="string">'order'</span>, 3, <span class="keyword">...</span>
-                    <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
-                    <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
-                    <span class="string">'sigmaCenter'</span>, [5, 7], <span class="keyword">...</span>
-                    <span class="string">'sigmaSurround'</span>, [12, 3], <span class="keyword">...</span>
-                    <span class="string">'inhibitionFactor'</span>, 0.6);
+            centerMask = GaussianMaskParameters( <span class="keyword">...</span>
+                <span class="string">'bandwidth'</span>, 5, <span class="keyword">...</span>
+                <span class="string">'sigmaRule'</span>, 7);
+
+            surroundMask = GaussianMaskParameters( <span class="keyword">...</span>
+                <span class="string">'bandwidth'</span>, 12, <span class="keyword">...</span>
+                <span class="string">'sigmaRule'</span>, 3);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                <span class="string">'order'</span>, 3, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, 4, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, 8, <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>, centerMask, <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, surroundMask, <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, 0.6);
 
             testCase.sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
                 <span class="string">'SameForAllFaultTypes'</span>, sharedParams);
@@ -131,8 +140,11 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="string">'sfrfsParams'</span>, testCase.sfrfsParams, <span class="keyword">...</span>
                 <span class="string">'operatingConditions'</span>, testCase.operatingConditions);
 
+            <span class="comment">% Determine portable worker cap for this machine/cluster</span>
+            c = parcluster(<span class="string">'Processes'</span>);
+            testCase.numWorkers = min(4, c.NumWorkers);
+
             <span class="comment">% Ensembles missing spectra</span>
-            <span class="comment">% Initialize and prepare EnsembleMockNoFFT</span>
             testCase.ensembleMockNoFFT = EnsembleMock( <span class="keyword">...</span>
                 <span class="string">'numMembers'</span>, 3, <span class="keyword">...</span>
                 <span class="string">'nSamples'</span>, testCase.snapshotParams.getTotalSamples(), <span class="keyword">...</span>
@@ -140,27 +152,21 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="string">'loads'</span>, testCase.loads);
             testCase.ensembleMockNoFFT.prepare();
 
-            <span class="comment">% Use EnsembleMockNoFFT's column names</span>
             testCase.temporalSnapshotColumns = <span class="keyword">...</span>
                 testCase.ensembleMockNoFFT.temporalSnapshotColumns;
 
-            <span class="comment">% Broker with no spectra</span>
             testCase.brokerNoFFT = SFRFsEnsembleBroker( <span class="keyword">...</span>
-                <span class="string">'ensembleObject'</span>, <span class="keyword">...</span>
-                testCase.ensembleMockNoFFT.fileEnsembleDS, <span class="keyword">...</span>
+                <span class="string">'ensembleObject'</span>, testCase.ensembleMockNoFFT.fileEnsembleDS, <span class="keyword">...</span>
                 <span class="string">'getFilesFunction'</span>, @(obj) obj.Files, <span class="keyword">...</span>
-                <span class="string">'temporalSnapshotColumns'</span>, <span class="keyword">...</span>
-                    testCase.temporalSnapshotColumns);
+                <span class="string">'temporalSnapshotColumns'</span>, testCase.temporalSnapshotColumns);
 
-            <span class="comment">% Create SFRFs processor case no spectra</span>
             testCase.sfrfsProcessorNoFFT = SFRFsEnsembleProcessor( <span class="keyword">...</span>
-                <span class="string">'numWorkers'</span>, testCase.ensembleMockNoFFT.numMembers, <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, testCase.numWorkers, <span class="keyword">...</span>
                 <span class="string">'ensemble'</span>, testCase.brokerNoFFT, <span class="keyword">...</span>
                 <span class="string">'frequencyBands'</span>, testCase.bearingFrequencyBands, <span class="keyword">...</span>
                 <span class="string">'snapshotParameters'</span>, testCase.snapshotParams);
 
             <span class="comment">% Ensembles with spectra</span>
-            <span class="comment">% Initialize and prepare EnsembleMock with FFT precomputed</span>
             testCase.ensembleMockFFT = EnsembleMock( <span class="keyword">...</span>
                 <span class="string">'numMembers'</span>, 15, <span class="keyword">...</span>
                 <span class="string">'nSamples'</span>, testCase.snapshotParams.getTotalSamples(), <span class="keyword">...</span>
@@ -168,27 +174,22 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="string">'loads'</span>, testCase.loads);
             testCase.ensembleMockFFT.prepare();
 
-            <span class="comment">% broker with spectra</span>
             testCase.brokerFFT = SFRFsEnsembleBroker( <span class="keyword">...</span>
-                <span class="string">'ensembleObject'</span>, <span class="keyword">...</span>
-                testCase.ensembleMockFFT.fileEnsembleDS, <span class="keyword">...</span>
+                <span class="string">'ensembleObject'</span>, testCase.ensembleMockFFT.fileEnsembleDS, <span class="keyword">...</span>
                 <span class="string">'getFilesFunction'</span>, @(obj) obj.Files, <span class="keyword">...</span>
-                <span class="string">'temporalSnapshotColumns'</span>, <span class="keyword">...</span>
-                    testCase.temporalSnapshotColumns);
+                <span class="string">'temporalSnapshotColumns'</span>, testCase.temporalSnapshotColumns);
 
-            <span class="comment">% Compute spectra</span>
-            fftProcessor = FFTEnsembleProcessor(<span class="keyword">...</span>
-                ensemble=testCase.brokerFFT,numWorkers=5);
+            fftProcessor = FFTEnsembleProcessor( <span class="keyword">...</span>
+                <span class="string">'ensemble'</span>, testCase.brokerFFT, <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, testCase.numWorkers);
             fftProcessor.process();
 
-            <span class="comment">% Create SFRFs processor case spectra</span>
             testCase.sfrfsProcessorFFT = SFRFsEnsembleProcessor( <span class="keyword">...</span>
-                <span class="string">'numWorkers'</span>, testCase.ensembleMockFFT.numMembers, <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, testCase.numWorkers, <span class="keyword">...</span>
                 <span class="string">'ensemble'</span>, testCase.brokerFFT, <span class="keyword">...</span>
                 <span class="string">'frequencyBands'</span>, testCase.bearingFrequencyBands, <span class="keyword">...</span>
                 <span class="string">'snapshotParameters'</span>, testCase.snapshotParams);
 
-            <span class="comment">% Register cleanup automatically</span>
             testCase.addTeardown(@() testCase.ensembleMockNoFFT.cleanup());
             testCase.addTeardown(@() testCase.ensembleMockFFT.cleanup());
         <span class="keyword">end</span>
@@ -196,11 +197,9 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
     <span class="keyword">methods</span> (Test)
         <span class="keyword">function</span> testProcessFailsWithoutFFT(testCase)
-            <span class="comment">% Load one member table manually</span>
             t = read(testCase.ensembleMockNoFFT.fileEnsembleDS);
 
-            <span class="comment">% Confirm that the table does NOT have FFT data yet</span>
-            testCase.assertFalse(<span class="keyword">...</span>
+            testCase.assertFalse( <span class="keyword">...</span>
                 any(contains(t.Properties.VariableNames, <span class="string">'FFT'</span>)), <span class="keyword">...</span>
                 <span class="string">'Precondition failed: table should not contain FFT data'</span>);
 
@@ -208,11 +207,9 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 testCase.sfrfsProcessorNoFFT.process();
                 testCase.verifyFail(<span class="string">'Expected exception was not thrown.'</span>);
             <span class="keyword">catch</span> ME
-                <span class="comment">% Verify top-level aggregate exception ID</span>
-                testCase.verifyEqual(<span class="keyword">...</span>
+                testCase.verifyEqual( <span class="keyword">...</span>
                     ME.identifier, <span class="string">'SFRFsProcessor:ProcessingError'</span>);
 
-                <span class="comment">% Verify nested causes contain the expected exception ID</span>
                 causeIds = cellfun(@(c) c.identifier, <span class="keyword">...</span>
                     ME.cause, <span class="string">'UniformOutput'</span>, false);
                 hasExpected = any(strcmp( <span class="keyword">...</span>
@@ -240,7 +237,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 temporalSnapshotColumns=testCase.temporalSnapshotColumns);
 
             sfrfsProcessor = SFRFsEnsembleProcessor( <span class="keyword">...</span>
-                numWorkers=testCase.ensembleMockFFT.numMembers, <span class="keyword">...</span>
+                numWorkers=testCase.numWorkers, <span class="keyword">...</span>
                 ensemble=broker, <span class="keyword">...</span>
                 frequencyBands=testCase.bearingFrequencyBands, <span class="keyword">...</span>
                 snapshotParameters=testCase.snapshotParams);
@@ -248,15 +245,16 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             testCase.verifyWarningFree(@() sfrfsProcessor.process());
 
             sfrfCols = string(cellfun(@(c) broker.mapToSpectralColumn(c), <span class="keyword">...</span>
-                testCase.temporalSnapshotColumns, <span class="string">'UniformOutput'</span>, false)).';
+                testCase.temporalSnapshotColumns, <span class="keyword">...</span>
+                <span class="string">'UniformOutput'</span>, false)).';
             sfrfCols = sfrfCols(contains(sfrfCols, <span class="string">"SFRFs"</span>));
 
-            <span class="comment">% Apply your updated concatenation fix</span>
-            newDataVars = [
-                testCase.temporalSnapshotColumns(:);
+            newDataVars = [ <span class="keyword">...</span>
+                testCase.temporalSnapshotColumns(:); <span class="keyword">...</span>
                 sfrfCols(:)];
-            newSelectedVars = [
-                dsReg.SelectedVariables(:);
+
+            newSelectedVars = [ <span class="keyword">...</span>
+                dsReg.SelectedVariables(:); <span class="keyword">...</span>
                 sfrfCols(:)];
 
             EnsembleDatastoreRegistry.reconfigureEnsemble( <span class="keyword">...</span>
@@ -264,8 +262,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 DataVariables=newDataVars, <span class="keyword">...</span>
                 SelectedVariables=newSelectedVars);
 
-            dsReg = <span class="keyword">...</span>
-                EnsembleDatastoreRegistry.getEnsemble(<span class="string">"ensembleWithFFT"</span>);
+            dsReg = EnsembleDatastoreRegistry.getEnsemble(<span class="string">"ensembleWithFFT"</span>);
             reset(dsReg);
             tAfter = read(dsReg);
 
@@ -273,29 +270,39 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             testCase.verifyTrue(all(ismember(sfrfCols, actualVars)), <span class="keyword">...</span>
                 <span class="string">"Not all expected SFRFs variables were found in output."</span>);
 
-            numFaults = numel(<span class="keyword">...</span>
+            numFaults = numel( <span class="keyword">...</span>
                 testCase.bearingFrequencyBands.faultFrequencyCodes);
 
             <span class="keyword">for</span> v = sfrfCols(:)'
                 col = tAfter.(v{1});
-                testCase.verifyClass(col, <span class="string">'cell'</span>, <span class="keyword">...</span>
-                    sprintf(<span class="keyword">...</span>
+                testCase.verifyClass(col, <span class="string">'cell'</span>, sprintf( <span class="keyword">...</span>
                     <span class="string">'SFRFs variable %s must be a cell array.'</span>, v{1}));
+
                 <span class="keyword">for</span> i = 1:height(tAfter)
                     entry = col{i};
-                    testCase.verifyClass(entry, <span class="string">'double'</span>, <span class="keyword">...</span>
-                        sprintf(<span class="keyword">...</span>
+                    testCase.verifyClass(entry, <span class="string">'double'</span>, sprintf( <span class="keyword">...</span>
                         <span class="string">'Entry %d of %s is not double.'</span>, i, v{1}));
-                    testCase.verifySize(entry, [1, numFaults], <span class="keyword">...</span>
-                        sprintf(<span class="keyword">...</span>
+                    testCase.verifySize(entry, [1, numFaults], sprintf( <span class="keyword">...</span>
                         <span class="string">'Entry %d of %s has wrong size.'</span>, i, v{1}));
-                    testCase.verifyTrue(all(isfinite(entry)), <span class="keyword">...</span>
-                        sprintf(<span class="keyword">...</span>
+                    testCase.verifyTrue(all(isfinite(entry)), sprintf( <span class="keyword">...</span>
                         <span class="string">'Entry %d of %s contains NaN or Inf.'</span>, i, v{1}));
                 <span class="keyword">end</span>
             <span class="keyword">end</span>
         <span class="keyword">end</span>
 
+        <span class="keyword">function</span> testTooManyWorkersFailsFastWithId(testCase)
+            c = parcluster(<span class="string">'Processes'</span>);
+            tooMany = c.NumWorkers + 1;
+
+            pBad = SFRFsEnsembleProcessor( <span class="keyword">...</span>
+                <span class="string">'numWorkers'</span>, tooMany, <span class="keyword">...</span>
+                <span class="string">'ensemble'</span>, testCase.brokerFFT, <span class="keyword">...</span>
+                <span class="string">'frequencyBands'</span>, testCase.bearingFrequencyBands, <span class="keyword">...</span>
+                <span class="string">'snapshotParameters'</span>, testCase.snapshotParams);
+
+            testCase.verifyError(@() pBad.process(), <span class="keyword">...</span>
+                <span class="string">'sfrfs:EnsembleProcessor:TooManyWorkers'</span>);
+        <span class="keyword">end</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 </pre>
@@ -307,7 +314,8 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 </div>
 <!--
 ##### SOURCE BEGIN #####
-classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
+classdef TestSFRFsEnsembleProcessor < matlab.unittest.TestCase
+
     properties
         snapshotParams ParametersSnapshot
         operatingConditions OperatingConditions
@@ -323,8 +331,9 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
         ensembleMockFFT EnsembleMock
         speeds double
         loads double
+        numWorkers double
     end
-    
+
     methods (TestMethodSetup)
         function prepareData(testCase)
             % Setup standard parameters
@@ -332,37 +341,47 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
                 'samplingFrequency', 25600, ...
                 'duration', 1.28, ...
                 'stride', 60);
-            
+
             testCase.speeds = [35; 37.5; 40];
             testCase.loads  = [12; 11; 10];
             testCase.operatingConditions = OperatingConditions( ...
                 testCase.speeds, testCase.loads);
-            
+
             testCase.bearingParams = ParametersRollingBearings( ...
                 'numRollingElements', 8, ...
                 'ballDiameter', 7.92, ...
                 'pitchDiameter', 34.55, ...
                 'contactAngle', 0);
-            
-            sharedParams = ...
-                SFRFsParameters.createSFRFsParameters( ...
-                    'order', 3, ...
-                    'numSidebands', 4, ...
-                    'numHarmonics', 8, ...
-                    'sigmaCenter', [5, 7], ...
-                    'sigmaSurround', [12, 3], ...
-                    'inhibitionFactor', 0.6);
+
+            centerMask = GaussianMaskParameters( ...
+                'bandwidth', 5, ...
+                'sigmaRule', 7);
+
+            surroundMask = GaussianMaskParameters( ...
+                'bandwidth', 12, ...
+                'sigmaRule', 3);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( ...
+                'order', 3, ...
+                'numSidebands', 4, ...
+                'numHarmonics', 8, ...
+                'centerMask', centerMask, ...
+                'surroundMask', surroundMask, ...
+                'inhibitionFactor', 0.6);
 
             testCase.sfrfsParams = SFRFsParametersRollingBearings( ...
                 'SameForAllFaultTypes', sharedParams);
-            
+
             testCase.bearingFrequencyBands = BearingFrequencyBands( ...
                 'bearingParams', testCase.bearingParams, ...
                 'sfrfsParams', testCase.sfrfsParams, ...
                 'operatingConditions', testCase.operatingConditions);
 
+            % Determine portable worker cap for this machine/cluster
+            c = parcluster('Processes');
+            testCase.numWorkers = min(4, c.NumWorkers);
+
             % Ensembles missing spectra
-            % Initialize and prepare EnsembleMockNoFFT
             testCase.ensembleMockNoFFT = EnsembleMock( ...
                 'numMembers', 3, ...
                 'nSamples', testCase.snapshotParams.getTotalSamples(), ...
@@ -370,79 +389,64 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
                 'loads', testCase.loads);
             testCase.ensembleMockNoFFT.prepare();
 
-            % Use EnsembleMockNoFFT's column names
             testCase.temporalSnapshotColumns = ...
                 testCase.ensembleMockNoFFT.temporalSnapshotColumns;
 
-            % Broker with no spectra
             testCase.brokerNoFFT = SFRFsEnsembleBroker( ...
-                'ensembleObject', ...
-                testCase.ensembleMockNoFFT.fileEnsembleDS, ...
+                'ensembleObject', testCase.ensembleMockNoFFT.fileEnsembleDS, ...
                 'getFilesFunction', @(obj) obj.Files, ...
-                'temporalSnapshotColumns', ...
-                    testCase.temporalSnapshotColumns);
-            
-            % Create SFRFs processor case no spectra
+                'temporalSnapshotColumns', testCase.temporalSnapshotColumns);
+
             testCase.sfrfsProcessorNoFFT = SFRFsEnsembleProcessor( ...
-                'numWorkers', testCase.ensembleMockNoFFT.numMembers, ...
+                'numWorkers', testCase.numWorkers, ...
                 'ensemble', testCase.brokerNoFFT, ...
                 'frequencyBands', testCase.bearingFrequencyBands, ...
                 'snapshotParameters', testCase.snapshotParams);
-            
+
             % Ensembles with spectra
-            % Initialize and prepare EnsembleMock with FFT precomputed
             testCase.ensembleMockFFT = EnsembleMock( ...
                 'numMembers', 15, ...
                 'nSamples', testCase.snapshotParams.getTotalSamples(), ...
                 'speeds', testCase.speeds, ...
                 'loads', testCase.loads);
             testCase.ensembleMockFFT.prepare();
-    
-            % broker with spectra
-            testCase.brokerFFT = SFRFsEnsembleBroker( ...
-                'ensembleObject', ...
-                testCase.ensembleMockFFT.fileEnsembleDS, ...
-                'getFilesFunction', @(obj) obj.Files, ...
-                'temporalSnapshotColumns', ...
-                    testCase.temporalSnapshotColumns);
 
-            % Compute spectra 
-            fftProcessor = FFTEnsembleProcessor(...
-                ensemble=testCase.brokerFFT,numWorkers=5);
+            testCase.brokerFFT = SFRFsEnsembleBroker( ...
+                'ensembleObject', testCase.ensembleMockFFT.fileEnsembleDS, ...
+                'getFilesFunction', @(obj) obj.Files, ...
+                'temporalSnapshotColumns', testCase.temporalSnapshotColumns);
+
+            fftProcessor = FFTEnsembleProcessor( ...
+                'ensemble', testCase.brokerFFT, ...
+                'numWorkers', testCase.numWorkers);
             fftProcessor.process();
-            
-            % Create SFRFs processor case spectra
+
             testCase.sfrfsProcessorFFT = SFRFsEnsembleProcessor( ...
-                'numWorkers', testCase.ensembleMockFFT.numMembers, ...
+                'numWorkers', testCase.numWorkers, ...
                 'ensemble', testCase.brokerFFT, ...
                 'frequencyBands', testCase.bearingFrequencyBands, ...
                 'snapshotParameters', testCase.snapshotParams);
 
-            % Register cleanup automatically
             testCase.addTeardown(@() testCase.ensembleMockNoFFT.cleanup());
             testCase.addTeardown(@() testCase.ensembleMockFFT.cleanup());
         end
     end
 
     methods (Test)
-        function testProcessFailsWithoutFFT(testCase)            
-            % Load one member table manually
+        function testProcessFailsWithoutFFT(testCase)
             t = read(testCase.ensembleMockNoFFT.fileEnsembleDS);
-            
-            % Confirm that the table does NOT have FFT data yet
-            testCase.assertFalse(...
+
+            testCase.assertFalse( ...
                 any(contains(t.Properties.VariableNames, 'FFT')), ...
                 'Precondition failed: table should not contain FFT data');
-            
+
             try
                 testCase.sfrfsProcessorNoFFT.process();
                 testCase.verifyFail('Expected exception was not thrown.');
             catch ME
-                % Verify top-level aggregate exception ID
-                testCase.verifyEqual(...
+                testCase.verifyEqual( ...
                     ME.identifier, 'SFRFsProcessor:ProcessingError');
-                
-                % Verify nested causes contain the expected exception ID
+
                 causeIds = cellfun(@(c) c.identifier, ...
                     ME.cause, 'UniformOutput', false);
                 hasExpected = any(strcmp( ...
@@ -470,7 +474,7 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
                 temporalSnapshotColumns=testCase.temporalSnapshotColumns);
 
             sfrfsProcessor = SFRFsEnsembleProcessor( ...
-                numWorkers=testCase.ensembleMockFFT.numMembers, ...
+                numWorkers=testCase.numWorkers, ...
                 ensemble=broker, ...
                 frequencyBands=testCase.bearingFrequencyBands, ...
                 snapshotParameters=testCase.snapshotParams);
@@ -478,15 +482,16 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
             testCase.verifyWarningFree(@() sfrfsProcessor.process());
 
             sfrfCols = string(cellfun(@(c) broker.mapToSpectralColumn(c), ...
-                testCase.temporalSnapshotColumns, 'UniformOutput', false)).';
+                testCase.temporalSnapshotColumns, ...
+                'UniformOutput', false)).';
             sfrfCols = sfrfCols(contains(sfrfCols, "SFRFs"));
 
-            % Apply your updated concatenation fix
-            newDataVars = [
-                testCase.temporalSnapshotColumns(:);
+            newDataVars = [ ...
+                testCase.temporalSnapshotColumns(:); ...
                 sfrfCols(:)];
-            newSelectedVars = [
-                dsReg.SelectedVariables(:);
+
+            newSelectedVars = [ ...
+                dsReg.SelectedVariables(:); ...
                 sfrfCols(:)];
 
             EnsembleDatastoreRegistry.reconfigureEnsemble( ...
@@ -494,8 +499,7 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
                 DataVariables=newDataVars, ...
                 SelectedVariables=newSelectedVars);
 
-            dsReg = ...
-                EnsembleDatastoreRegistry.getEnsemble("ensembleWithFFT");
+            dsReg = EnsembleDatastoreRegistry.getEnsemble("ensembleWithFFT");
             reset(dsReg);
             tAfter = read(dsReg);
 
@@ -503,31 +507,42 @@ classdef TestSFRFsEnsembleProcessor < matlab .unittest.TestCase
             testCase.verifyTrue(all(ismember(sfrfCols, actualVars)), ...
                 "Not all expected SFRFs variables were found in output.");
 
-            numFaults = numel(...
+            numFaults = numel( ...
                 testCase.bearingFrequencyBands.faultFrequencyCodes);
 
             for v = sfrfCols(:)'
                 col = tAfter.(v{1});
-                testCase.verifyClass(col, 'cell', ...
-                    sprintf(...
+                testCase.verifyClass(col, 'cell', sprintf( ...
                     'SFRFs variable %s must be a cell array.', v{1}));
+
                 for i = 1:height(tAfter)
                     entry = col{i};
-                    testCase.verifyClass(entry, 'double', ...
-                        sprintf(...
+                    testCase.verifyClass(entry, 'double', sprintf( ...
                         'Entry %d of %s is not double.', i, v{1}));
-                    testCase.verifySize(entry, [1, numFaults], ...
-                        sprintf(...
+                    testCase.verifySize(entry, [1, numFaults], sprintf( ...
                         'Entry %d of %s has wrong size.', i, v{1}));
-                    testCase.verifyTrue(all(isfinite(entry)), ...
-                        sprintf(...
+                    testCase.verifyTrue(all(isfinite(entry)), sprintf( ...
                         'Entry %d of %s contains NaN or Inf.', i, v{1}));
                 end
             end
         end
 
+        function testTooManyWorkersFailsFastWithId(testCase)
+            c = parcluster('Processes');
+            tooMany = c.NumWorkers + 1;
+
+            pBad = SFRFsEnsembleProcessor( ...
+                'numWorkers', tooMany, ...
+                'ensemble', testCase.brokerFFT, ...
+                'frequencyBands', testCase.bearingFrequencyBands, ...
+                'snapshotParameters', testCase.snapshotParams);
+
+            testCase.verifyError(@() pBad.process(), ...
+                'sfrfs:EnsembleProcessor:TooManyWorkers');
+        end
     end
 end
+
 
 ##### SOURCE END #####
 -->

@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>SFRFsParameters</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="SFRFsParameters.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -78,26 +78,21 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <div class="content">
 <pre class="codeinput">
 <span class="keyword">classdef</span> (Abstract) SFRFsParameters &lt; handle
-    <span class="comment">% SFRFsParameters Abstract base class to store and validate Spectral</span>
-    <span class="comment">% Fault Receptive Fields (SFRF) parameters.</span>
-    <span class="comment">%</span>
-    <span class="comment">%   Stores validated SFRF parameter sets for different fault types</span>
-    <span class="comment">%   having those fault types defined in the concrete extending classes.</span>
-    <span class="comment">%</span>
-    <span class="comment">%   Supports:</span>
-    <span class="comment">%     - Definition of fault types via an abstract constant property.</span>
-    <span class="comment">%     - Creation of SFRF parameter structs using a generic fully</span>
-    <span class="comment">%       implemented static method.</span>
-    <span class="comment">%</span>
-    <span class="comment">% Properties:</span>
-    <span class="comment">%   (Concrete subclasses define properties specific to domain.)</span>
-    <span class="comment">%</span>
-    <span class="comment">% Abstract Constant Properties:</span>
-    <span class="comment">%   faultTypes - Cell array of fault type names for a given subclass.</span>
-    <span class="comment">%</span>
-    <span class="comment">% Static Methods:</span>
-    <span class="comment">%   createSFRFsParameters - Create parameter struct for SFRFs.</span>
-    <span class="comment">%</span>
+<span class="comment">% SFRFsParameters</span>
+<span class="comment">%</span>
+<span class="comment">% Abstract base class to store and validate Spectral Fault Receptive Fields</span>
+<span class="comment">% (SFRF) parameters.</span>
+<span class="comment">%</span>
+<span class="comment">% Concrete subclasses define the available fault types. Mask</span>
+<span class="comment">% parameterization is represented explicitly via MaskParameters.</span>
+<span class="comment">%</span>
+<span class="comment">% Example (recommended):</span>
+<span class="comment">%   params = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%       order = 2, ...</span>
+<span class="comment">%       centerMask = ...</span>
+<span class="comment">%           GaussianMaskParameters(bandwidth = 5), ...</span>
+<span class="comment">%       surroundMask = ...</span>
+<span class="comment">%           SuperGaussianMaskParameters(alpha = 12, beta = 4));</span>
 
     <span class="keyword">properties</span> (Abstract, Constant)
         faultTypes <span class="comment">% Cell array of fault type names specific to subclass</span>
@@ -105,14 +100,17 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
     <span class="keyword">properties</span> (Constant)
         <span class="comment">% SFRF parameter field names</span>
-        ORDER_PARAM_NAME               = <span class="string">'order'</span>
-        NUM_SIDEBANDS_PARAM_NAME       = <span class="string">'numSidebands'</span>
-        NUM_HARMONICS_PARAM_NAME       = <span class="string">'numHarmonics'</span>
+        ORDER_PARAM_NAME             = <span class="string">'order'</span>
+        NUM_SIDEBANDS_PARAM_NAME     = <span class="string">'numSidebands'</span>
+        NUM_HARMONICS_PARAM_NAME     = <span class="string">'numHarmonics'</span>
+        CENTER_MASK_PARAM_NAME       = <span class="string">'centerMask'</span>
+        SURROUND_MASK_PARAM_NAME     = <span class="string">'surroundMask'</span>
+        INHIBITION_FACTOR_PARAM_NAME = <span class="string">'inhibitionFactor'</span>
+        <span class="comment">% Legacy</span>
         SIGMA_CENTER_PARAM_NAME        = <span class="string">'sigmaCenter'</span>
         SIGMA_SURROUND_PARAM_NAME      = <span class="string">'sigmaSurround'</span>
-        INHIBITION_FACTOR_PARAM_NAME   = <span class="string">'inhibitionFactor'</span>
 
-        <span class="comment">% Collection of all SFRF parameter field names</span>
+        <span class="comment">% Collection of SFRF parameter field names (backward compatibility)</span>
         sfrfFields = { <span class="keyword">...</span>
             SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
             SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
@@ -121,44 +119,133 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, <span class="keyword">...</span>
             SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME <span class="keyword">...</span>
         }
+
+        <span class="comment">% Collection of SFRF parameter field names (new interface)</span>
+        sfrfFieldsForMasks = { <span class="keyword">...</span>
+            SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.NUM_HARMONICS_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.CENTER_MASK_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.SURROUND_MASK_PARAM_NAME, <span class="keyword">...</span>
+            SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME}
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Abstract)
+        params = getParamsForFaultType(obj, faultTypeName)
+        <span class="comment">% getParamsForFaultType Return the parameter struct for a given</span>
+        <span class="comment">% fault type.</span>
+        <span class="comment">%</span>
+        <span class="comment">% This method provides a uniform accessor across all</span>
+        <span class="comment">% SFRFsParameters subclasses.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Inputs:</span>
+        <span class="comment">%   faultTypeName - fault type identifier as string scalar or</span>
+        <span class="comment">%                   char vector</span>
+        <span class="comment">%</span>
+        <span class="comment">% Output:</span>
+        <span class="comment">%   params - struct containing the SFRF parameters for the fault</span>
+        <span class="comment">%            type</span>
+        <span class="comment">%</span>
+        <span class="comment">% Implementations must:</span>
+        <span class="comment">%   - validate the faultTypeName is supported by the subclass</span>
+        <span class="comment">%   - return a struct with at least the core fields required by the</span>
+        <span class="comment">%     subclass contract (order, numSidebands, numHarmonics,</span>
+        <span class="comment">%     inhibitionFactor, either sigmaCenter or centerMask, and</span>
+        <span class="comment">%     either sigmaSurround or surroundMask)</span>
     <span class="keyword">end</span>
 
     <span class="keyword">methods</span> (Static)
 
+        <span class="keyword">function</span> sfrfsParams = buildSFRFsParameters(args)
+        <span class="comment">% buildSFRFsParameters Builds parameters for Spectral Fault</span>
+        <span class="comment">% Receptive Fields.</span>
+        <span class="comment">%</span>
+        <span class="comment">% sfrfsParams = buildSFRFsParameters('Name',Value,...) creates a</span>
+        <span class="comment">% struct of parameters for SFRFs with specified values. Unspecified</span>
+        <span class="comment">% parameters use default values.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Parameters:</span>
+        <span class="comment">%   'order'           - SFRFs order</span>
+        <span class="comment">%                       (default: 0, integer &gt;= 0)</span>
+        <span class="comment">%   'numSidebands'    - Number of sidebands</span>
+        <span class="comment">%                       (default: 2, integer &gt;= 0)</span>
+        <span class="comment">%   'numHarmonics'    - Number of harmonics</span>
+        <span class="comment">%                       (default: 10, integer &gt;= 1)</span>
+        <span class="comment">%   'centerMask'      - MaskParameters instance for the center</span>
+        <span class="comment">%                       (default: GaussianMaskParameters())</span>
+        <span class="comment">%   'surroundMask'    - MaskParameters instance for the surround</span>
+        <span class="comment">%                       (default: GaussianMaskParameters())</span>
+        <span class="comment">%   'inhibitionFactor'- Inhibition factor</span>
+        <span class="comment">%                       (default: 0.8, 0 &lt;= value &lt;= 1)</span>
+        <span class="comment">%</span>
+
+
+            <span class="keyword">arguments</span>
+                args.order <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBeNonnegative}</span> = 0
+                args.numSidebands <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBeNonnegative}</span> = 2
+                args.numHarmonics <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBePositive}</span> = 10
+                args.centerMask <span class="typesection">(1,1) MaskParameters </span>= <span class="keyword">...</span>
+                    GaussianMaskParameters()
+                args.surroundMask <span class="typesection">(1,1) MaskParameters </span>= <span class="keyword">...</span>
+                    GaussianMaskParameters()
+                args.inhibitionFactor <span class="typesection">(1,1) double { </span><span class="keyword">...</span>
+                    <span class="typesection">mustBeGreaterThanOrEqual(args.inhibitionFactor,0), </span><span class="keyword">...</span>
+                    <span class="typesection">mustBeLessThanOrEqual(args.inhibitionFactor,1)}</span> = 0.8
+            <span class="keyword">end</span>
+
+            sfrfsParams = struct( <span class="keyword">...</span>
+                SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
+                args.order, <span class="keyword">...</span>
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
+                args.numSidebands, <span class="keyword">...</span>
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, <span class="keyword">...</span>
+                args.numHarmonics, <span class="keyword">...</span>
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, <span class="keyword">...</span>
+                args.centerMask, <span class="keyword">...</span>
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME, <span class="keyword">...</span>
+                args.surroundMask, <span class="keyword">...</span>
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME, <span class="keyword">...</span>
+                args.inhibitionFactor);
+        <span class="keyword">end</span>
+
+
         <span class="keyword">function</span> sfrfsParams = createSFRFsParameters(args)
-            <span class="comment">% createSFRFsParameters Create parameters for Spectral Fault</span>
-            <span class="comment">% Receptive Fields.</span>
-            <span class="comment">%</span>
-            <span class="comment">% sfrfsParams = createSFRFsParameters('Name',Value,...) creates</span>
-            <span class="comment">% a struct of parameters for SFRFs with specified values.</span>
-            <span class="comment">% Unspecified parameters use default values.</span>
-            <span class="comment">%</span>
-            <span class="comment">% Parameters:</span>
-            <span class="comment">%   'order'           - SFRFS order</span>
-            <span class="comment">%                       (default: 0, integer &gt;= 0)</span>
-            <span class="comment">%   'numSidebands'    - Number of sidebands</span>
-            <span class="comment">%                       (default: 2, integer &gt;= 0)</span>
-            <span class="comment">%   'numHarmonics'    - Number of harmonics</span>
-            <span class="comment">%                       (default: 10, integer &gt;= 1)</span>
-            <span class="comment">%   'sigmaCenter'     - [bandwidth, sigmaRule] vector.</span>
-            <span class="comment">%                       Bandwidth sets the width of the</span>
-            <span class="comment">%                       Gaussian mask. sigmaRule sets how the</span>
-            <span class="comment">%                       frequency band limits are handled; for</span>
-            <span class="comment">%                       example, sigmaRule = 3 means the band</span>
-            <span class="comment">%                       covers &plusmn;3 times the bandwidth,</span>
-            <span class="comment">%                       99.7% of the Gaussian area falls within</span>
-            <span class="comment">%                       the band. (default: [4, 6])</span>
-            <span class="comment">%   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same</span>
-            <span class="comment">%                       structure and meaning as sigmaCenter.</span>
-            <span class="comment">%                       (default: [12, 1])</span>
-            <span class="comment">%   'inhibitionFactor'- Inhibition factor</span>
-            <span class="comment">%                       (default: 0.8, 0 &lt;= value &lt;= 1)</span>
-            <span class="comment">%</span>
-            <span class="comment">% Example:</span>
-            <span class="comment">%   params = ...</span>
-            <span class="comment">%      SFRFsParameters.createSFRFsParameters(...</span>
-            <span class="comment">%      'order', 2, 'sigmaCenter', [5, 7]);</span>
-            <span class="comment">%</span>
+        <span class="comment">% createSFRFsParameters Create parameters for Spectral Fault</span>
+        <span class="comment">% Receptive Fields.</span>
+        <span class="comment">%</span>
+        <span class="comment">% sfrfsParams = createSFRFsParameters('Name',Value,...) creates</span>
+        <span class="comment">% a struct of parameters for SFRFs with specified values.</span>
+        <span class="comment">% Unspecified parameters use default values.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Parameters:</span>
+        <span class="comment">%   'order'           - SFRFS order</span>
+        <span class="comment">%                       (default: 0, integer &gt;= 0)</span>
+        <span class="comment">%   'numSidebands'    - Number of sidebands</span>
+        <span class="comment">%                       (default: 2, integer &gt;= 0)</span>
+        <span class="comment">%   'numHarmonics'    - Number of harmonics</span>
+        <span class="comment">%                       (default: 10, integer &gt;= 1)</span>
+        <span class="comment">%   'sigmaCenter'     - [bandwidth, sigmaRule] vector.</span>
+        <span class="comment">%                       Bandwidth sets the width of the</span>
+        <span class="comment">%                       Gaussian mask. sigmaRule sets how the</span>
+        <span class="comment">%                       frequency band limits are handled; for</span>
+        <span class="comment">%                       example, sigmaRule = 3 means the band</span>
+        <span class="comment">%                       covers &plusmn;3 times the bandwidth,</span>
+        <span class="comment">%                       99.7% of the Gaussian area falls within</span>
+        <span class="comment">%                       the band. (default: [4, 6])</span>
+        <span class="comment">%   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same</span>
+        <span class="comment">%                       structure and meaning as sigmaCenter.</span>
+        <span class="comment">%                       (default: [12, 1])</span>
+        <span class="comment">%   'inhibitionFactor'- Inhibition factor</span>
+        <span class="comment">%                       (default: 0.8, 0 &lt;= value &lt;= 1)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   params = ...</span>
+        <span class="comment">%      SFRFsParameters.createSFRFsParameters(...</span>
+        <span class="comment">%      'order', 2, 'sigmaCenter', [5, 7]);</span>
+        <span class="comment">%</span>
 
             <span class="keyword">arguments</span>
                 args.order <span class="typesection">(1,1) </span><span class="keyword">...</span>
@@ -174,13 +261,33 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                     <span class="typesection">mustBeLessThanOrEqual(args.inhibitionFactor,1)}</span> = 0.8;
             <span class="keyword">end</span>
 
+            centerMask = GaussianMaskParameters( <span class="keyword">...</span>
+                bandwidth = args.sigmaCenter(1), <span class="keyword">...</span>
+                sigmaRule = args.sigmaCenter(2));
+
+            surroundMask = GaussianMaskParameters( <span class="keyword">...</span>
+                bandwidth = args.sigmaSurround(1), <span class="keyword">...</span>
+                sigmaRule = args.sigmaSurround(2));
+
+
             sfrfsParams = struct(<span class="keyword">...</span>
-                <span class="string">'order'</span>, args.order, <span class="keyword">...</span>
-                <span class="string">'numSidebands'</span>, args.numSidebands, <span class="keyword">...</span>
-                <span class="string">'numHarmonics'</span>, args.numHarmonics, <span class="keyword">...</span>
-                <span class="string">'sigmaCenter'</span>, args.sigmaCenter, <span class="keyword">...</span>
-                <span class="string">'sigmaSurround'</span>, args.sigmaSurround, <span class="keyword">...</span>
-                <span class="string">'inhibitionFactor'</span>, args.inhibitionFactor);
+                SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
+                args.order, <span class="keyword">...</span>
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
+                args.numSidebands, <span class="keyword">...</span>
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, <span class="keyword">...</span>
+                args.numHarmonics, <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME, <span class="keyword">...</span>
+                args.sigmaCenter, <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, <span class="keyword">...</span>
+                args.sigmaSurround, <span class="keyword">...</span>
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, <span class="keyword">...</span>
+                centerMask, <span class="keyword">...</span>
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME, <span class="keyword">...</span>
+                surroundMask, <span class="keyword">...</span>
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME, <span class="keyword">...</span>
+                args.inhibitionFactor);
+
         <span class="keyword">end</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
@@ -194,41 +301,39 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <!--
 ##### SOURCE BEGIN #####
 classdef (Abstract) SFRFsParameters < handle
-    % SFRFsParameters Abstract base class to store and validate Spectral
-    % Fault Receptive Fields (SFRF) parameters.
-    %
-    %   Stores validated SFRF parameter sets for different fault types
-    %   having those fault types defined in the concrete extending classes.
-    %
-    %   Supports:
-    %     - Definition of fault types via an abstract constant property.
-    %     - Creation of SFRF parameter structs using a generic fully 
-    %       implemented static method.
-    %
-    % Properties:
-    %   (Concrete subclasses define properties specific to domain.)
-    %
-    % Abstract Constant Properties:
-    %   faultTypes - Cell array of fault type names for a given subclass.
-    %
-    % Static Methods:
-    %   createSFRFsParameters - Create parameter struct for SFRFs.
-    %
-    
+% SFRFsParameters
+%
+% Abstract base class to store and validate Spectral Fault Receptive Fields
+% (SFRF) parameters.
+%
+% Concrete subclasses define the available fault types. Mask
+% parameterization is represented explicitly via MaskParameters.
+%
+% Example (recommended):
+%   params = SFRFsParameters.buildSFRFsParameters( ...
+%       order = 2, ...
+%       centerMask = ...
+%           GaussianMaskParameters(bandwidth = 5), ...
+%       surroundMask = ...
+%           SuperGaussianMaskParameters(alpha = 12, beta = 4));
+
     properties (Abstract, Constant)
         faultTypes % Cell array of fault type names specific to subclass
     end
 
     properties (Constant)
-        % SFRF parameter field names 
-        ORDER_PARAM_NAME               = 'order'
-        NUM_SIDEBANDS_PARAM_NAME       = 'numSidebands'
-        NUM_HARMONICS_PARAM_NAME       = 'numHarmonics'
+        % SFRF parameter field names
+        ORDER_PARAM_NAME             = 'order'
+        NUM_SIDEBANDS_PARAM_NAME     = 'numSidebands'
+        NUM_HARMONICS_PARAM_NAME     = 'numHarmonics'
+        CENTER_MASK_PARAM_NAME       = 'centerMask'
+        SURROUND_MASK_PARAM_NAME     = 'surroundMask'
+        INHIBITION_FACTOR_PARAM_NAME = 'inhibitionFactor'
+        % Legacy
         SIGMA_CENTER_PARAM_NAME        = 'sigmaCenter'
         SIGMA_SURROUND_PARAM_NAME      = 'sigmaSurround'
-        INHIBITION_FACTOR_PARAM_NAME   = 'inhibitionFactor'
-    
-        % Collection of all SFRF parameter field names
+
+        % Collection of SFRF parameter field names (backward compatibility)
         sfrfFields = { ...
             SFRFsParameters.ORDER_PARAM_NAME, ...
             SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
@@ -237,45 +342,134 @@ classdef (Abstract) SFRFsParameters < handle
             SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, ...
             SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME ...
         }
+
+        % Collection of SFRF parameter field names (new interface)
+        sfrfFieldsForMasks = { ... 
+            SFRFsParameters.ORDER_PARAM_NAME, ... 
+            SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
+            SFRFsParameters.NUM_HARMONICS_PARAM_NAME, ...
+            SFRFsParameters.CENTER_MASK_PARAM_NAME, ...
+            SFRFsParameters.SURROUND_MASK_PARAM_NAME, ...
+            SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME}
     end
-    
+
+    methods (Abstract)
+        params = getParamsForFaultType(obj, faultTypeName)
+        % getParamsForFaultType Return the parameter struct for a given 
+        % fault type.
+        %
+        % This method provides a uniform accessor across all 
+        % SFRFsParameters subclasses. 
+        %
+        % Inputs:
+        %   faultTypeName - fault type identifier as string scalar or 
+        %                   char vector
+        %
+        % Output:
+        %   params - struct containing the SFRF parameters for the fault 
+        %            type
+        %
+        % Implementations must:
+        %   - validate the faultTypeName is supported by the subclass
+        %   - return a struct with at least the core fields required by the
+        %     subclass contract (order, numSidebands, numHarmonics,
+        %     inhibitionFactor, either sigmaCenter or centerMask, and 
+        %     either sigmaSurround or surroundMask)
+    end
+
     methods (Static)
 
+        function sfrfsParams = buildSFRFsParameters(args)
+        % buildSFRFsParameters Builds parameters for Spectral Fault
+        % Receptive Fields.
+        %
+        % sfrfsParams = buildSFRFsParameters('Name',Value,...) creates a
+        % struct of parameters for SFRFs with specified values. Unspecified
+        % parameters use default values.
+        %
+        % Parameters:
+        %   'order'           - SFRFs order
+        %                       (default: 0, integer >= 0)
+        %   'numSidebands'    - Number of sidebands
+        %                       (default: 2, integer >= 0)
+        %   'numHarmonics'    - Number of harmonics
+        %                       (default: 10, integer >= 1)
+        %   'centerMask'      - MaskParameters instance for the center
+        %                       (default: GaussianMaskParameters())
+        %   'surroundMask'    - MaskParameters instance for the surround
+        %                       (default: GaussianMaskParameters())
+        %   'inhibitionFactor'- Inhibition factor
+        %                       (default: 0.8, 0 <= value <= 1)
+        %
+
+
+            arguments
+                args.order (1,1) ...
+                    {mustBeInteger, mustBeNonnegative} = 0
+                args.numSidebands (1,1) ...
+                    {mustBeInteger, mustBeNonnegative} = 2
+                args.numHarmonics (1,1) ...
+                    {mustBeInteger, mustBePositive} = 10
+                args.centerMask (1,1) MaskParameters = ...
+                    GaussianMaskParameters()
+                args.surroundMask (1,1) MaskParameters = ...
+                    GaussianMaskParameters()
+                args.inhibitionFactor (1,1) double { ...
+                    mustBeGreaterThanOrEqual(args.inhibitionFactor,0), ...
+                    mustBeLessThanOrEqual(args.inhibitionFactor,1)} = 0.8
+            end
+
+            sfrfsParams = struct( ...
+                SFRFsParameters.ORDER_PARAM_NAME, ...
+                args.order, ...
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
+                args.numSidebands, ...
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, ...
+                args.numHarmonics, ...
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, ...
+                args.centerMask, ...
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME, ...
+                args.surroundMask, ...
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME, ...
+                args.inhibitionFactor);
+        end
+
+
         function sfrfsParams = createSFRFsParameters(args)
-            % createSFRFsParameters Create parameters for Spectral Fault 
-            % Receptive Fields.
-            %
-            % sfrfsParams = createSFRFsParameters('Name',Value,...) creates 
-            % a struct of parameters for SFRFs with specified values. 
-            % Unspecified parameters use default values.
-            %
-            % Parameters:
-            %   'order'           - SFRFS order 
-            %                       (default: 0, integer >= 0)
-            %   'numSidebands'    - Number of sidebands 
-            %                       (default: 2, integer >= 0)
-            %   'numHarmonics'    - Number of harmonics 
-            %                       (default: 10, integer >= 1)
-            %   'sigmaCenter'     - [bandwidth, sigmaRule] vector. 
-            %                       Bandwidth sets the width of the 
-            %                       Gaussian mask. sigmaRule sets how the 
-            %                       frequency band limits are handled; for
-            %                       example, sigmaRule = 3 means the band 
-            %                       covers ±3 times the bandwidth, 
-            %                       99.7% of the Gaussian area falls within 
-            %                       the band. (default: [4, 6])
-            %   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same 
-            %                       structure and meaning as sigmaCenter. 
-            %                       (default: [12, 1])
-            %   'inhibitionFactor'- Inhibition factor 
-            %                       (default: 0.8, 0 <= value <= 1)
-            %
-            % Example:
-            %   params = ...
-            %      SFRFsParameters.createSFRFsParameters(...
-            %      'order', 2, 'sigmaCenter', [5, 7]);
-            %
-            
+        % createSFRFsParameters Create parameters for Spectral Fault
+        % Receptive Fields.
+        %
+        % sfrfsParams = createSFRFsParameters('Name',Value,...) creates
+        % a struct of parameters for SFRFs with specified values.
+        % Unspecified parameters use default values.
+        %
+        % Parameters:
+        %   'order'           - SFRFS order
+        %                       (default: 0, integer >= 0)
+        %   'numSidebands'    - Number of sidebands
+        %                       (default: 2, integer >= 0)
+        %   'numHarmonics'    - Number of harmonics
+        %                       (default: 10, integer >= 1)
+        %   'sigmaCenter'     - [bandwidth, sigmaRule] vector.
+        %                       Bandwidth sets the width of the
+        %                       Gaussian mask. sigmaRule sets how the
+        %                       frequency band limits are handled; for
+        %                       example, sigmaRule = 3 means the band
+        %                       covers ±3 times the bandwidth,
+        %                       99.7% of the Gaussian area falls within
+        %                       the band. (default: [4, 6])
+        %   'sigmaSurround'   - [bandwidth, sigmaRule] vector. Same
+        %                       structure and meaning as sigmaCenter.
+        %                       (default: [12, 1])
+        %   'inhibitionFactor'- Inhibition factor
+        %                       (default: 0.8, 0 <= value <= 1)
+        %
+        % Example:
+        %   params = ...
+        %      SFRFsParameters.createSFRFsParameters(...
+        %      'order', 2, 'sigmaCenter', [5, 7]);
+        %
+
             arguments
                 args.order (1,1) ...
                     {mustBeInteger, mustBeNonnegative} = 0;
@@ -289,19 +483,37 @@ classdef (Abstract) SFRFsParameters < handle
                     mustBeGreaterThanOrEqual(args.inhibitionFactor,0), ...
                     mustBeLessThanOrEqual(args.inhibitionFactor,1)} = 0.8;
             end
-            
+
+            centerMask = GaussianMaskParameters( ...
+                bandwidth = args.sigmaCenter(1), ...
+                sigmaRule = args.sigmaCenter(2));
+
+            surroundMask = GaussianMaskParameters( ...
+                bandwidth = args.sigmaSurround(1), ...
+                sigmaRule = args.sigmaSurround(2));
+
+
             sfrfsParams = struct(...
-                'order', args.order, ...
-                'numSidebands', args.numSidebands, ...
-                'numHarmonics', args.numHarmonics, ...
-                'sigmaCenter', args.sigmaCenter, ...
-                'sigmaSurround', args.sigmaSurround, ...
-                'inhibitionFactor', args.inhibitionFactor);
+                SFRFsParameters.ORDER_PARAM_NAME, ...
+                args.order, ...
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
+                args.numSidebands, ...
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, ...
+                args.numHarmonics, ...
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME, ...
+                args.sigmaCenter, ...
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, ...
+                args.sigmaSurround, ...
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, ...
+                centerMask, ...
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME, ...
+                surroundMask, ...
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME, ...
+                args.inhibitionFactor);
+
         end
     end
 end
-
-
 ##### SOURCE END #####
 -->
 </body>

@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>SFRFsParametersRollingBearings</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="SFRFsParametersRollingBearings.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -81,58 +81,60 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <span class="comment">% SFRFsParametersRollingBearings  Store and validate SFRF parameters for</span>
 <span class="comment">% bearing fault types.</span>
 <span class="comment">%</span>
-<span class="comment">%   This value class stores validated Spectral Fault Receptive Field (SFRF)</span>
-<span class="comment">%   parameter sets for:</span>
-<span class="comment">%      - Outer race (BPFO frequency band)</span>
-<span class="comment">%      - Inner race (BPFI frequency band)</span>
-<span class="comment">%      - Ball       (BSF frequency band)</span>
-<span class="comment">%      - Cage       (FTF frequency band)</span>
+<span class="comment">% This value class stores validated Spectral Fault Receptive Field (SFRF)</span>
+<span class="comment">% parameter sets for:</span>
+<span class="comment">%   - Outer race (BPFO frequency band)</span>
+<span class="comment">%   - Inner race (BPFI frequency band)</span>
+<span class="comment">%   - Ball       (BSF frequency band)</span>
+<span class="comment">%   - Cage       (FTF frequency band)</span>
 <span class="comment">%</span>
-<span class="comment">%   Construction uses named (keyword) arguments and supports two modes:</span>
+<span class="comment">% Construction uses named (keyword) arguments and supports two modes.</span>
 <span class="comment">%</span>
-<span class="comment">%   Mode 1: Individual SFRF parameters per fault type</span>
-<span class="comment">%     Mode 1 &ndash; Individual parameters for each fault type:</span>
-<span class="comment">%         paramsOuter = ...</span>
-<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
-<span class="comment">%           'order',2, 'sigmaCenter',[5,7]);</span>
-<span class="comment">%         paramsInner = ...</span>
-<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
-<span class="comment">%           'order',1, 'numHarmonics',8);</span>
-<span class="comment">%         paramsBall  =</span>
-<span class="comment">%           SFRFsParameters.createSFRFsParameters(...</span>
-<span class="comment">%           'order',0, 'sigmaCenter',[4,6]);</span>
-<span class="comment">%         % use defaults</span>
-<span class="comment">%         paramsCage  = ...</span>
-<span class="comment">%           SFRFsParameters.createSFRFsParameters();</span>
+<span class="comment">% Examples:</span>
+<span class="comment">% Mode 1 &ndash; Individual parameters for each fault type:</span>
+<span class="comment">%   centerOuter   = GaussianMaskParameters(bandwidth = 5, sigmaRule = 7);</span>
+<span class="comment">%   surroundOuter = SuperGaussianMaskParameters(alpha = 12, beta = 3);</span>
 <span class="comment">%</span>
-<span class="comment">%         params = SFRFsParametersRollingBearings( ...</span>
-<span class="comment">%                 'outerRace', paramsOuter, ...</span>
-<span class="comment">%                 'innerRace', paramsInner, ...</span>
-<span class="comment">%                 'ball',      paramsBall, ...</span>
-<span class="comment">%                 'cage',      paramsCage );</span>
+<span class="comment">%   paramsOuter = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%     order            = 2, ...</span>
+<span class="comment">%     numSidebands     = 0, ...</span>
+<span class="comment">%     centerMask       = centerOuter, ...</span>
+<span class="comment">%     surroundMask     = surroundOuter, ...</span>
+<span class="comment">%     inhibitionFactor = 0.2);</span>
 <span class="comment">%</span>
-<span class="comment">%   Mode 2: Shared SFRF parameters for all fault types</span>
-<span class="comment">%     sharedParams = ...</span>
-<span class="comment">%         SFRFsParameters.createSFRFsParameters( ...</span>
-<span class="comment">%         'order', 3, ...</span>
-<span class="comment">%         'numSidebands', 4, ...</span>
-<span class="comment">%         'numHarmonics', 8, ...</span>
-<span class="comment">%         'sigmaCenter', [5, 7], ...</span>
-<span class="comment">%         'sigmaSurround', [12, 3], ...</span>
-<span class="comment">%         'inhibitionFactor', 0.6);</span>
+<span class="comment">%   paramsInner = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%     order        = 1, ...</span>
+<span class="comment">%     numHarmonics = 8);</span>
 <span class="comment">%</span>
-<span class="comment">%     obj = SFRFsParametersRollingBearings( ...</span>
-<span class="comment">%         'SameForAllFaultTypes', sharedParams);</span>
+<span class="comment">%   paramsBall  = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%     order      = 0, ...</span>
+<span class="comment">%     centerMask = GaussianMaskParameters(bandwidth = 4, sigmaRule = 6));</span>
 <span class="comment">%</span>
-<span class="comment">%   Reference:</span>
-<span class="comment">%       Stan Mu&ntilde;oz Guti&eacute;rrez and Franz Wotawa. Optimized Spectral Fault</span>
-<span class="comment">%       Receptive Fields for Diagnosis-Informed Prognosis. In 36th</span>
-<span class="comment">%       International Conference on Principles of Diagnosis and Resilient</span>
-<span class="comment">%       Systems (DX 2025). Open Access Series in Informatics (OASIcs),</span>
-<span class="comment">%       Volume 136, pp. 9:1-9:20, Schloss Dagstuhl &ndash; Leibniz-Zentrum f&uuml;r</span>
-<span class="comment">%       Informatik (2025) DOI:10.4230/OASIcs.DX.2025.9.</span>
+<span class="comment">%   paramsCage  = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%     numSidebands = 0);</span>
 <span class="comment">%</span>
-<span class="comment">%   See also: SFRFsParameters</span>
+<span class="comment">%   obj = SFRFsParametersRollingBearings( ...</span>
+<span class="comment">%     outerRace = paramsOuter, ...</span>
+<span class="comment">%     innerRace = paramsInner, ...</span>
+<span class="comment">%     ball      = paramsBall, ...</span>
+<span class="comment">%     cage      = paramsCage);</span>
+<span class="comment">%</span>
+<span class="comment">% Mode 2 &ndash; Shared SFRF parameters for all fault types:</span>
+<span class="comment">%   sharedParams = SFRFsParameters.buildSFRFsParameters( ...</span>
+<span class="comment">%     order            = 3, ...</span>
+<span class="comment">%     numSidebands     = 4, ...</span>
+<span class="comment">%     numHarmonics     = 8, ...</span>
+<span class="comment">%     centerMask       = GaussianMaskParameters(...</span>
+<span class="comment">%                           bandwidth = 5, sigmaRule = 7), ...</span>
+<span class="comment">%     surroundMask     = SuperGaussianMaskParameters(...</span>
+<span class="comment">%                           alpha = 12, beta = 4), ...</span>
+<span class="comment">%     inhibitionFactor = 0.6);</span>
+<span class="comment">%</span>
+<span class="comment">%   obj = SFRFsParametersRollingBearings( ...</span>
+<span class="comment">%     SameForAllFaultTypes = sharedParams);</span>
+<span class="comment">%</span>
+<span class="comment">% See also: SFRFsParameters</span>
+
 
     <span class="keyword">properties</span>
         outerRace   <span class="comment">% SFRF params for Outer race faults</span>
@@ -206,18 +208,43 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
         <span class="keyword">end</span>
 
         <span class="keyword">function</span> str = toString(obj)
-            <span class="comment">% toString Return a formatted string representation of the</span>
-            <span class="comment">% object.</span>
+            <span class="comment">% toString Return a concise state representation of the object.</span>
 
-            outerRaceStr = jsonencode(obj.outerRace);
-            innerRaceStr = jsonencode(obj.innerRace);
-            ballStr = jsonencode(obj.ball);
-            cageStr = jsonencode(obj.cage);
-
-            str = sprintf([<span class="string">'[SFRFsParametersRollingBearings:'</span>, <span class="keyword">...</span>
-                <span class="string">' outerRace: %s, innerRace: %s, ball: %s, cage: %s]'</span>], <span class="keyword">...</span>
-                outerRaceStr, innerRaceStr, ballStr, cageStr);
+            str = sprintf( <span class="keyword">...</span>
+                [<span class="string">'[SFRFsParametersRollingBearings:'</span>, <span class="keyword">...</span>
+                <span class="string">' outerRace=%s, innerRace=%s, ball=%s, cage=%s]'</span>], <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.format(obj.outerRace), <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.format(obj.innerRace), <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.format(obj.ball), <span class="keyword">...</span>
+                SFRFsParametersRollingBearings.format(obj.cage));
         <span class="keyword">end</span>
+
+        <span class="keyword">function</span> params = getParamsForFaultType(obj, faultTypeName)
+            <span class="comment">% getParamsForFaultType Return the parameter struct for a given</span>
+            <span class="comment">% fault type.</span>
+
+            <span class="keyword">arguments</span>
+                obj <span class="typesection">(1,1) SFRFsParametersRollingBearings</span>
+                faultTypeName <span class="typesection">{mustBeTextScalar}</span>
+            <span class="keyword">end</span>
+
+            ft = string(faultTypeName);
+
+            <span class="comment">% Validate supported fault types</span>
+            <span class="keyword">if</span> ~any(strcmp(ft, SFRFsParametersRollingBearings.faultTypes))
+                error( <span class="keyword">...</span>
+                    [<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                    <span class="string">'getParamsForFaultType:UnknownFaultType'</span>], <span class="keyword">...</span>
+                    <span class="string">'Unknown fault type "%s". Supported types: %s.'</span>, <span class="keyword">...</span>
+                    ft, <span class="keyword">...</span>
+                    strjoin(SFRFsParametersRollingBearings.faultTypes, <span class="keyword">...</span>
+                    <span class="string">', '</span>));
+            <span class="keyword">end</span>
+
+            params = obj.(ft);
+
+        <span class="keyword">end</span>
+
     <span class="keyword">end</span>
 
     <span class="keyword">methods</span> (Access = private, Static)
@@ -239,6 +266,8 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                         [<span class="string">'Not additional arguments allowed for '</span> <span class="keyword">...</span>
                         <span class="string">'SameForAllFaultTypes option'</span>]);
                 <span class="keyword">end</span>
+                SFRFsParametersRollingBearings.checkDuplicateParams( <span class="keyword">...</span>
+                    args.SameForAllFaultTypes, <span class="string">'SameForAllFaultTypes'</span>);
                 missingSFRFParams = getMissPar(<span class="keyword">...</span>
                     <span class="string">'SameForAllFaultTypes'</span>, args);
             <span class="keyword">else</span>
@@ -255,8 +284,15 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                 <span class="comment">% validate params of fault types</span>
                 fts = SFRFsParametersRollingBearings.faultTypes;
                 missingSFRFParams = {};
-                <span class="keyword">for</span> i=1:length(fts)
-                    misspars = getMissPar(fts(i), args);
+
+                <span class="keyword">for</span> i = 1:numel(fts)
+                    ft = fts{i};
+
+                    SFRFsParametersRollingBearings.checkDuplicateParams(<span class="keyword">...</span>
+                        args.(ft), ft);
+
+                    misspars = getMissPar(ft, args);
+
                     <span class="keyword">if</span> ~isempty(misspars)
                         missingSFRFParams = <span class="keyword">...</span>
                             [missingSFRFParams, misspars]; <span class="comment">%#ok&lt;AGROW&gt;</span>
@@ -284,11 +320,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             missingFields = <span class="keyword">...</span>
                 SFRFsParametersRollingBearings.missingPars(args.(fname));
             <span class="keyword">if</span> ~isempty(missingFields)
-                missingParams{end+1} = <span class="keyword">...</span>
-                    sprintf(<span class="string">'%s (missing fields: %s)'</span>, <span class="keyword">...</span>
-                    fname, <span class="keyword">...</span>
-                    strjoin(missingFields, <span class="string">', '</span>));
+                missingParams{end+1} = sprintf(<span class="string">'%s (%s)'</span>, <span class="keyword">...</span>
+                    fname, strjoin(missingFields, <span class="string">'; '</span>));
             <span class="keyword">end</span>
+
         <span class="keyword">end</span>
 
         <span class="keyword">function</span> missingFaults = getMissingFaultTypes(args)
@@ -302,11 +337,181 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
         <span class="keyword">function</span> missingFields = missingPars(paramStruct)
 
-            fields = SFRFsParametersRollingBearings.sfrfFields;
+            coreFields = { <span class="keyword">...</span>
+                SFRFsParameters.ORDER_PARAM_NAME, <span class="keyword">...</span>
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, <span class="keyword">...</span>
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, <span class="keyword">...</span>
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME };
 
-            <span class="comment">% Check which required fields are missing</span>
-            missingFields = fields(~isfield(paramStruct, fields));
+            legacyFields = { <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME, <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME };
 
+            maskFields = { <span class="keyword">...</span>
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, <span class="keyword">...</span>
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME };
+
+            missingCore   = <span class="keyword">...</span>
+                coreFields(~isfield(paramStruct, coreFields));
+            missingLegacy = <span class="keyword">...</span>
+                legacyFields(~isfield(paramStruct, legacyFields));
+            missingMasks  = <span class="keyword">...</span>
+                maskFields(~isfield(paramStruct, maskFields));
+
+            missingFields = {};
+
+            <span class="comment">% Always include core if missing</span>
+            <span class="keyword">if</span> ~isempty(missingCore)
+                missingFields{end+1} = sprintf( <span class="keyword">...</span>
+                    <span class="string">'Missing core fields: %s'</span>, strjoin(missingCore, <span class="string">', '</span>));
+            <span class="keyword">end</span>
+
+            <span class="comment">% 2b interface semantics:</span>
+            <span class="comment">% - center must be defined via: sigmaCenter OR centerMask</span>
+            <span class="comment">% - surround must be defined via: sigmaSurround OR surroundMask</span>
+
+            hasSigmaCenter = isfield(paramStruct, <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+            hasCenterMask  = isfield(paramStruct, <span class="keyword">...</span>
+                SFRFsParameters.CENTER_MASK_PARAM_NAME);
+
+            hasSigmaSurround = isfield(paramStruct, <span class="keyword">...</span>
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+            hasSurroundMask  = isfield(paramStruct, <span class="keyword">...</span>
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+
+            centerDefined   = hasSigmaCenter   || hasCenterMask;
+            surroundDefined = hasSigmaSurround || hasSurroundMask;
+
+            <span class="keyword">if</span> ~(centerDefined &amp;&amp; surroundDefined)
+                <span class="keyword">if</span> ~centerDefined
+                    <span class="comment">% Tailored suggestions using what is actually missing</span>
+                    missingFields{end+1} = sprintf( <span class="keyword">...</span>
+                        [<span class="string">'Center undefined: '</span> <span class="keyword">...</span>
+                         <span class="string">'provide %s or %s (missing: %s)'</span>], <span class="keyword">...</span>
+                        SFRFsParameters.SIGMA_CENTER_PARAM_NAME, <span class="keyword">...</span>
+                        SFRFsParameters.CENTER_MASK_PARAM_NAME, <span class="keyword">...</span>
+                        strjoin(intersect( <span class="keyword">...</span>
+                            {SFRFsParameters.SIGMA_CENTER_PARAM_NAME, <span class="keyword">...</span>
+                             SFRFsParameters.CENTER_MASK_PARAM_NAME}, <span class="keyword">...</span>
+                            [missingLegacy, missingMasks], <span class="keyword">...</span>
+                            <span class="string">'stable'</span>), <span class="string">', '</span>));
+                <span class="keyword">end</span>
+
+                <span class="keyword">if</span> ~surroundDefined
+                    missingFields{end+1} = sprintf( <span class="keyword">...</span>
+                        [<span class="string">'Surround undefined: '</span> <span class="keyword">...</span>
+                         <span class="string">'provide %s or %s (missing: %s)'</span>], <span class="keyword">...</span>
+                        SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, <span class="keyword">...</span>
+                        SFRFsParameters.SURROUND_MASK_PARAM_NAME, <span class="keyword">...</span>
+                        strjoin(intersect( <span class="keyword">...</span>
+                            {SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, <span class="keyword">...</span>
+                             SFRFsParameters.SURROUND_MASK_PARAM_NAME}, <span class="keyword">...</span>
+                            [missingLegacy, missingMasks], <span class="keyword">...</span>
+                            <span class="string">'stable'</span>), <span class="string">', '</span>));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> checkDuplicateParams(paramStruct, label)
+        <span class="comment">% checkDuplicateParams</span>
+        <span class="comment">% Reject duplicate parameterization unless it is a consistent,</span>
+        <span class="comment">% redundant legacy-to-mask canonization (old sigma parameters</span>
+        <span class="comment">% are converted to MaskParameters objects and added as additional</span>
+        <span class="comment">% fileds).</span>
+        <span class="comment">%</span>
+        <span class="comment">% Allowed:</span>
+        <span class="comment">%   - Center: sigmaCenter OR centerMask</span>
+        <span class="comment">%   - Surround: sigmaSurround OR surroundMask</span>
+        <span class="comment">%   - Mixed across center/surround is allowed</span>
+        <span class="comment">%   - If BOTH are present for center/surround, allowed only when:</span>
+        <span class="comment">%       * mask is GaussianMaskParameters</span>
+        <span class="comment">%       * mask params match sigma vector exactly</span>
+
+            <span class="keyword">function</span> tf = isGaussianMask(maskObj)
+                tf = isa(maskObj, <span class="string">'GaussianMaskParameters'</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">function</span> [bw, sr] = getGaussianParams(maskObj)
+                <span class="comment">% Try common representations</span>
+                <span class="keyword">if</span> isprop(maskObj, <span class="string">'bandwidth'</span>) &amp;&amp; <span class="keyword">...</span>
+                        isprop(maskObj, <span class="string">'sigmaRule'</span>)
+                    bw = maskObj.bandwidth;
+                    sr = maskObj.sigmaRule;
+                    <span class="keyword">return</span>
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> isprop(maskObj, <span class="string">'params'</span>) &amp;&amp; <span class="keyword">...</span>
+                    isstruct(maskObj.params) &amp;&amp; <span class="keyword">...</span>
+                        isfield(maskObj.params, <span class="string">'bandwidth'</span>) &amp;&amp; <span class="keyword">...</span>
+                        isfield(maskObj.params, <span class="string">'sigmaRule'</span>)
+                    bw = maskObj.params.bandwidth;
+                    sr = maskObj.params.sigmaRule;
+                    <span class="keyword">return</span>
+                <span class="keyword">end</span>
+                error([<span class="string">'sfrfs:SFRFsParametersRollingBearings:'</span> <span class="keyword">...</span>
+                       <span class="string">'validateInputs:GaussianMaskParamsUnavailable'</span>], <span class="keyword">...</span>
+                      [<span class="string">'Cannot access GaussianMaskParameters'</span> <span class="keyword">...</span>
+                       <span class="string">'to validate consistency in "%s".'</span>], label);
+            <span class="keyword">end</span>
+
+            <span class="keyword">function</span> tf = matchesSigma(maskObj, sigmaVec)
+                <span class="comment">% sigmaVec = [bandwidth, sigmaRule]</span>
+                [bw, sr] = getGaussianParams(maskObj);
+                tf = isequal([bw, sr], sigmaVec);
+            <span class="keyword">end</span>
+
+            <span class="keyword">function</span> dupError(idSuffix, msgFmt, varargin)
+                error( <span class="keyword">...</span>
+                [<span class="string">'sfrfs:SFRFsParametersRollingBearings:validateInputs:'</span> <span class="keyword">...</span>
+                idSuffix], msgFmt, varargin{:});
+            <span class="keyword">end</span>
+
+            <span class="comment">% check defined params</span>
+            hasSigmaCenter = isfield( <span class="keyword">...</span>
+                paramStruct, SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+            hasCenterMask = isfield( <span class="keyword">...</span>
+                paramStruct, SFRFsParameters.CENTER_MASK_PARAM_NAME);
+            hasSigmaSurround = isfield( <span class="keyword">...</span>
+                paramStruct, SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+            hasSurroundMask  = isfield( <span class="keyword">...</span>
+                paramStruct, SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+
+            <span class="comment">% duplicate in definition of center params</span>
+            <span class="keyword">if</span> hasSigmaCenter &amp;&amp; hasCenterMask
+                maskObj  = <span class="keyword">...</span>
+                    paramStruct.(SFRFsParameters.CENTER_MASK_PARAM_NAME);
+                sigmaVec = <span class="keyword">...</span>
+                    paramStruct.(SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+
+                <span class="comment">% Allow only if mask is Gaussian and matches sigmaCenter</span>
+                <span class="keyword">if</span> ~(isGaussianMask(maskObj) &amp;&amp; <span class="keyword">...</span>
+                        matchesSigma(maskObj, sigmaVec))
+                    dupError(<span class="string">'DuplicateCenterParameterization'</span>, <span class="keyword">...</span>
+                        [<span class="string">'Inconsistent CENTER parameterization in '</span> <span class="keyword">...</span>
+                         <span class="string">'"%s": sigmaCenter and centerMask are both '</span> <span class="keyword">...</span>
+                         <span class="string">'provided but do not match.'</span>], <span class="keyword">...</span>
+                        label);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% duplicate in definition of surround params</span>
+            <span class="keyword">if</span> hasSigmaSurround &amp;&amp; hasSurroundMask
+                maskObj  = paramStruct.(<span class="keyword">...</span>
+                    SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+                sigmaVec = paramStruct.(<span class="keyword">...</span>
+                    SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+
+                <span class="comment">% check if they match</span>
+                <span class="keyword">if</span> ~(isGaussianMask(maskObj) &amp;&amp; <span class="keyword">...</span>
+                        matchesSigma(maskObj, sigmaVec))
+                    dupError(<span class="string">'DuplicateSurroundParameterization'</span>, <span class="keyword">...</span>
+                        [<span class="string">'Inconsistent SURROUND parameterization '</span> <span class="keyword">...</span>
+                         <span class="string">'in "%s": sigmaSurround and surroundMask are '</span> <span class="keyword">...</span>
+                         <span class="string">'both provided but do not match.'</span>], <span class="keyword">...</span>
+                        label);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
         <span class="keyword">end</span>
 
         <span class="keyword">function</span> validateNoSidebands(paramStruct, faultTypeName)
@@ -317,6 +522,22 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                     <span class="string">'%s fault type must have NumSidebands = 0.'</span>, <span class="keyword">...</span>
                     faultTypeName);
             <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> s = format(p)
+            <span class="comment">% Extract state-only view of an SFRF parameter struct.</span>
+
+            s = jsonencode(struct( <span class="keyword">...</span>
+                <span class="string">'order'</span>, p.order, <span class="keyword">...</span>
+                <span class="string">'numSidebands'</span>, p.numSidebands, <span class="keyword">...</span>
+                <span class="string">'numHarmonics'</span>, p.numHarmonics, <span class="keyword">...</span>
+                <span class="string">'centerMask'</span>, struct( <span class="keyword">...</span>
+                <span class="string">'type'</span>, class(p.centerMask), <span class="keyword">...</span>
+                <span class="string">'params'</span>, p.centerMask.params), <span class="keyword">...</span>
+                <span class="string">'surroundMask'</span>, struct( <span class="keyword">...</span>
+                <span class="string">'type'</span>, class(p.surroundMask), <span class="keyword">...</span>
+                <span class="string">'params'</span>, p.surroundMask.params), <span class="keyword">...</span>
+                <span class="string">'inhibitionFactor'</span>, p.inhibitionFactor));
         <span class="keyword">end</span>
 
     <span class="keyword">end</span>
@@ -331,61 +552,63 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <!--
 ##### SOURCE BEGIN #####
 classdef SFRFsParametersRollingBearings < SFRFsParameters
-% SFRFsParametersRollingBearings  Store and validate SFRF parameters for 
+% SFRFsParametersRollingBearings  Store and validate SFRF parameters for
 % bearing fault types.
 %
-%   This value class stores validated Spectral Fault Receptive Field (SFRF) 
-%   parameter sets for:
-%      - Outer race (BPFO frequency band)
-%      - Inner race (BPFI frequency band)
-%      - Ball       (BSF frequency band)
-%      - Cage       (FTF frequency band)
+% This value class stores validated Spectral Fault Receptive Field (SFRF)
+% parameter sets for:
+%   - Outer race (BPFO frequency band)
+%   - Inner race (BPFI frequency band)
+%   - Ball       (BSF frequency band)
+%   - Cage       (FTF frequency band)
 %
-%   Construction uses named (keyword) arguments and supports two modes:
+% Construction uses named (keyword) arguments and supports two modes.
 %
-%   Mode 1: Individual SFRF parameters per fault type
-%     Mode 1 – Individual parameters for each fault type:
-%         paramsOuter = ...
-%           SFRFsParameters.createSFRFsParameters(...
-%           'order',2, 'sigmaCenter',[5,7]);
-%         paramsInner = ...
-%           SFRFsParameters.createSFRFsParameters(...
-%           'order',1, 'numHarmonics',8);
-%         paramsBall  = 
-%           SFRFsParameters.createSFRFsParameters(...
-%           'order',0, 'sigmaCenter',[4,6]);
-%         % use defaults
-%         paramsCage  = ...
-%           SFRFsParameters.createSFRFsParameters();  
+% Examples:
+% Mode 1 – Individual parameters for each fault type:
+%   centerOuter   = GaussianMaskParameters(bandwidth = 5, sigmaRule = 7);
+%   surroundOuter = SuperGaussianMaskParameters(alpha = 12, beta = 3);
 %
-%         params = SFRFsParametersRollingBearings( ...
-%                 'outerRace', paramsOuter, ...
-%                 'innerRace', paramsInner, ...
-%                 'ball',      paramsBall, ...
-%                 'cage',      paramsCage );
+%   paramsOuter = SFRFsParameters.buildSFRFsParameters( ...
+%     order            = 2, ...
+%     numSidebands     = 0, ...
+%     centerMask       = centerOuter, ...
+%     surroundMask     = surroundOuter, ...
+%     inhibitionFactor = 0.2);
 %
-%   Mode 2: Shared SFRF parameters for all fault types
-%     sharedParams = ...
-%         SFRFsParameters.createSFRFsParameters( ...
-%         'order', 3, ...
-%         'numSidebands', 4, ...
-%         'numHarmonics', 8, ...
-%         'sigmaCenter', [5, 7], ...
-%         'sigmaSurround', [12, 3], ...
-%         'inhibitionFactor', 0.6);
+%   paramsInner = SFRFsParameters.buildSFRFsParameters( ...
+%     order        = 1, ...
+%     numHarmonics = 8);
 %
-%     obj = SFRFsParametersRollingBearings( ...
-%         'SameForAllFaultTypes', sharedParams);
+%   paramsBall  = SFRFsParameters.buildSFRFsParameters( ...
+%     order      = 0, ...
+%     centerMask = GaussianMaskParameters(bandwidth = 4, sigmaRule = 6));
 %
-%   Reference:
-%       Stan Muñoz Gutiérrez and Franz Wotawa. Optimized Spectral Fault 
-%       Receptive Fields for Diagnosis-Informed Prognosis. In 36th 
-%       International Conference on Principles of Diagnosis and Resilient 
-%       Systems (DX 2025). Open Access Series in Informatics (OASIcs), 
-%       Volume 136, pp. 9:1-9:20, Schloss Dagstuhl – Leibniz-Zentrum für 
-%       Informatik (2025) DOI:10.4230/OASIcs.DX.2025.9.
+%   paramsCage  = SFRFsParameters.buildSFRFsParameters( ...
+%     numSidebands = 0);
 %
-%   See also: SFRFsParameters         
+%   obj = SFRFsParametersRollingBearings( ...
+%     outerRace = paramsOuter, ...
+%     innerRace = paramsInner, ...
+%     ball      = paramsBall, ...
+%     cage      = paramsCage);
+%
+% Mode 2 – Shared SFRF parameters for all fault types:
+%   sharedParams = SFRFsParameters.buildSFRFsParameters( ...
+%     order            = 3, ...
+%     numSidebands     = 4, ...
+%     numHarmonics     = 8, ...
+%     centerMask       = GaussianMaskParameters(...
+%                           bandwidth = 5, sigmaRule = 7), ...
+%     surroundMask     = SuperGaussianMaskParameters(...
+%                           alpha = 12, beta = 4), ...
+%     inhibitionFactor = 0.6);
+%
+%   obj = SFRFsParametersRollingBearings( ...
+%     SameForAllFaultTypes = sharedParams);
+%
+% See also: SFRFsParameters
+     
 
     properties
         outerRace   % SFRF params for Outer race faults
@@ -459,18 +682,43 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
         end
 
         function str = toString(obj)
-            % toString Return a formatted string representation of the 
-            % object.
-            
-            outerRaceStr = jsonencode(obj.outerRace);
-            innerRaceStr = jsonencode(obj.innerRace);
-            ballStr = jsonencode(obj.ball);
-            cageStr = jsonencode(obj.cage);
-            
-            str = sprintf(['[SFRFsParametersRollingBearings:', ...
-                ' outerRace: %s, innerRace: %s, ball: %s, cage: %s]'], ...
-                outerRaceStr, innerRaceStr, ballStr, cageStr);
+            % toString Return a concise state representation of the object.
+
+            str = sprintf( ...
+                ['[SFRFsParametersRollingBearings:', ...
+                ' outerRace=%s, innerRace=%s, ball=%s, cage=%s]'], ...
+                SFRFsParametersRollingBearings.format(obj.outerRace), ...
+                SFRFsParametersRollingBearings.format(obj.innerRace), ...
+                SFRFsParametersRollingBearings.format(obj.ball), ...
+                SFRFsParametersRollingBearings.format(obj.cage));
         end
+
+        function params = getParamsForFaultType(obj, faultTypeName)
+            % getParamsForFaultType Return the parameter struct for a given 
+            % fault type.
+
+            arguments
+                obj (1,1) SFRFsParametersRollingBearings
+                faultTypeName {mustBeTextScalar}
+            end
+
+            ft = string(faultTypeName);
+
+            % Validate supported fault types
+            if ~any(strcmp(ft, SFRFsParametersRollingBearings.faultTypes))
+                error( ...
+                    ['sfrfs:SFRFsParametersRollingBearings:' ...
+                    'getParamsForFaultType:UnknownFaultType'], ...
+                    'Unknown fault type "%s". Supported types: %s.', ...
+                    ft, ...
+                    strjoin(SFRFsParametersRollingBearings.faultTypes, ...
+                    ', '));
+            end
+
+            params = obj.(ft);
+
+        end
+
     end
 
     methods (Access = private, Static)
@@ -492,6 +740,8 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
                         ['Not additional arguments allowed for ' ...
                         'SameForAllFaultTypes option']);
                 end
+                SFRFsParametersRollingBearings.checkDuplicateParams( ...
+                    args.SameForAllFaultTypes, 'SameForAllFaultTypes');
                 missingSFRFParams = getMissPar(...
                     'SameForAllFaultTypes', args);
             else
@@ -508,8 +758,15 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
                 % validate params of fault types
                 fts = SFRFsParametersRollingBearings.faultTypes;
                 missingSFRFParams = {};
-                for i=1:length(fts)
-                    misspars = getMissPar(fts(i), args);
+
+                for i = 1:numel(fts)
+                    ft = fts{i};
+
+                    SFRFsParametersRollingBearings.checkDuplicateParams(...
+                        args.(ft), ft);
+
+                    misspars = getMissPar(ft, args);
+
                     if ~isempty(misspars)
                         missingSFRFParams = ...
                             [missingSFRFParams, misspars]; %#ok<AGROW>
@@ -537,11 +794,10 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
             missingFields = ...
                 SFRFsParametersRollingBearings.missingPars(args.(fname));
             if ~isempty(missingFields)
-                missingParams{end+1} = ...
-                    sprintf('%s (missing fields: %s)', ...
-                    fname, ...
-                    strjoin(missingFields, ', '));
+                missingParams{end+1} = sprintf('%s (%s)', ...
+                    fname, strjoin(missingFields, '; '));
             end
+
         end
 
         function missingFaults = getMissingFaultTypes(args)
@@ -554,12 +810,182 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
         end
 
         function missingFields = missingPars(paramStruct)
+        
+            coreFields = { ...
+                SFRFsParameters.ORDER_PARAM_NAME, ...
+                SFRFsParameters.NUM_SIDEBANDS_PARAM_NAME, ...
+                SFRFsParameters.NUM_HARMONICS_PARAM_NAME, ...
+                SFRFsParameters.INHIBITION_FACTOR_PARAM_NAME };
+        
+            legacyFields = { ...
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME, ...
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME };
+        
+            maskFields = { ...
+                SFRFsParameters.CENTER_MASK_PARAM_NAME, ...
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME };
+        
+            missingCore   = ...
+                coreFields(~isfield(paramStruct, coreFields));
+            missingLegacy = ...
+                legacyFields(~isfield(paramStruct, legacyFields));
+            missingMasks  = ...
+                maskFields(~isfield(paramStruct, maskFields));
+        
+            missingFields = {};
+        
+            % Always include core if missing
+            if ~isempty(missingCore)
+                missingFields{end+1} = sprintf( ...
+                    'Missing core fields: %s', strjoin(missingCore, ', '));
+            end
+        
+            % 2b interface semantics:
+            % - center must be defined via: sigmaCenter OR centerMask
+            % - surround must be defined via: sigmaSurround OR surroundMask
+        
+            hasSigmaCenter = isfield(paramStruct, ...
+                SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+            hasCenterMask  = isfield(paramStruct, ...
+                SFRFsParameters.CENTER_MASK_PARAM_NAME);
+        
+            hasSigmaSurround = isfield(paramStruct, ...
+                SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+            hasSurroundMask  = isfield(paramStruct, ...
+                SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+        
+            centerDefined   = hasSigmaCenter   || hasCenterMask;
+            surroundDefined = hasSigmaSurround || hasSurroundMask;
+        
+            if ~(centerDefined && surroundDefined)
+                if ~centerDefined
+                    % Tailored suggestions using what is actually missing
+                    missingFields{end+1} = sprintf( ...
+                        ['Center undefined: ' ...
+                         'provide %s or %s (missing: %s)'], ...
+                        SFRFsParameters.SIGMA_CENTER_PARAM_NAME, ...
+                        SFRFsParameters.CENTER_MASK_PARAM_NAME, ...
+                        strjoin(intersect( ...
+                            {SFRFsParameters.SIGMA_CENTER_PARAM_NAME, ...
+                             SFRFsParameters.CENTER_MASK_PARAM_NAME}, ...
+                            [missingLegacy, missingMasks], ...
+                            'stable'), ', '));
+                end
+        
+                if ~surroundDefined
+                    missingFields{end+1} = sprintf( ...
+                        ['Surround undefined: ' ...
+                         'provide %s or %s (missing: %s)'], ...
+                        SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, ...
+                        SFRFsParameters.SURROUND_MASK_PARAM_NAME, ...
+                        strjoin(intersect( ...
+                            {SFRFsParameters.SIGMA_SURROUND_PARAM_NAME, ...
+                             SFRFsParameters.SURROUND_MASK_PARAM_NAME}, ...
+                            [missingLegacy, missingMasks], ...
+                            'stable'), ', '));
+                end
+            end
+        end
 
-            fields = SFRFsParametersRollingBearings.sfrfFields; 
 
-            % Check which required fields are missing
-            missingFields = fields(~isfield(paramStruct, fields));
-
+        function checkDuplicateParams(paramStruct, label)
+        % checkDuplicateParams
+        % Reject duplicate parameterization unless it is a consistent, 
+        % redundant legacy-to-mask canonization (old sigma parameters
+        % are converted to MaskParameters objects and added as additional
+        % fileds).
+        %
+        % Allowed:
+        %   - Center: sigmaCenter OR centerMask
+        %   - Surround: sigmaSurround OR surroundMask
+        %   - Mixed across center/surround is allowed 
+        %   - If BOTH are present for center/surround, allowed only when:
+        %       * mask is GaussianMaskParameters
+        %       * mask params match sigma vector exactly
+        
+            function tf = isGaussianMask(maskObj)
+                tf = isa(maskObj, 'GaussianMaskParameters');
+            end
+        
+            function [bw, sr] = getGaussianParams(maskObj)
+                % Try common representations
+                if isprop(maskObj, 'bandwidth') && ...
+                        isprop(maskObj, 'sigmaRule')
+                    bw = maskObj.bandwidth;
+                    sr = maskObj.sigmaRule;
+                    return
+                end
+                if isprop(maskObj, 'params') && ... 
+                    isstruct(maskObj.params) && ...
+                        isfield(maskObj.params, 'bandwidth') && ...
+                        isfield(maskObj.params, 'sigmaRule')
+                    bw = maskObj.params.bandwidth;
+                    sr = maskObj.params.sigmaRule;
+                    return
+                end
+                error(['sfrfs:SFRFsParametersRollingBearings:' ...
+                       'validateInputs:GaussianMaskParamsUnavailable'], ...
+                      ['Cannot access GaussianMaskParameters' ...
+                       'to validate consistency in "%s".'], label);
+            end
+        
+            function tf = matchesSigma(maskObj, sigmaVec)
+                % sigmaVec = [bandwidth, sigmaRule]
+                [bw, sr] = getGaussianParams(maskObj);
+                tf = isequal([bw, sr], sigmaVec);
+            end
+        
+            function dupError(idSuffix, msgFmt, varargin)
+                error( ...
+                ['sfrfs:SFRFsParametersRollingBearings:validateInputs:' ...
+                idSuffix], msgFmt, varargin{:});
+            end
+        
+            % check defined params
+            hasSigmaCenter = isfield( ...
+                paramStruct, SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+            hasCenterMask = isfield( ...
+                paramStruct, SFRFsParameters.CENTER_MASK_PARAM_NAME);
+            hasSigmaSurround = isfield( ...
+                paramStruct, SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+            hasSurroundMask  = isfield( ...
+                paramStruct, SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+        
+            % duplicate in definition of center params
+            if hasSigmaCenter && hasCenterMask
+                maskObj  = ...
+                    paramStruct.(SFRFsParameters.CENTER_MASK_PARAM_NAME);
+                sigmaVec = ...
+                    paramStruct.(SFRFsParameters.SIGMA_CENTER_PARAM_NAME);
+        
+                % Allow only if mask is Gaussian and matches sigmaCenter
+                if ~(isGaussianMask(maskObj) && ...
+                        matchesSigma(maskObj, sigmaVec))
+                    dupError('DuplicateCenterParameterization', ...
+                        ['Inconsistent CENTER parameterization in ' ...
+                         '"%s": sigmaCenter and centerMask are both ' ...
+                         'provided but do not match.'], ...
+                        label);
+                end
+            end
+        
+            % duplicate in definition of surround params
+            if hasSigmaSurround && hasSurroundMask
+                maskObj  = paramStruct.(...
+                    SFRFsParameters.SURROUND_MASK_PARAM_NAME);
+                sigmaVec = paramStruct.(...
+                    SFRFsParameters.SIGMA_SURROUND_PARAM_NAME);
+        
+                % check if they match
+                if ~(isGaussianMask(maskObj) && ...
+                        matchesSigma(maskObj, sigmaVec))
+                    dupError('DuplicateSurroundParameterization', ...
+                        ['Inconsistent SURROUND parameterization ' ...
+                         'in "%s": sigmaSurround and surroundMask are ' ...
+                         'both provided but do not match.'], ...
+                        label);
+                end
+            end
         end
 
         function validateNoSidebands(paramStruct, faultTypeName)
@@ -570,6 +996,22 @@ classdef SFRFsParametersRollingBearings < SFRFsParameters
                     '%s fault type must have NumSidebands = 0.', ...
                     faultTypeName);
             end
+        end
+
+        function s = format(p)
+            % Extract state-only view of an SFRF parameter struct.
+
+            s = jsonencode(struct( ...
+                'order', p.order, ...
+                'numSidebands', p.numSidebands, ...
+                'numHarmonics', p.numHarmonics, ...
+                'centerMask', struct( ...
+                'type', class(p.centerMask), ...
+                'params', p.centerMask.params), ...
+                'surroundMask', struct( ...
+                'type', class(p.surroundMask), ...
+                'params', p.surroundMask.params), ...
+                'inhibitionFactor', p.inhibitionFactor));
         end
 
     end

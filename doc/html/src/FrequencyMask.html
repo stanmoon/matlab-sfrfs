@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>FrequencyMask</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="FrequencyMask.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -85,8 +85,55 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <span class="comment">%   - Super-Gaussian masks.</span>
 <span class="comment">%       (Super-Gaussian includes Gaussian as a special case but</span>
 <span class="comment">%        is parameterized differently to allow varying shape.)</span>
+<span class="comment">%</span>
+<span class="comment">% New unified entry point:</span>
+<span class="comment">%   G = FrequencyMask.evaluate(f, band, maskParams)</span>
+<span class="comment">%</span>
+<span class="comment">% Legacy utilities remain:</span>
+<span class="comment">%   - G = FrequencyMask.gaussian(f, band, sigmaRule, normalize)</span>
+<span class="comment">%   - G = FrequencyMask.superGauss(f, band, beta)</span>
 
     <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> G = evaluate(f, band, maskParams)
+            <span class="comment">% evaluate  Evaluate a mask given MaskParameters.</span>
+            <span class="comment">%</span>
+            <span class="comment">% Usage:</span>
+            <span class="comment">%   G = FrequencyMask.evaluate(f, band, maskParams)</span>
+            <span class="comment">%</span>
+            <span class="comment">% Inputs:</span>
+            <span class="comment">%   f         Frequency domain vector (Hz)</span>
+            <span class="comment">%   band      Two element vector [fMin, fMax] defining the</span>
+            <span class="comment">%             frequency band (Hz)</span>
+            <span class="comment">%   maskParams MaskParameters instance</span>
+            <span class="comment">%              (e.g., GaussianMaskParameters,</span>
+            <span class="comment">%                     SuperGaussianMaskParameters)</span>
+            <span class="comment">%</span>
+            <span class="comment">% Output:</span>
+            <span class="comment">%   G         Mask vector (same length as f)</span>
+
+            <span class="keyword">arguments</span>
+                f <span class="typesection">(:,1) double</span>
+                band <span class="typesection">(1,2) double {mustBeNonnegative}</span>
+                maskParams <span class="typesection">(1,1) MaskParameters</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(maskParams, <span class="string">"GaussianMaskParameters"</span>)
+                G = FrequencyMask.gaussian( <span class="keyword">...</span>
+                    f, band, maskParams.sigmaRule, maskParams.normalize);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isa(maskParams, <span class="string">"SuperGaussianMaskParameters"</span>)
+                G = FrequencyMask.superGauss(<span class="keyword">...</span>
+                    f, band, maskParams.alpha, maskParams.beta);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error(<span class="string">"sfrfs:FrequencyMask:evaluate:UnsupportedMaskType"</span>, <span class="keyword">...</span>
+                <span class="string">"Unsupported mask parameters type: %s"</span>, class(maskParams));
+        <span class="keyword">end</span>
+
         <span class="keyword">function</span> G = gaussian(f, band, sigmaRule, normalize)
             <span class="comment">% gaussian Generate Gaussian mask over a frequency band.</span>
             <span class="comment">%</span>
@@ -136,48 +183,62 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             <span class="keyword">end</span>
         <span class="keyword">end</span>
 
-        <span class="keyword">function</span> G = superGauss(f, band, beta)
-        <span class="comment">% superGauss Generate super-Gaussian mask over a frequency band.</span>
+        <span class="keyword">function</span> G = superGauss(f, band, alpha, beta)
+        <span class="comment">% superGauss Generate a super-Gaussian frequency mask.</span>
         <span class="comment">%</span>
-        <span class="comment">% Usage:</span>
-        <span class="comment">%   G = FrequencyMask.superGauss(f, band, beta)</span>
+        <span class="comment">%   G = FrequencyMask.superGauss(f, band, alpha, beta)</span>
         <span class="comment">%</span>
-        <span class="comment">% Inputs:</span>
-        <span class="comment">%   f      Frequency domain vector (Hz)</span>
-        <span class="comment">%   band   Two-element vector [fMin, fMax] with the frequency band</span>
-        <span class="comment">%   beta   Positive shape exponent controlling the shape factor of</span>
-        <span class="comment">%          the mask:</span>
-        <span class="comment">%               - &lt; 0,  raises an error, mathematically possible</span>
-        <span class="comment">%                       but results in a minimum at the central</span>
-        <span class="comment">%                       frequency rather than a maximum.</span>
-        <span class="comment">%               - = 0,  raises an error, constant value.</span>
-        <span class="comment">%               - = 1,  Laplacian, close to triangular inside the</span>
-        <span class="comment">%                       monitoring bandwith</span>
-        <span class="comment">%               - = 2,  Gaussian, profile.</span>
-        <span class="comment">%               - &gt; 2,  flatter shape, decays slower than a</span>
-        <span class="comment">%                       Gaussian.</span>
-        <span class="comment">%               - &gt;&gt; 2, tends to a square shaped mask.</span>
+        <span class="comment">%   Computes a super-Gaussian mask</span>
         <span class="comment">%</span>
-        <span class="comment">% Output:</span>
-        <span class="comment">%   G      Super-Gaussian mask vector (same length as f)</span>
+        <span class="comment">%       G(f) = exp( - |(f - f_c) / alpha|^beta )</span>
         <span class="comment">%</span>
-        <span class="comment">% Note:</span>
-        <span class="comment">%   The mask width parameter alpha is set equal to the bandwidth:</span>
-        <span class="comment">%       alpha = bandwidth (fMax - fMin)</span>
+        <span class="comment">%   where f_c is the center frequency of the band [fMin, fMax].</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Semantics:</span>
+        <span class="comment">%   - The scale parameter alpha is constrained to</span>
+        <span class="comment">%</span>
+        <span class="comment">%         alpha = (fMax - fMin) / 2</span>
+        <span class="comment">%</span>
+        <span class="comment">%   - The shape parameter beta controls the sharpness of the</span>
+        <span class="comment">%     profile (beta = 2 corresponds to a Gaussian-equivalent</span>
+        <span class="comment">%     shape).</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Inputs:</span>
+        <span class="comment">%     f      - Frequency vector (Hz).</span>
+        <span class="comment">%     band   - Two-element vector [fMin, fMax].</span>
+        <span class="comment">%     alpha  - Scale parameter (must match half-bandwidth).</span>
+        <span class="comment">%     beta   - Positive shape exponent.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Output:</span>
+        <span class="comment">%     G      - Super-Gaussian mask evaluated at f.</span>
+        <span class="comment">%</span>
+        <span class="comment">%   Errors:</span>
+        <span class="comment">%     sfrfs:FrequencyMask:superGauss:AlphaMismatch</span>
 
             <span class="keyword">arguments</span>
                 f <span class="typesection">(:,1) double</span>
                 band <span class="typesection">(1,2) double {mustBeNonnegative}</span>
-                beta <span class="typesection">(1,1) double {mustBePositive}</span>
+                alpha <span class="typesection">(1,1) double {mustBePositive}</span>
+                beta  <span class="typesection">(1,1) double {mustBePositive}</span>
             <span class="keyword">end</span>
 
             f = f(:);
             fMin = band(1);
             fMax = band(2);
             centerFreq = mean(band);
-            bandwidth = fMax - fMin;
 
-            alpha = bandwidth;
+            <span class="comment">% Consistency check: expected half-bandwidth semantics.</span>
+            expectedAlpha = (fMax - fMin) / 2;
+
+            <span class="comment">% relative tolerance</span>
+            tol = 1e-12;
+            denom = max(1, abs(expectedAlpha));
+            <span class="keyword">if</span> abs(alpha - expectedAlpha) / denom &gt; tol
+                error(<span class="string">"sfrfs:FrequencyMask:superGauss:AlphaMismatch"</span>, <span class="keyword">...</span>
+                    [<span class="string">'SuperGaussian alpha mismatch. Expected alpha = '</span> <span class="keyword">...</span>
+                    <span class="string">'(fMax - fMin)/2 = %.15g, but got %.15g.'</span>], <span class="keyword">...</span>
+                    expectedAlpha, alpha);
+            <span class="keyword">end</span>
 
             G = exp(-abs((f - centerFreq) / alpha).^beta);
         <span class="keyword">end</span>
@@ -199,10 +260,57 @@ classdef FrequencyMask
 % Current support:
 %   - Gaussian masks.
 %   - Super-Gaussian masks.
-%       (Super-Gaussian includes Gaussian as a special case but 
+%       (Super-Gaussian includes Gaussian as a special case but
 %        is parameterized differently to allow varying shape.)
-    
+%
+% New unified entry point:
+%   G = FrequencyMask.evaluate(f, band, maskParams)
+%
+% Legacy utilities remain:
+%   - G = FrequencyMask.gaussian(f, band, sigmaRule, normalize)
+%   - G = FrequencyMask.superGauss(f, band, beta)
+
     methods (Static)
+
+        function G = evaluate(f, band, maskParams)
+            % evaluate  Evaluate a mask given MaskParameters.
+            %
+            % Usage:
+            %   G = FrequencyMask.evaluate(f, band, maskParams)
+            %
+            % Inputs:
+            %   f         Frequency domain vector (Hz)
+            %   band      Two element vector [fMin, fMax] defining the 
+            %             frequency band (Hz)
+            %   maskParams MaskParameters instance 
+            %              (e.g., GaussianMaskParameters,
+            %                     SuperGaussianMaskParameters)
+            %
+            % Output:
+            %   G         Mask vector (same length as f)
+
+            arguments
+                f (:,1) double
+                band (1,2) double {mustBeNonnegative}
+                maskParams (1,1) MaskParameters
+            end
+
+            if isa(maskParams, "GaussianMaskParameters")
+                G = FrequencyMask.gaussian( ...
+                    f, band, maskParams.sigmaRule, maskParams.normalize);
+                return
+            end
+
+            if isa(maskParams, "SuperGaussianMaskParameters")
+                G = FrequencyMask.superGauss(...
+                    f, band, maskParams.alpha, maskParams.beta);
+                return
+            end
+
+            error("sfrfs:FrequencyMask:evaluate:UnsupportedMaskType", ...
+                "Unsupported mask parameters type: %s", class(maskParams));
+        end
+
         function G = gaussian(f, band, sigmaRule, normalize)
             % gaussian Generate Gaussian mask over a frequency band.
             %
@@ -213,34 +321,34 @@ classdef FrequencyMask
             %
             % Inputs:
             %   f         Frequency domain vector (Hz)
-            %   band      Two element vector [fMin, fMax] defining the band 
+            %   band      Two element vector [fMin, fMax] defining the band
             %             (Hz)
             %   sigmaRule Bandwidth divisor to sigma (default: 3)
             %   normalize Logical to normalize area to 1 (default: false)
             %
             % Output:
             %   G         Gaussian mask vector (same length as f)
-            
+
             arguments
                 f (:,1) double
                 band (1,2) double {mustBeNonnegative}
                 sigmaRule (1,1) double {mustBePositive} = 3
                 normalize (1,1) logical = false
             end
-            
+
             % Ensure column vector
             f = f(:);
-            
+
             % Compute parameters
             fMin = band(1);
             fMax = band(2);
             centerFreq = (fMin + fMax) / 2;
             bandwidth = fMax - fMin;
             sigmaF = bandwidth / (2 * sigmaRule);
-            
+
             % Compute Gaussian
             G = exp(-0.5 * ((f - centerFreq) / sigmaF).^2);
-            
+
             % Normalize if needed
             if normalize
                 df = mean(diff(f));
@@ -251,50 +359,64 @@ classdef FrequencyMask
                 G = G / area;
             end
         end
-        
-        function G = superGauss(f, band, beta)
-        % superGauss Generate super-Gaussian mask over a frequency band.
+
+        function G = superGauss(f, band, alpha, beta)
+        % superGauss Generate a super-Gaussian frequency mask.
         %
-        % Usage:
-        %   G = FrequencyMask.superGauss(f, band, beta)
+        %   G = FrequencyMask.superGauss(f, band, alpha, beta)
         %
-        % Inputs:
-        %   f      Frequency domain vector (Hz)
-        %   band   Two-element vector [fMin, fMax] with the frequency band
-        %   beta   Positive shape exponent controlling the shape factor of
-        %          the mask:
-        %               - < 0,  raises an error, mathematically possible
-        %                       but results in a minimum at the central
-        %                       frequency rather than a maximum.
-        %               - = 0,  raises an error, constant value.
-        %               - = 1,  Laplacian, close to triangular inside the
-        %                       monitoring bandwith
-        %               - = 2,  Gaussian, profile.
-        %               - > 2,  flatter shape, decays slower than a
-        %                       Gaussian.
-        %               - >> 2, tends to a square shaped mask. 
+        %   Computes a super-Gaussian mask
         %
-        % Output:
-        %   G      Super-Gaussian mask vector (same length as f)
+        %       G(f) = exp( - |(f - f_c) / alpha|^beta )
         %
-        % Note:
-        %   The mask width parameter alpha is set equal to the bandwidth:
-        %       alpha = bandwidth (fMax - fMin)
-            
+        %   where f_c is the center frequency of the band [fMin, fMax].
+        %
+        %   Semantics:
+        %   - The scale parameter alpha is constrained to
+        %
+        %         alpha = (fMax - fMin) / 2
+        %
+        %   - The shape parameter beta controls the sharpness of the
+        %     profile (beta = 2 corresponds to a Gaussian-equivalent
+        %     shape).
+        %
+        %   Inputs:
+        %     f      - Frequency vector (Hz).
+        %     band   - Two-element vector [fMin, fMax].
+        %     alpha  - Scale parameter (must match half-bandwidth).
+        %     beta   - Positive shape exponent.
+        %
+        %   Output:
+        %     G      - Super-Gaussian mask evaluated at f.
+        %
+        %   Errors:
+        %     sfrfs:FrequencyMask:superGauss:AlphaMismatch
+
             arguments
                 f (:,1) double
                 band (1,2) double {mustBeNonnegative}
-                beta (1,1) double {mustBePositive}
+                alpha (1,1) double {mustBePositive}
+                beta  (1,1) double {mustBePositive}
             end
-            
+
             f = f(:);
             fMin = band(1);
             fMax = band(2);
             centerFreq = mean(band);
-            bandwidth = fMax - fMin;
-            
-            alpha = bandwidth;
-            
+
+            % Consistency check: expected half-bandwidth semantics.
+            expectedAlpha = (fMax - fMin) / 2;
+
+            % relative tolerance
+            tol = 1e-12;
+            denom = max(1, abs(expectedAlpha));
+            if abs(alpha - expectedAlpha) / denom > tol
+                error("sfrfs:FrequencyMask:superGauss:AlphaMismatch", ...
+                    ['SuperGaussian alpha mismatch. Expected alpha = ' ...
+                    '(fMax - fMin)/2 = %.15g, but got %.15g.'], ...
+                    expectedAlpha, alpha);
+            end
+
             G = exp(-abs((f - centerFreq) / alpha).^beta);
         end
 

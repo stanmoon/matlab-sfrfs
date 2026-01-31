@@ -1,0 +1,261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>FaultConditionSelector</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-01-31">
+<meta name="DC.source" content="FaultConditionSelector.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> FaultConditionSelector
+<span class="comment">%FaultConditionSelector  Resolve a fault-condition key to a unique row.</span>
+<span class="comment">%</span>
+<span class="comment">% Key:</span>
+<span class="comment">%   (FaultGroup, Speed, Load)</span>
+<span class="comment">%</span>
+<span class="comment">% Usage:</span>
+<span class="comment">%   sel = OperatingConditionSelection(speed=speedHz, load=loadkN);</span>
+<span class="comment">%   idx = FaultConditionSelector.selectRow( ...</span>
+<span class="comment">%       tbl, faultGroup=faultGroup, selection=sel);</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> idx = selectRow(tbl, args)
+            <span class="keyword">arguments</span>
+                tbl <span class="typesection">table</span>
+                args.faultGroup <span class="typesection">(1,1) double {mustBeFinite, mustBeReal}</span>
+                args.selection <span class="typesection">(1,1) OperatingConditionSelection</span>
+            <span class="keyword">end</span>
+
+            faultGroup = args.faultGroup;
+            sel = args.selection;
+
+            import <span class="string">tables.FaultConditionTableMetaSchema</span>;
+            ms = FaultConditionTableMetaSchema;
+            FG = ms.FAULTGROUP;
+            SP = ms.SPEED;
+            LD = ms.LOAD;
+
+            FaultConditionSelector.mustHaveColumn_(tbl, FG);
+            FaultConditionSelector.mustHaveColumn_(tbl, SP);
+            FaultConditionSelector.mustHaveColumn_(tbl, LD);
+
+            m = (tbl.(FG) == faultGroup) &amp; <span class="keyword">...</span>
+                (tbl.(SP) == sel.speed) &amp; <span class="keyword">...</span>
+                (tbl.(LD) == sel.load);
+
+            idxs = find(m);
+
+            <span class="keyword">if</span> isempty(idxs)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:tables:FaultConditionSelector:NoMatch"</span>, <span class="keyword">...</span>
+                    <span class="string">"No row matches FaultGroup=%g, Speed=%.6g Hz, "</span> + <span class="keyword">...</span>
+                    <span class="string">"Load=%.6g."</span>, faultGroup, sel.speed, sel.load);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> numel(idxs) &gt; 1
+                error( <span class="keyword">...</span>
+                    [<span class="string">'sfrfs:tables:FaultConditionSelector:'</span> <span class="keyword">...</span>
+                     <span class="string">'AmbiguousMatch'</span>], <span class="keyword">...</span>
+                    <span class="string">"Selection matches %d rows: %s."</span>, numel(idxs), <span class="keyword">...</span>
+                    mat2str(idxs(:)'));
+            <span class="keyword">end</span>
+
+            idx = idxs(1);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [rec, idx] = extractRecordStruct(tbl, args)
+            <span class="keyword">arguments</span>
+                tbl <span class="typesection">table</span>
+                args.faultGroup <span class="typesection">(1,1) double {mustBeFinite, mustBeReal}</span>
+                args.selection <span class="typesection">(1,1) OperatingConditionSelection</span>
+            <span class="keyword">end</span>
+
+            idx = FaultConditionSelector.selectRow(tbl, <span class="keyword">...</span>
+                faultGroup=args.faultGroup, <span class="keyword">...</span>
+                selection=args.selection);
+
+            rec = table2struct(tbl(idx, :));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> mustHaveColumn_(tbl, name)
+            <span class="keyword">if</span> ~ismember(name, string(tbl.Properties.VariableNames))
+                error( <span class="keyword">...</span>
+                    [<span class="string">'sfrfs:tables:FaultConditionSelector:'</span> <span class="keyword">...</span>
+                     <span class="string">'MissingColumn'</span>], <span class="keyword">...</span>
+                    <span class="string">"Required column '%s' is missing."</span>, name);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef FaultConditionSelector
+%FaultConditionSelector  Resolve a fault-condition key to a unique row.
+%
+% Key:
+%   (FaultGroup, Speed, Load)
+%
+% Usage:
+%   sel = OperatingConditionSelection(speed=speedHz, load=loadkN);
+%   idx = FaultConditionSelector.selectRow( ...
+%       tbl, faultGroup=faultGroup, selection=sel);
+
+    methods (Static)
+
+        function idx = selectRow(tbl, args)
+            arguments
+                tbl table
+                args.faultGroup (1,1) double {mustBeFinite, mustBeReal}
+                args.selection (1,1) OperatingConditionSelection
+            end
+
+            faultGroup = args.faultGroup;
+            sel = args.selection;
+
+            import tables.FaultConditionTableMetaSchema;
+            ms = FaultConditionTableMetaSchema;
+            FG = ms.FAULTGROUP;
+            SP = ms.SPEED;
+            LD = ms.LOAD;
+
+            FaultConditionSelector.mustHaveColumn_(tbl, FG);
+            FaultConditionSelector.mustHaveColumn_(tbl, SP);
+            FaultConditionSelector.mustHaveColumn_(tbl, LD);
+
+            m = (tbl.(FG) == faultGroup) & ...
+                (tbl.(SP) == sel.speed) & ...
+                (tbl.(LD) == sel.load);
+
+            idxs = find(m);
+
+            if isempty(idxs)
+                error( ...
+                    "sfrfs:tables:FaultConditionSelector:NoMatch", ...
+                    "No row matches FaultGroup=%g, Speed=%.6g Hz, " + ...
+                    "Load=%.6g.", faultGroup, sel.speed, sel.load);
+            end
+
+            if numel(idxs) > 1
+                error( ...
+                    ['sfrfs:tables:FaultConditionSelector:' ...
+                     'AmbiguousMatch'], ...
+                    "Selection matches %d rows: %s.", numel(idxs), ...
+                    mat2str(idxs(:)'));
+            end
+
+            idx = idxs(1);
+        end
+
+        function [rec, idx] = extractRecordStruct(tbl, args)
+            arguments
+                tbl table
+                args.faultGroup (1,1) double {mustBeFinite, mustBeReal}
+                args.selection (1,1) OperatingConditionSelection
+            end
+
+            idx = FaultConditionSelector.selectRow(tbl, ...
+                faultGroup=args.faultGroup, ...
+                selection=args.selection);
+
+            rec = table2struct(tbl(idx, :));
+        end
+    end
+
+    methods (Static, Access = private)
+
+        function mustHaveColumn_(tbl, name)
+            if ~ismember(name, string(tbl.Properties.VariableNames))
+                error( ...
+                    ['sfrfs:tables:FaultConditionSelector:' ...
+                     'MissingColumn'], ...
+                    "Required column '%s' is missing.", name);
+            end
+        end
+    end
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

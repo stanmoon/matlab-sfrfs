@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>SFRFsCompute</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2025-12-10">
+<meta name="DC.date" content="2026-01-31">
 <meta name="DC.source" content="SFRFsCompute.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -78,13 +78,18 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <div class="content">
 <pre class="codeinput">
 <span class="keyword">classdef</span> SFRFsCompute &lt; handle
-    <span class="comment">% SFRFsCompute Performs spectral fault receptive field computations</span>
-    <span class="comment">%   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and</span>
-    <span class="comment">%   ParametersSnapshot to compute responses on input signals.</span>
-    <span class="comment">%</span>
-    <span class="comment">% Example usage:</span>
-    <span class="comment">%   sfrfsCalc = SFRFsCompute(paramsSnapshot, rfgfInstance);</span>
-    <span class="comment">%   responseTable = sfrfsCalc.compute(x, operatingCondition);</span>
+<span class="comment">% SFRFsCompute Performs spectral fault receptive field computations</span>
+<span class="comment">%   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and</span>
+<span class="comment">%   ParametersSnapshot to compute responses on input signals.</span>
+<span class="comment">%</span>
+<span class="comment">% Example usage:</span>
+<span class="comment">%   sfrfsCalc = SFRFsCompute( ...</span>
+<span class="comment">%       snapshotParameters = paramsSnapshot, ...</span>
+<span class="comment">%       rfgfs = rfgfInstance);</span>
+<span class="comment">%</span>
+<span class="comment">%   responseTable = sfrfsCalc.compute( ...</span>
+<span class="comment">%       temporalSnapshot = x, ...</span>
+<span class="comment">%       operatingCondition = operatingCondition);</span>
 
 
     <span class="keyword">properties</span> (SetAccess = private)
@@ -154,52 +159,63 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
                     isempty(args.spectrumSnapshot)
                 error(<span class="string">'sfrfs:SFRFsCompute:NoInputSingal'</span>, <span class="keyword">...</span>
                     <span class="string">'Either temporal or spectral data must be provided.'</span>);
-            <span class="keyword">elseif</span> ~isempty(args.temporalSnapshot) &amp;&amp; <span class="keyword">...</span>
-                    ~isempty(args.spectrumSnapshot)
-                error(<span class="string">'sfrfs:SFRFsCompute:AmbiguousInputSignal'</span>,<span class="keyword">...</span>
-                    [<span class="string">'Only one of temporal or spectral data'</span> <span class="keyword">...</span>
-                     <span class="string">' should be provided.'</span>]);
             <span class="keyword">end</span>
 
+            <span class="keyword">if</span> ~isempty(args.temporalSnapshot) &amp;&amp; <span class="keyword">...</span>
+                    ~isempty(args.spectrumSnapshot)
+                error(<span class="string">'sfrfs:SFRFsCompute:AmbiguousInputSignal'</span>, <span class="keyword">...</span>
+                    [<span class="string">'Only one of temporal or spectral data should be '</span> <span class="keyword">...</span>
+                    <span class="string">'provided.'</span>]);
+            <span class="keyword">end</span>
+
+            import <span class="string">tables.GainFunctionsTableSchema</span>
+            import <span class="string">tables.OperatingConditionsTableSchema</span>
+            import <span class="string">structs.FrequencyBankMasksSchema</span>
+
+            kFaultGroup = GainFunctionsTableSchema.FAULTGROUP;
+            kMasks      = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+            kSfrfs      = GainFunctionsTableSchema.SFRFS;
+
+            kSpeed = OperatingConditionsTableSchema.SPEED;
+            kLoad  = OperatingConditionsTableSchema.LOAD;
+
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
 
             log = SFRFsLogger.getLogger();
 
-            <span class="comment">% Retrieve frequency domain details</span>
             f = obj.paramsSnapshot.getFrequencyDomain();
-
-            <span class="comment">% Access gain functions table</span>
             gainTable = obj.rfgfs.gainFunctionsTable;
 
-            <span class="comment">% Validate and filter operating conditions</span>
-            requiredVars = {<span class="string">'Speed'</span>, <span class="string">'Load'</span>};
-            <span class="keyword">if</span> ~all(ismember(<span class="keyword">...</span>
-                    requiredVars, <span class="keyword">...</span>
-                    args.operatingCondition.Properties.VariableNames))
+            requiredVars = [kSpeed, kLoad];
+            varNames = string(<span class="keyword">...</span>
+                args.operatingCondition.Properties.VariableNames);
+
+            <span class="keyword">if</span> ~all(ismember(requiredVars, varNames))
                 error(<span class="string">'sfrfs:SFRFsCompute:MissingColumn'</span>, <span class="keyword">...</span>
-                      <span class="string">'Nonconforming to expected Speed and Load columns.'</span>);
+                    <span class="string">'Expected columns %s and %s.'</span>, kSpeed, kLoad);
             <span class="keyword">end</span>
 
-            <span class="comment">% RequiredVars for filtering gainTable by operatingCondition</span>
-            maskRows = ismember(<span class="keyword">...</span>
-                gainTable(:, requiredVars), <span class="keyword">...</span>
-                args.operatingCondition(:, requiredVars));
-            idxs = find(maskRows);
 
+            maskRows = ismember( <span class="keyword">...</span>
+                gainTable{:, requiredVars}, <span class="keyword">...</span>
+                args.operatingCondition{:, requiredVars}, <span class="keyword">...</span>
+                <span class="string">'rows'</span>);
+
+            idxs = find(maskRows);
             <span class="keyword">if</span> isempty(idxs)
                 <span class="keyword">if</span> log.isSevereEnabled()
                     jsonStr = jsonencode(args.operatingCondition);
-                    msg = sprintf(<span class="keyword">...</span>
+                    log.severe(sprintf( <span class="keyword">...</span>
                         <span class="string">'Operating condition missing in RFGFs: %s'</span>, <span class="keyword">...</span>
-                        jsonStr);
-                    log.severe(msg);
+                        jsonStr));
                 <span class="keyword">end</span>
                 error(<span class="string">'sfrfs:SFRFsCompute:MissingFaultBands'</span>, <span class="keyword">...</span>
-                      <span class="string">'Operating condition missing in RFGRs.'</span>);
+                    <span class="string">'Operating condition missing in RFGFs.'</span>);
             <span class="keyword">end</span>
 
             selectedBands = gainTable(idxs, :);
 
-            <span class="comment">% Compute or use provided FFT</span>
             <span class="keyword">if</span> isempty(args.spectrumSnapshot)
                 X = fft(args.temporalSnapshot, [], 1);
             <span class="keyword">else</span>
@@ -208,40 +224,33 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
             nFFT = size(X, 1);
 
-
-            <span class="comment">% Calculate SFRF responses per fault mode</span>
             SFRF = cell(height(selectedBands), 1);
             <span class="keyword">for</span> i = 1:height(selectedBands)
+                masks = selectedBands.(kMasks){i};
 
-                masks = selectedBands.FrequencyBankMasks{i};
-                <span class="comment">% Ensure mask lengths match FFT length</span>
-                <span class="keyword">if</span> length(masks.CenterFrequencyBankMask) ~= nFFT || <span class="keyword">...</span>
-                        length(masks.SurroundFrequencyBankMask) ~= nFFT
+                centerMask   = masks.(kCenter);
+                surroundMask = masks.(kSur);
+
+                <span class="keyword">if</span> numel(centerMask) ~= nFFT || numel(surroundMask) ~= nFFT
                     error(<span class="string">'sfrfs:SFRFsCompute:MaskLength'</span>, <span class="keyword">...</span>
                         <span class="string">'Mask length does not match FFT length.'</span>);
                 <span class="keyword">end</span>
 
-                <span class="comment">% Extract fault type for current row (example)</span>
-                faultGroup = selectedBands.FaultGroup(i);
+                faultGroup = selectedBands.(kFaultGroup)(i);
                 faultType = <span class="keyword">...</span>
-                    obj.rfgfs.frequencyBands.faultGroupToTypeName(<span class="keyword">...</span>
+                    obj.rfgfs.frequencyBands.faultGroupToTypeName( <span class="keyword">...</span>
                     faultGroup);
 
-                <span class="comment">% Retrieve inhibition factor specific to fault type</span>
                 k = obj.sfrfsParams.(faultType).inhibitionFactor;
 
-                SFRF{i} = obj.computeSingleModeResponse(<span class="keyword">...</span>
-                    X, <span class="keyword">...</span>
-                    masks.CenterFrequencyBankMask, <span class="keyword">...</span>
-                    masks.SurroundFrequencyBankMask, <span class="keyword">...</span>
-                    f, <span class="keyword">...</span>
-                    k);
+                SFRF{i} = obj.computeSingleModeResponse( <span class="keyword">...</span>
+                    X, centerMask, surroundMask, f, k);
             <span class="keyword">end</span>
 
-            <span class="comment">% Construct response table including SFRF results</span>
             responseTable = selectedBands;
-            responseTable.SFRFs = SFRF;
+            responseTable.(kSfrfs) = SFRF;
         <span class="keyword">end</span>
+
     <span class="keyword">end</span>
 
     <span class="keyword">methods</span> (Access = private)
@@ -280,13 +289,18 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <!--
 ##### SOURCE BEGIN #####
 classdef SFRFsCompute < handle
-    % SFRFsCompute Performs spectral fault receptive field computations
-    %   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and
-    %   ParametersSnapshot to compute responses on input signals.
-    %
-    % Example usage:
-    %   sfrfsCalc = SFRFsCompute(paramsSnapshot, rfgfInstance);
-    %   responseTable = sfrfsCalc.compute(x, operatingCondition);
+% SFRFsCompute Performs spectral fault receptive field computations
+%   Uses ReceptiveFieldGainFunctions (with nested FaultFrequencyBands) and
+%   ParametersSnapshot to compute responses on input signals.
+%
+% Example usage:
+%   sfrfsCalc = SFRFsCompute( ...
+%       snapshotParameters = paramsSnapshot, ...
+%       rfgfs = rfgfInstance);
+%
+%   responseTable = sfrfsCalc.compute( ...
+%       temporalSnapshot = x, ...
+%       operatingCondition = operatingCondition);
     
 
     properties (SetAccess = private)
@@ -356,94 +370,98 @@ classdef SFRFsCompute < handle
                     isempty(args.spectrumSnapshot)
                 error('sfrfs:SFRFsCompute:NoInputSingal', ...
                     'Either temporal or spectral data must be provided.');
-            elseif ~isempty(args.temporalSnapshot) && ...
-                    ~isempty(args.spectrumSnapshot)
-                error('sfrfs:SFRFsCompute:AmbiguousInputSignal',...
-                    ['Only one of temporal or spectral data' ...
-                     ' should be provided.']);
             end
 
-            
+            if ~isempty(args.temporalSnapshot) && ...
+                    ~isempty(args.spectrumSnapshot)
+                error('sfrfs:SFRFsCompute:AmbiguousInputSignal', ...
+                    ['Only one of temporal or spectral data should be ' ...
+                    'provided.']);
+            end
+
+            import tables.GainFunctionsTableSchema
+            import tables.OperatingConditionsTableSchema
+            import structs.FrequencyBankMasksSchema
+
+            kFaultGroup = GainFunctionsTableSchema.FAULTGROUP;
+            kMasks      = GainFunctionsTableSchema.FREQUENCYBANKMASKS;
+            kSfrfs      = GainFunctionsTableSchema.SFRFS;
+
+            kSpeed = OperatingConditionsTableSchema.SPEED;
+            kLoad  = OperatingConditionsTableSchema.LOAD;
+
+            kCenter = FrequencyBankMasksSchema.CENTER;
+            kSur    = FrequencyBankMasksSchema.SURROUND;
+
             log = SFRFsLogger.getLogger();
 
-            % Retrieve frequency domain details
             f = obj.paramsSnapshot.getFrequencyDomain();
-            
-            % Access gain functions table
             gainTable = obj.rfgfs.gainFunctionsTable;
+
+            requiredVars = [kSpeed, kLoad];
+            varNames = string(...
+                args.operatingCondition.Properties.VariableNames);
             
-            % Validate and filter operating conditions
-            requiredVars = {'Speed', 'Load'};
-            if ~all(ismember(...
-                    requiredVars, ...
-                    args.operatingCondition.Properties.VariableNames))
+            if ~all(ismember(requiredVars, varNames))
                 error('sfrfs:SFRFsCompute:MissingColumn', ...
-                      'Nonconforming to expected Speed and Load columns.');
+                    'Expected columns %s and %s.', kSpeed, kLoad);
             end
-            
-            % RequiredVars for filtering gainTable by operatingCondition
-            maskRows = ismember(...
-                gainTable(:, requiredVars), ...
-                args.operatingCondition(:, requiredVars));
+
+
+            maskRows = ismember( ...
+                gainTable{:, requiredVars}, ...
+                args.operatingCondition{:, requiredVars}, ...
+                'rows');
+
             idxs = find(maskRows);
-            
             if isempty(idxs)
                 if log.isSevereEnabled()
                     jsonStr = jsonencode(args.operatingCondition);
-                    msg = sprintf(...
+                    log.severe(sprintf( ...
                         'Operating condition missing in RFGFs: %s', ...
-                        jsonStr);
-                    log.severe(msg);
+                        jsonStr));
                 end
                 error('sfrfs:SFRFsCompute:MissingFaultBands', ...
-                      'Operating condition missing in RFGRs.');
+                    'Operating condition missing in RFGFs.');
             end
 
             selectedBands = gainTable(idxs, :);
-            
-            % Compute or use provided FFT
+
             if isempty(args.spectrumSnapshot)
                 X = fft(args.temporalSnapshot, [], 1);
             else
                 X = args.spectrumSnapshot;
             end
-            
+
             nFFT = size(X, 1);
 
-
-            % Calculate SFRF responses per fault mode
             SFRF = cell(height(selectedBands), 1);
             for i = 1:height(selectedBands)
+                masks = selectedBands.(kMasks){i};
 
-                masks = selectedBands.FrequencyBankMasks{i};
-                % Ensure mask lengths match FFT length
-                if length(masks.CenterFrequencyBankMask) ~= nFFT || ...
-                        length(masks.SurroundFrequencyBankMask) ~= nFFT
+                centerMask   = masks.(kCenter);
+                surroundMask = masks.(kSur);
+
+                if numel(centerMask) ~= nFFT || numel(surroundMask) ~= nFFT
                     error('sfrfs:SFRFsCompute:MaskLength', ...
                         'Mask length does not match FFT length.');
                 end
 
-                % Extract fault type for current row (example)
-                faultGroup = selectedBands.FaultGroup(i);
+                faultGroup = selectedBands.(kFaultGroup)(i);
                 faultType = ...
-                    obj.rfgfs.frequencyBands.faultGroupToTypeName(...
+                    obj.rfgfs.frequencyBands.faultGroupToTypeName( ...
                     faultGroup);
-            
-                % Retrieve inhibition factor specific to fault type
+
                 k = obj.sfrfsParams.(faultType).inhibitionFactor;
 
-                SFRF{i} = obj.computeSingleModeResponse(...
-                    X, ...
-                    masks.CenterFrequencyBankMask, ...
-                    masks.SurroundFrequencyBankMask, ...
-                    f, ...
-                    k);
+                SFRF{i} = obj.computeSingleModeResponse( ...
+                    X, centerMask, surroundMask, f, k);
             end
-            
-            % Construct response table including SFRF results
+
             responseTable = selectedBands;
-            responseTable.SFRFs = SFRF;
+            responseTable.(kSfrfs) = SFRF;
         end
+
     end
     
     methods (Access = private)
