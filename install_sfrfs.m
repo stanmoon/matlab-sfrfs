@@ -2,8 +2,16 @@
 % Script to install the SFRFS Toolbox cleanly, removing old versions
 
 toolboxName = 'Spectral Fault Receptive Fields';
-toolboxFile = fullfile('dist', 'sfrfs.mltbx');
+distDir = 'dist';
+
+d = dir(fullfile(distDir, 'SFRFsToolbox_v*.mltbx'));
+assert(~isempty(d), 'No release artifacts found in dist/.');
+
+[~, i] = max([d.datenum]);
+toolboxFile = fullfile(d(i).folder, d(i).name);
+
 agreeToLicense = true;
+
 
 % Uninstall any previous versions
 installed = matlab.addons.installedAddons;
@@ -27,3 +35,16 @@ disp(['Version: ', installedInfo.Version]);
 disp(['Guid: ', installedInfo.Guid]);
 
 disp('SFRFS Toolbox installed and path updated successfully.');
+
+% Cleanup installer log clutter (best-effort)
+logFiles = { ...
+    fullfile(pwd, "deploymentLog.html"), ...
+    fullfile("dist", "deploymentLog.html") ...
+};
+
+for k = 1:numel(logFiles)
+    if isfile(logFiles{k})
+        delete(logFiles{k});
+        fprintf('[install_sfrfs] Deleted log file: %s\n', f);
+    end
+end

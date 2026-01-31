@@ -23,6 +23,7 @@
 % \%example/%file.svn
 %
 **/resources/project/**/*
+resources/templates/**
 resources
 **/*.prj
 **/*.prj.bak
@@ -37,6 +38,7 @@ dist/*
 doc/**
 devel/**
 images/**
+nursery/**
 deploymentLog.html
 release_sfrfs.m
 .gitignore

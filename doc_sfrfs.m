@@ -80,13 +80,38 @@ for k = 1:numel(files)
     tokens = regexp(txt, expr, 'tokens');
 
     for i = 1:numel(tokens)
-        orig = tokens{i}{1};     % e.g. ../../SFRFsCompute.m or
-                                 %      ../../../tests/TestSFRFsCompute.m
-        [~, name, ~] = fileparts(orig);
+        orig = tokens{i}{1};
 
-        if contains(orig, 'tests/')
-            newHref = ['href="' testsPrefix name '.html"'];
+        % Normalize separators for reliable parsing
+        origN = strrep(orig, '\', '/');
+
+        if contains(origN, 'tests/')
+            relL = extractAfter(origN, 'tests/');
+            relL = stripLeadingDots(relL);
+            relL = replace(relL, '.m', '.html');
+            newHref = ['href="' testsPrefix relL '"'];
+
+        elseif contains(origN, 'toolbox/')
+            relL = extractAfter(origN, 'toolbox/');
+            relL = stripLeadingDots(relL);
+            relL = replace(relL, '.m', '.html');
+            newHref = ['href="' srcPrefix relL '"'];
+
+        elseif contains(origN, '/+')
+            relL = extractAfter(origN, '/+');
+            relL = ['+' relL];
+            relL = stripLeadingDots(relL);
+            relL = replace(relL, '.m', '.html');
+            newHref = ['href="' srcPrefix relL '"'];
+
+        elseif startsWith(origN, '+')
+            relL = stripLeadingDots(origN);
+            relL = replace(relL, '.m', '.html');
+            newHref = ['href="' srcPrefix relL '"'];
+
         else
+            % Fallback: flatten to name.html
+            [~, name] = fileparts(origN);
             newHref = ['href="' srcPrefix name '.html"'];
         end
 
@@ -95,7 +120,7 @@ for k = 1:numel(files)
         txt = strrep(txt, ['href="'  orig '"'], newHref);
     end
 
-    fid = fopen(htmlFile,'w');
+fid = fopen(htmlFile,'w');
     fwrite(fid, txt, 'char');
     fclose(fid);
 end
@@ -168,3 +193,24 @@ if exist(testsRoot,'dir')
 end
 
 fprintf('Export completed.\n');
+function s = stripLeadingDots(s)
+% Remove leading ./ or ../ segments from a relative path.
+
+    if isstring(s)
+        s = char(s);
+    end
+
+    s = strrep(s, '\\', '/');
+
+    while startsWith(s, '../')
+        s = s(4:end);
+    end
+
+    while startsWith(s, './')
+        s = s(3:end);
+    end
+
+    while startsWith(s, '/')
+        s = s(2:end);
+    end
+end
