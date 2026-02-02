@@ -113,7 +113,8 @@ sfrfs.mltbx inside the dist folder.
 
 A versioned, citable release of the SFRFs Toolbox is available on Zenodo:
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17631784.svg)](https://doi.org/10.5281/zenodo.17631784)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17631783.svg)](https://doi.org/10.5281/zenodo.17631783)
+
 
 The Zenodo record includes:
 
@@ -142,6 +143,12 @@ Verify that the toolbox is functional by running the unit tests:
 
 ```matlab
 runtests('Spectral Fault Receptive Fields/tests')
+```
+
+Alternatively, you may simply run the provided test script:
+
+```matlab
+test_sfrfs
 ```
 
 ## Uninstallation
