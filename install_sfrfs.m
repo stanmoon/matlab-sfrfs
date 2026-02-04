@@ -45,6 +45,6 @@ logFiles = { ...
 for k = 1:numel(logFiles)
     if isfile(logFiles{k})
         delete(logFiles{k});
-        fprintf('[install_sfrfs] Deleted log file: %s\n', f);
+        fprintf('[install_sfrfs] Deleted log file: %s\n', logFiles{k});
     end
 end
