@@ -1,20 +1,34 @@
 % +internal
 %
-% Internal engine routines for evolutionary search.
+% Internal validation and transformation routines for the evolutionary
+% engine.
 %
-% This package contains internal routines that implement the control flow
-% and orchestration logic of evolutionary algorithms. Functions defined
-% here support the execution of the evolutionary loop (initialization,
-% evaluation, variation, selection, replacement) but do not represent
-% evolutionary mechanisms or policies themselves.
+% This package contains supporting components used by the evolutionary
+% representation and decoding infrastructure. These routines provide
+% shared validation logic, schema utilities, and reusable numeric
+% transformations used by genomes, phenotype decoders, and parameter
+% descriptors.
 %
-% Components in this package act as glue between public evolutionary
-% building blocks. They coordinate data flow, enforce consistency, and
-% manage execution details that are intentionally kept out of the public
-% API to preserve clarity and flexibility.
+% The components here implement low-level checks and helper operations
+% that enforce representation invariants and consistency across the
+% evolutionary data model.
 %
-% These routines are internal to the evolutionary engine and are not part
-% of the supported public API. Their interfaces and behavior may change as
-% the engine is refined or extended.
+% Scope
+% -----
+% The utilities in this package include:
+%   - validation helpers for genome and phenotype structures,
+%   - descriptor and schema utilities,
+%   - reusable decoding transformations,
+%   - shared low-level validation primitives.
 %
-% See also +evolutionary
+% These routines are intentionally separated from public classes in
+% order to keep public APIs concise while centralizing validation and
+% transformation logic.
+%
+% Notes
+% -----
+% Components in this package are internal implementation details and are
+% not part of the supported public API. Their interfaces and behavior may
+% change as the evolutionary infrastructure evolves.
+%
+% See also epistemic.tools.evolutionary

@@ -3,7 +3,7 @@
 % This package provides evolutionary mechanisms as epistemic tools.
 % The components defined here implement population-based generative
 % processes driven by variation, selection, and survival. They are used
-% to structure, explore, and evaluate candidate solutions or artefacts.
+% to structure, explore, and evaluate candidate solutions.
 %
 % Evolutionary mechanisms are treated instrumentally: their role is to
 % induce epistemic structure in the reasoning process of the human
@@ -14,38 +14,40 @@
 % -----
 % The implementation focuses on generic evolutionary machinery, including:
 %   - population and individual representations,
+%   - genotype structures and decoding mechanisms,
 %   - variation operators (mutation, recombination),
 %   - parent and survivor selection policies,
 %   - replacement and survival policies,
-%   - multiobjective selection instruments (e.g., Pareto fronts),
-%   - diversity preservation instruments (e.g., crowding, sharing).
+%   - diversity preservation instruments.
 %
 % Evaluation objectives, domain-specific evaluators, and application logic
-% (e.g., FAHRE) are intentionally kept outside this package and injected
-% from above.
+% are intentionally kept outside this package and injected from above.
 %
 % Organization
 % ------------
-% Public components are grouped into small conceptual subpackages:
+% Public components are grouped into conceptual subpackages:
+%
+%   genomes
+%     Representations of individuals at the genotype level.
+%
+%   phenotype
+%     Mechanisms that map genotypes to interpretable parameter
+%     representations.
+%
 %   operators
 %     Variation mechanisms that generate offspring from parents.
 %
 %   selection
-%     Decision policies that choose parents and survivors. Instrumental
-%     routines used by selection policies (e.g., dominance sorting,
-%     crowding distance, sharing, clearing) are kept in internal
-%     subpackages to preserve a crisp public surface.
+%     Decision policies that choose parents and survivors.
 %
 %   environments
-%     The Environment contract is defined here as part of the evolutionary
-%     metaphor. Concrete problems may be implemented anywhere else by
-%     subclassing this contract.
+%     Contracts that define how candidate solutions are evaluated.
 %
 % Internal details
 % ----------------
 % Implementation details are placed in internal subpackages close to their
-% point of use (branch or leaf) to support encapsulation and refactoring.
-% Internal components are not part of the supported public API.
+% point of use to support encapsulation and refactoring. Internal
+% components are not part of the supported public API.
 %
 % Notes
 % -----
