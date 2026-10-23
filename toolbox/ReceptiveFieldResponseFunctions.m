@@ -21,6 +21,28 @@ classdef ReceptiveFieldResponseFunctions
                 ReceptiveFieldResponseFunctions.doIntegralAbs(X, f);
         end
 
+        function binder = maskedMeanAbs(args)
+            %maskedMeanAbs Response binder for masked-mean absolute response.
+            %
+            % binder = maskedMeanAbs()
+            % rf = binder(mask)
+            % r = rf(X, f)
+            %
+            % X is assumed to already contain any upstream masking or spectral
+            % preprocessing. The supplied mask is used only to normalize by
+            % receptive-field area.
+
+            arguments
+                args.eps (1,1) double {mustBePositive} = 1e-12
+            end
+
+            epsVal = args.eps;
+
+            binder = @(mask) @(X, f) ...
+                ReceptiveFieldResponseFunctions.doMaskedMeanAbs( ...
+                X, f, mask, epsVal);
+        end
+
         function fcn = entropy(args)
         %entropy Response: spectral entropy over frequency.
         %
@@ -146,6 +168,34 @@ classdef ReceptiveFieldResponseFunctions
             f = ReceptiveFieldResponseFunctions.validateXF(X, f);
             r = trapz(f, abs(X), 1);
         end
+
+        function r = doMaskedMeanAbs(X, f, mask, epsVal)
+            f = ReceptiveFieldResponseFunctions.validateXF(X, f);
+            ReceptiveFieldResponseFunctions.validateEps(epsVal);
+
+            mask = mask(:);
+
+            if numel(mask) ~= size(X, 1)
+                error(['sfrfs:ReceptiveFieldResponseFunctions:' ...
+                    'MaskAxisMismatch'], ...
+                    "mask length must match size(X,1).");
+            end
+
+            if any(~isfinite(mask)) || any(mask < 0)
+                error(['sfrfs:ReceptiveFieldResponseFunctions:' ...
+                    'InvalidMask'], ...
+                    "mask must be finite and nonnegative.");
+            end
+
+            denom = max(trapz(f, mask), epsVal);
+
+            % X is assumed to already contain any upstream masking or
+            % spectral preprocessing. The mask is used only to normalize
+            % by receptive-field area. Applying the mask again here would
+            % alter the intended response semantics.
+            r = trapz(f, abs(X), 1) ./ denom;
+        end
+
 
         function r = doEntropy(X, f, doNormalize, epsVal)
             ReceptiveFieldResponseFunctions.validateXF(X, f); 
