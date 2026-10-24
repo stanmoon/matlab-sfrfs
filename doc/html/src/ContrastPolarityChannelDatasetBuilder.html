@@ -1,0 +1,936 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>ContrastPolarityChannelDatasetBuilder</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="ContrastPolarityChannelDatasetBuilder.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> ContrastPolarityChannelDatasetBuilder &lt; handle
+<span class="comment">%CONTRASTPOLARITYCHANNELDATASETBUILDER Build harmonic contrast and event datasets.</span>
+<span class="comment">%</span>
+<span class="comment">% Constructs prognosis-channel datasets from spectral observations of</span>
+<span class="comment">% bearing runs, with one output row per run and monitored fault family.</span>
+<span class="comment">%</span>
+<span class="comment">% The processing combines lifted harmonic receptive-field responses,</span>
+<span class="comment">% sensor-local center-surround contrast, cross-sensor polarity</span>
+<span class="comment">% agreement filtering, and temporal polarity event detection.</span>
+<span class="comment">%</span>
+<span class="comment">% Public methods:</span>
+<span class="comment">%   buildFromEnsemble - Process all members of a data ensemble.</span>
+<span class="comment">%   buildMemberRows   - Build channel rows for one ensemble member.</span>
+<span class="comment">%</span>
+<span class="comment">% Static methods:</span>
+<span class="comment">%   rawContrastNames  - Generate sensor-local contrast column names.</span>
+<span class="comment">%</span>
+<span class="comment">% Construction:</span>
+<span class="comment">%   obj = ContrastPolarityChannelDatasetBuilder( ...</span>
+<span class="comment">%       liftedGainFunctionsByFamily = liftedFunctions, ...</span>
+<span class="comment">%       familyNames = ["BPFO", "BPFI", "BSF", "FTF"]);</span>
+<span class="comment">%</span>
+<span class="comment">% Each output table row represents one bearing/run and one monitored</span>
+<span class="comment">% fault-frequency family. The columns are:</span>
+<span class="comment">%</span>
+<span class="comment">%   Label, Speed, Load, Lifetime, MonitoredFaultFamily, HarmonicCount</span>
+<span class="comment">%   Failure_O, Failure_I, Failure_C, Failure_B</span>
+<span class="comment">%   &lt;SpectralColumn1&gt;_C, &lt;SpectralColumn2&gt;_C</span>
+<span class="comment">%   AgreementFloor, ResolvedContrast, PolarityReversal</span>
+<span class="comment">%   OnPositive, OnNegative, OffPositive, OffNegative</span>
+<span class="comment">%</span>
+<span class="comment">% The raw contrast column names follow the convention</span>
+<span class="comment">% &lt;signal&gt;_&lt;representation&gt;_C, for example:</span>
+<span class="comment">%</span>
+<span class="comment">%   HorizontalAcceleration_FFT_C</span>
+<span class="comment">%</span>
+<span class="comment">% Contrast and event matrices have dimensions T x H, where T is the</span>
+<span class="comment">% number of observations and H the number of monitored harmonics.</span>
+<span class="comment">% AgreementFloor is a T x 1 temporal history.</span>
+<span class="comment">%</span>
+<span class="comment">% Matrix-valued channels are stored in table cells, preserving</span>
+<span class="comment">% per-run dimensions without introducing global padding.</span>
+<span class="comment">%</span>
+<span class="comment">% buildFromEnsemble returns a structure with fields:</span>
+<span class="comment">%   Table            - Combined channel table.</span>
+<span class="comment">%   ChannelNames     - Computed channel names.</span>
+<span class="comment">%   RawContrastNames - Sensor-local contrast column names.</span>
+<span class="comment">%   FamilyNames      - Monitored fault-family names.</span>
+<span class="comment">%   MatrixLayout     - ["snapshot", "harmonic"].</span>
+<span class="comment">%   SpectralColumns  - Source spectral column names.</span>
+<span class="comment">%</span>
+<span class="comment">% The five event channels are logical matrices. PolarityReversal</span>
+<span class="comment">% indicates a reversal event; OnPositive, OnNegative, OffPositive,</span>
+<span class="comment">% and OffNegative distinguish signed activity transitions.</span>
+<span class="comment">%</span>
+<span class="comment">% See also LiftedHarmonicGainFunctions, LiftedHarmonicResponseCompute,</span>
+<span class="comment">% ReceptiveFieldResponseFunctions, ContrastMappings,</span>
+<span class="comment">% ContrastPolarityFilter, PolarityReversalDetector,</span>
+<span class="comment">% OnOffContrastPolarityDetector.</span>
+
+    <span class="keyword">properties</span> (Constant)
+        ChannelNames = [ <span class="keyword">...</span>
+            <span class="string">"ResolvedContrast"</span>, <span class="keyword">...</span>
+            <span class="string">"PolarityReversal"</span>, <span class="keyword">...</span>
+            <span class="string">"OnPositive"</span>, <span class="keyword">...</span>
+            <span class="string">"OnNegative"</span>, <span class="keyword">...</span>
+            <span class="string">"OffPositive"</span>, <span class="keyword">...</span>
+            <span class="string">"OffNegative"</span>];
+
+        MatrixLayout = [ <span class="keyword">...</span>
+            <span class="string">"snapshot"</span>, <span class="keyword">...</span>
+            <span class="string">"harmonic"</span>];
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        familyNames <span class="typesection">string</span>
+        liftedGainFunctionsByFamily <span class="typesection">cell</span>
+        computeByFamily <span class="typesection">cell</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = ContrastPolarityChannelDatasetBuilder(args)
+            <span class="keyword">arguments</span>
+                args.liftedGainFunctionsByFamily <span class="typesection">(1,:) cell</span>
+                args.familyNames <span class="typesection">(1,:) string </span>= <span class="keyword">...</span>
+                    [<span class="string">"BPFO"</span>, <span class="string">"BPFI"</span>, <span class="string">"BSF"</span>, <span class="string">"FTF"</span>]
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> numel(args.liftedGainFunctionsByFamily) <span class="keyword">...</span>
+                    ~= numel(args.familyNames)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:ChannelDatasetBuilder:FamilyMismatch"</span>, <span class="keyword">...</span>
+                    <span class="string">"familyNames and liftedGainFunctionsByFamily "</span> + <span class="keyword">...</span>
+                    <span class="string">"must have the same length."</span>);
+            <span class="keyword">end</span>
+
+            obj.familyNames = args.familyNames;
+            obj.liftedGainFunctionsByFamily = <span class="keyword">...</span>
+                args.liftedGainFunctionsByFamily;
+
+            obj.computeByFamily = cell(size(args.familyNames));
+
+            <span class="keyword">for</span> f = 1:numel(args.familyNames)
+                lifted = args.liftedGainFunctionsByFamily{f};
+
+                obj.computeByFamily{f} = <span class="keyword">...</span>
+                    LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                        snapshotParameters = <span class="keyword">...</span>
+                            lifted.snapshotParameters, <span class="keyword">...</span>
+                        liftedGainFunctions = lifted);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> dataset = buildFromEnsemble(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.ensemble
+                args.spectralColumns <span class="typesection">(1,2) string</span>
+                args.receptiveFieldResponseFunction <span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.receptiveFieldResponseBinder <span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= function_handle.empty()
+                args.contrastMapping <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ContrastMappings.difference()
+                args.quantileLevel <span class="typesection">(1,1) double </span>= 0.9
+                args.riseRate <span class="typesection">(1,1) double </span>= 1/7
+                args.fallRate <span class="typesection">(1,1) double </span>= 1/49
+            <span class="keyword">end</span>
+
+            reset(args.ensemble);
+
+            rows = cell(args.ensemble.NumMembers, 1);
+            row = 0;
+
+            <span class="keyword">while</span> hasdata(args.ensemble)
+                row = row + 1;
+                memberTable = read(args.ensemble);
+
+                rows{row} = obj.buildMemberRows( <span class="keyword">...</span>
+                    memberTable = memberTable, <span class="keyword">...</span>
+                    spectralColumns = args.spectralColumns, <span class="keyword">...</span>
+                    receptiveFieldResponseFunction = <span class="keyword">...</span>
+                        args.receptiveFieldResponseFunction, <span class="keyword">...</span>
+                    receptiveFieldResponseBinder = <span class="keyword">...</span>
+                        args.receptiveFieldResponseBinder, <span class="keyword">...</span>
+                    contrastMapping = args.contrastMapping, <span class="keyword">...</span>
+                    quantileLevel = args.quantileLevel, <span class="keyword">...</span>
+                    riseRate = args.riseRate, <span class="keyword">...</span>
+                    fallRate = args.fallRate);
+            <span class="keyword">end</span>
+
+            channelRuns = vertcat(rows{1:row});
+
+            dataset = struct( <span class="keyword">...</span>
+                <span class="string">"Table"</span>, channelRuns, <span class="keyword">...</span>
+                <span class="string">"ChannelNames"</span>, obj.ChannelNames, <span class="keyword">...</span>
+                <span class="string">"RawContrastNames"</span>, <span class="keyword">...</span>
+                    obj.rawContrastNames(args.spectralColumns), <span class="keyword">...</span>
+                <span class="string">"FamilyNames"</span>, obj.familyNames, <span class="keyword">...</span>
+                <span class="string">"MatrixLayout"</span>, obj.MatrixLayout, <span class="keyword">...</span>
+                <span class="string">"SpectralColumns"</span>, args.spectralColumns);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rows = buildMemberRows(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.memberTable <span class="typesection">table</span>
+                args.spectralColumns <span class="typesection">(1,2) string</span>
+                args.receptiveFieldResponseFunction <span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.receptiveFieldResponseBinder <span class="keyword">...</span>
+                    <span class="typesection">function_handle </span>= function_handle.empty()
+                args.contrastMapping <span class="typesection">function_handle </span>= <span class="keyword">...</span>
+                    ContrastMappings.difference()
+                args.quantileLevel <span class="typesection">(1,1) double </span>= 0.9
+                args.riseRate <span class="typesection">(1,1) double </span>= 1/7
+                args.fallRate <span class="typesection">(1,1) double </span>= 1/49
+            <span class="keyword">end</span>
+
+            nFamilies = numel(obj.familyNames);
+            rawNames = obj.rawContrastNames(args.spectralColumns);
+
+            Label = strings(nFamilies, 1);
+            Speed = nan(nFamilies, 1);
+            Load = nan(nFamilies, 1);
+            Lifetime = nan(nFamilies, 1);
+            MonitoredFaultFamily = strings(nFamilies, 1);
+            HarmonicCount = nan(nFamilies, 1);
+
+            Failure_O = nan(nFamilies, 1);
+            Failure_I = nan(nFamilies, 1);
+            Failure_C = nan(nFamilies, 1);
+            Failure_B = nan(nFamilies, 1);
+
+            RawContrast1 = cell(nFamilies, 1);
+            RawContrast2 = cell(nFamilies, 1);
+            AgreementFloor = cell(nFamilies, 1);
+
+            ResolvedContrast = cell(nFamilies, 1);
+            PolarityReversal = cell(nFamilies, 1);
+            OnPositive = cell(nFamilies, 1);
+            OnNegative = cell(nFamilies, 1);
+            OffPositive = cell(nFamilies, 1);
+            OffNegative = cell(nFamilies, 1);
+
+            <span class="keyword">for</span> f = 1:nFamilies
+                [C, tau, CBySensor] = obj.computeResolvedContrast( <span class="keyword">...</span>
+                    familyIndex = f, <span class="keyword">...</span>
+                    memberTable = args.memberTable, <span class="keyword">...</span>
+                    spectralColumns = args.spectralColumns, <span class="keyword">...</span>
+                    receptiveFieldResponseFunction = <span class="keyword">...</span>
+                        args.receptiveFieldResponseFunction, <span class="keyword">...</span>
+                    receptiveFieldResponseBinder = <span class="keyword">...</span>
+                        args.receptiveFieldResponseBinder, <span class="keyword">...</span>
+                    contrastMapping = args.contrastMapping, <span class="keyword">...</span>
+                    quantileLevel = args.quantileLevel, <span class="keyword">...</span>
+                    riseRate = args.riseRate, <span class="keyword">...</span>
+                    fallRate = args.fallRate);
+
+                channels = obj.computeChannels(C);
+
+                Label(f) = obj.readString(args.memberTable, <span class="string">"Label"</span>);
+                Speed(f) = obj.readScalar(args.memberTable, <span class="string">"Speed"</span>);
+                Load(f) = obj.readScalar(args.memberTable, <span class="string">"Load"</span>);
+                Lifetime(f) = obj.readScalar(args.memberTable, <span class="string">"Lifetime"</span>);
+
+                MonitoredFaultFamily(f) = obj.familyNames(f);
+                HarmonicCount(f) = size(C, 2);
+
+                Failure_O(f) = obj.readScalar(args.memberTable, <span class="string">"Failure_O"</span>);
+                Failure_I(f) = obj.readScalar(args.memberTable, <span class="string">"Failure_I"</span>);
+                Failure_C(f) = obj.readScalar(args.memberTable, <span class="string">"Failure_C"</span>);
+                Failure_B(f) = obj.readScalar(args.memberTable, <span class="string">"Failure_B"</span>);
+
+                RawContrast1{f} = CBySensor{1};
+                RawContrast2{f} = CBySensor{2};
+                AgreementFloor{f} = tau(:);
+
+                ResolvedContrast{f} = channels.ResolvedContrast;
+                PolarityReversal{f} = channels.PolarityReversal;
+                OnPositive{f} = channels.OnPositive;
+                OnNegative{f} = channels.OnNegative;
+                OffPositive{f} = channels.OffPositive;
+                OffNegative{f} = channels.OffNegative;
+            <span class="keyword">end</span>
+
+            rows = table( <span class="keyword">...</span>
+                Label, <span class="keyword">...</span>
+                Speed, <span class="keyword">...</span>
+                Load, <span class="keyword">...</span>
+                Lifetime, <span class="keyword">...</span>
+                MonitoredFaultFamily, <span class="keyword">...</span>
+                HarmonicCount, <span class="keyword">...</span>
+                Failure_O, <span class="keyword">...</span>
+                Failure_I, <span class="keyword">...</span>
+                Failure_C, <span class="keyword">...</span>
+                Failure_B, <span class="keyword">...</span>
+                RawContrast1, <span class="keyword">...</span>
+                RawContrast2, <span class="keyword">...</span>
+                AgreementFloor, <span class="keyword">...</span>
+                ResolvedContrast, <span class="keyword">...</span>
+                PolarityReversal, <span class="keyword">...</span>
+                OnPositive, <span class="keyword">...</span>
+                OnNegative, <span class="keyword">...</span>
+                OffPositive, <span class="keyword">...</span>
+                OffNegative);
+
+            rows.Properties.VariableNames(11:12) = cellstr(rawNames);
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> names = rawContrastNames(spectralColumns)
+            <span class="keyword">arguments</span>
+                spectralColumns <span class="typesection">(1,:) string</span>
+            <span class="keyword">end</span>
+
+            names = spectralColumns + <span class="string">"_C"</span>;
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+
+        <span class="keyword">function</span> [C, tau, CBySensor] = computeResolvedContrast(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.familyIndex <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBePositive}</span>
+                args.memberTable <span class="typesection">table</span>
+                args.spectralColumns <span class="typesection">(1,2) string</span>
+                args.receptiveFieldResponseFunction <span class="typesection">function_handle</span>
+                args.receptiveFieldResponseBinder <span class="typesection">function_handle</span>
+                args.contrastMapping <span class="typesection">function_handle</span>
+                args.quantileLevel <span class="typesection">(1,1) double</span>
+                args.riseRate <span class="typesection">(1,1) double</span>
+                args.fallRate <span class="typesection">(1,1) double</span>
+            <span class="keyword">end</span>
+
+            C1 = obj.computeContrastForColumn( <span class="keyword">...</span>
+                familyIndex = args.familyIndex, <span class="keyword">...</span>
+                memberTable = args.memberTable, <span class="keyword">...</span>
+                spectralColumn = args.spectralColumns(1), <span class="keyword">...</span>
+                receptiveFieldResponseFunction = <span class="keyword">...</span>
+                    args.receptiveFieldResponseFunction, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    args.receptiveFieldResponseBinder, <span class="keyword">...</span>
+                contrastMapping = args.contrastMapping);
+
+            C2 = obj.computeContrastForColumn( <span class="keyword">...</span>
+                familyIndex = args.familyIndex, <span class="keyword">...</span>
+                memberTable = args.memberTable, <span class="keyword">...</span>
+                spectralColumn = args.spectralColumns(2), <span class="keyword">...</span>
+                receptiveFieldResponseFunction = <span class="keyword">...</span>
+                    args.receptiveFieldResponseFunction, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    args.receptiveFieldResponseBinder, <span class="keyword">...</span>
+                contrastMapping = args.contrastMapping);
+
+            CBySensor = {C1, C2};
+
+            nSnapshots = size(C1, 1);
+            C = zeros(size(C1), <span class="string">"like"</span>, C1);
+            tau = zeros(nSnapshots, 1);
+
+            <span class="keyword">for</span> t = 1:nSnapshots
+                [~, tau, C(t, :), ~] = <span class="keyword">...</span>
+                    ContrastPolarityFilter.apply( <span class="keyword">...</span>
+                        C1(t, :), <span class="keyword">...</span>
+                        C2(t, :), <span class="keyword">...</span>
+                        t, <span class="keyword">...</span>
+                        tau, <span class="keyword">...</span>
+                        args.quantileLevel, <span class="keyword">...</span>
+                        args.riseRate, <span class="keyword">...</span>
+                        args.fallRate);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> C = computeContrastForColumn(obj, args)
+            <span class="keyword">arguments</span>
+                obj
+                args.familyIndex <span class="typesection">(1,1) </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBePositive}</span>
+                args.memberTable <span class="typesection">table</span>
+                args.spectralColumn <span class="typesection">(1,1) string</span>
+                args.receptiveFieldResponseFunction <span class="typesection">function_handle</span>
+                args.receptiveFieldResponseBinder <span class="typesection">function_handle</span>
+                args.contrastMapping <span class="typesection">function_handle</span>
+            <span class="keyword">end</span>
+
+            compute = obj.computeByFamily{args.familyIndex};
+
+            <span class="keyword">if</span> isempty(args.receptiveFieldResponseBinder)
+                responses = compute.compute( <span class="keyword">...</span>
+                    memberTable = args.memberTable, <span class="keyword">...</span>
+                    spectralColumn = args.spectralColumn, <span class="keyword">...</span>
+                    receptiveFieldResponseFunction = <span class="keyword">...</span>
+                        args.receptiveFieldResponseFunction);
+            <span class="keyword">else</span>
+                responses = compute.compute( <span class="keyword">...</span>
+                    memberTable = args.memberTable, <span class="keyword">...</span>
+                    spectralColumn = args.spectralColumn, <span class="keyword">...</span>
+                    receptiveFieldResponseBinder = <span class="keyword">...</span>
+                        args.receptiveFieldResponseBinder);
+            <span class="keyword">end</span>
+
+            C = args.contrastMapping( <span class="keyword">...</span>
+                responses.Center.', <span class="keyword">...</span>
+                responses.Surround.');
+
+            C = C.';
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> channels = computeChannels(~, C)
+
+            reversalMap = PolarityReversalDetector.detectAll(C);
+
+            [onMap, offMap] = <span class="keyword">...</span>
+                OnOffContrastPolarityDetector.detectAll(C);
+
+            channels = struct( <span class="keyword">...</span>
+                <span class="string">"ResolvedContrast"</span>, C, <span class="keyword">...</span>
+                <span class="string">"PolarityReversal"</span>, abs(reversalMap) &gt; 0, <span class="keyword">...</span>
+                <span class="string">"OnPositive"</span>, onMap &gt; 0, <span class="keyword">...</span>
+                <span class="string">"OnNegative"</span>, onMap &lt; 0, <span class="keyword">...</span>
+                <span class="string">"OffPositive"</span>, offMap &gt; 0, <span class="keyword">...</span>
+                <span class="string">"OffNegative"</span>, offMap &lt; 0);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> value = readScalar(~, memberTable, name)
+
+            <span class="keyword">if</span> ~ismember(name, string(memberTable.Properties.VariableNames))
+                value = NaN;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            value = memberTable.(name)(1);
+
+            <span class="keyword">if</span> iscell(value)
+                value = value{1};
+            <span class="keyword">end</span>
+
+            value = double(value);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> value = readString(~, memberTable, name)
+
+            <span class="keyword">if</span> ~ismember(name, string(memberTable.Properties.VariableNames))
+                value = missing;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            value = string(memberTable.(name)(1));
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef ContrastPolarityChannelDatasetBuilder < handle
+%CONTRASTPOLARITYCHANNELDATASETBUILDER Build harmonic contrast and event datasets.
+%
+% Constructs prognosis-channel datasets from spectral observations of
+% bearing runs, with one output row per run and monitored fault family.
+%
+% The processing combines lifted harmonic receptive-field responses,
+% sensor-local center-surround contrast, cross-sensor polarity
+% agreement filtering, and temporal polarity event detection.
+%
+% Public methods:
+%   buildFromEnsemble - Process all members of a data ensemble.
+%   buildMemberRows   - Build channel rows for one ensemble member.
+%
+% Static methods:
+%   rawContrastNames  - Generate sensor-local contrast column names.
+%
+% Construction:
+%   obj = ContrastPolarityChannelDatasetBuilder( ...
+%       liftedGainFunctionsByFamily = liftedFunctions, ...
+%       familyNames = ["BPFO", "BPFI", "BSF", "FTF"]);
+%
+% Each output table row represents one bearing/run and one monitored
+% fault-frequency family. The columns are:
+%
+%   Label, Speed, Load, Lifetime, MonitoredFaultFamily, HarmonicCount
+%   Failure_O, Failure_I, Failure_C, Failure_B
+%   <SpectralColumn1>_C, <SpectralColumn2>_C
+%   AgreementFloor, ResolvedContrast, PolarityReversal
+%   OnPositive, OnNegative, OffPositive, OffNegative
+%
+% The raw contrast column names follow the convention
+% <signal>_<representation>_C, for example:
+%
+%   HorizontalAcceleration_FFT_C
+%
+% Contrast and event matrices have dimensions T x H, where T is the
+% number of observations and H the number of monitored harmonics.
+% AgreementFloor is a T x 1 temporal history.
+%
+% Matrix-valued channels are stored in table cells, preserving
+% per-run dimensions without introducing global padding.
+%
+% buildFromEnsemble returns a structure with fields:
+%   Table            - Combined channel table.
+%   ChannelNames     - Computed channel names.
+%   RawContrastNames - Sensor-local contrast column names.
+%   FamilyNames      - Monitored fault-family names.
+%   MatrixLayout     - ["snapshot", "harmonic"].
+%   SpectralColumns  - Source spectral column names.
+%
+% The five event channels are logical matrices. PolarityReversal
+% indicates a reversal event; OnPositive, OnNegative, OffPositive,
+% and OffNegative distinguish signed activity transitions.
+%
+% See also LiftedHarmonicGainFunctions, LiftedHarmonicResponseCompute,
+% ReceptiveFieldResponseFunctions, ContrastMappings,
+% ContrastPolarityFilter, PolarityReversalDetector,
+% OnOffContrastPolarityDetector.
+
+    properties (Constant)
+        ChannelNames = [ ...
+            "ResolvedContrast", ...
+            "PolarityReversal", ...
+            "OnPositive", ...
+            "OnNegative", ...
+            "OffPositive", ...
+            "OffNegative"];
+
+        MatrixLayout = [ ...
+            "snapshot", ...
+            "harmonic"];
+    end
+
+    properties (SetAccess = private)
+        familyNames string
+        liftedGainFunctionsByFamily cell
+        computeByFamily cell
+    end
+
+    methods
+
+        function obj = ContrastPolarityChannelDatasetBuilder(args)
+            arguments
+                args.liftedGainFunctionsByFamily (1,:) cell
+                args.familyNames (1,:) string = ...
+                    ["BPFO", "BPFI", "BSF", "FTF"]
+            end
+
+            if numel(args.liftedGainFunctionsByFamily) ...
+                    ~= numel(args.familyNames)
+                error( ...
+                    "sfrfs:ChannelDatasetBuilder:FamilyMismatch", ...
+                    "familyNames and liftedGainFunctionsByFamily " + ...
+                    "must have the same length.");
+            end
+
+            obj.familyNames = args.familyNames;
+            obj.liftedGainFunctionsByFamily = ...
+                args.liftedGainFunctionsByFamily;
+
+            obj.computeByFamily = cell(size(args.familyNames));
+
+            for f = 1:numel(args.familyNames)
+                lifted = args.liftedGainFunctionsByFamily{f};
+
+                obj.computeByFamily{f} = ...
+                    LiftedHarmonicResponseCompute( ...
+                        snapshotParameters = ...
+                            lifted.snapshotParameters, ...
+                        liftedGainFunctions = lifted);
+            end
+        end
+
+        function dataset = buildFromEnsemble(obj, args)
+            arguments
+                obj
+                args.ensemble
+                args.spectralColumns (1,2) string
+                args.receptiveFieldResponseFunction ...
+                    function_handle = ...
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.receptiveFieldResponseBinder ...
+                    function_handle = function_handle.empty()
+                args.contrastMapping function_handle = ...
+                    ContrastMappings.difference()
+                args.quantileLevel (1,1) double = 0.9
+                args.riseRate (1,1) double = 1/7
+                args.fallRate (1,1) double = 1/49
+            end
+
+            reset(args.ensemble);
+
+            rows = cell(args.ensemble.NumMembers, 1);
+            row = 0;
+
+            while hasdata(args.ensemble)
+                row = row + 1;
+                memberTable = read(args.ensemble);
+
+                rows{row} = obj.buildMemberRows( ...
+                    memberTable = memberTable, ...
+                    spectralColumns = args.spectralColumns, ...
+                    receptiveFieldResponseFunction = ...
+                        args.receptiveFieldResponseFunction, ...
+                    receptiveFieldResponseBinder = ...
+                        args.receptiveFieldResponseBinder, ...
+                    contrastMapping = args.contrastMapping, ...
+                    quantileLevel = args.quantileLevel, ...
+                    riseRate = args.riseRate, ...
+                    fallRate = args.fallRate);
+            end
+
+            channelRuns = vertcat(rows{1:row});
+
+            dataset = struct( ...
+                "Table", channelRuns, ...
+                "ChannelNames", obj.ChannelNames, ...
+                "RawContrastNames", ...
+                    obj.rawContrastNames(args.spectralColumns), ...
+                "FamilyNames", obj.familyNames, ...
+                "MatrixLayout", obj.MatrixLayout, ...
+                "SpectralColumns", args.spectralColumns);
+        end
+
+        function rows = buildMemberRows(obj, args)
+            arguments
+                obj
+                args.memberTable table
+                args.spectralColumns (1,2) string
+                args.receptiveFieldResponseFunction ...
+                    function_handle = ...
+                    ReceptiveFieldResponseFunctions.integralAbs()
+                args.receptiveFieldResponseBinder ...
+                    function_handle = function_handle.empty()
+                args.contrastMapping function_handle = ...
+                    ContrastMappings.difference()
+                args.quantileLevel (1,1) double = 0.9
+                args.riseRate (1,1) double = 1/7
+                args.fallRate (1,1) double = 1/49
+            end
+
+            nFamilies = numel(obj.familyNames);
+            rawNames = obj.rawContrastNames(args.spectralColumns);
+
+            Label = strings(nFamilies, 1);
+            Speed = nan(nFamilies, 1);
+            Load = nan(nFamilies, 1);
+            Lifetime = nan(nFamilies, 1);
+            MonitoredFaultFamily = strings(nFamilies, 1);
+            HarmonicCount = nan(nFamilies, 1);
+
+            Failure_O = nan(nFamilies, 1);
+            Failure_I = nan(nFamilies, 1);
+            Failure_C = nan(nFamilies, 1);
+            Failure_B = nan(nFamilies, 1);
+
+            RawContrast1 = cell(nFamilies, 1);
+            RawContrast2 = cell(nFamilies, 1);
+            AgreementFloor = cell(nFamilies, 1);
+
+            ResolvedContrast = cell(nFamilies, 1);
+            PolarityReversal = cell(nFamilies, 1);
+            OnPositive = cell(nFamilies, 1);
+            OnNegative = cell(nFamilies, 1);
+            OffPositive = cell(nFamilies, 1);
+            OffNegative = cell(nFamilies, 1);
+
+            for f = 1:nFamilies
+                [C, tau, CBySensor] = obj.computeResolvedContrast( ...
+                    familyIndex = f, ...
+                    memberTable = args.memberTable, ...
+                    spectralColumns = args.spectralColumns, ...
+                    receptiveFieldResponseFunction = ...
+                        args.receptiveFieldResponseFunction, ...
+                    receptiveFieldResponseBinder = ...
+                        args.receptiveFieldResponseBinder, ...
+                    contrastMapping = args.contrastMapping, ...
+                    quantileLevel = args.quantileLevel, ...
+                    riseRate = args.riseRate, ...
+                    fallRate = args.fallRate);
+
+                channels = obj.computeChannels(C);
+
+                Label(f) = obj.readString(args.memberTable, "Label");
+                Speed(f) = obj.readScalar(args.memberTable, "Speed");
+                Load(f) = obj.readScalar(args.memberTable, "Load");
+                Lifetime(f) = obj.readScalar(args.memberTable, "Lifetime");
+
+                MonitoredFaultFamily(f) = obj.familyNames(f);
+                HarmonicCount(f) = size(C, 2);
+
+                Failure_O(f) = obj.readScalar(args.memberTable, "Failure_O");
+                Failure_I(f) = obj.readScalar(args.memberTable, "Failure_I");
+                Failure_C(f) = obj.readScalar(args.memberTable, "Failure_C");
+                Failure_B(f) = obj.readScalar(args.memberTable, "Failure_B");
+
+                RawContrast1{f} = CBySensor{1};
+                RawContrast2{f} = CBySensor{2};
+                AgreementFloor{f} = tau(:);
+
+                ResolvedContrast{f} = channels.ResolvedContrast;
+                PolarityReversal{f} = channels.PolarityReversal;
+                OnPositive{f} = channels.OnPositive;
+                OnNegative{f} = channels.OnNegative;
+                OffPositive{f} = channels.OffPositive;
+                OffNegative{f} = channels.OffNegative;
+            end
+
+            rows = table( ...
+                Label, ...
+                Speed, ...
+                Load, ...
+                Lifetime, ...
+                MonitoredFaultFamily, ...
+                HarmonicCount, ...
+                Failure_O, ...
+                Failure_I, ...
+                Failure_C, ...
+                Failure_B, ...
+                RawContrast1, ...
+                RawContrast2, ...
+                AgreementFloor, ...
+                ResolvedContrast, ...
+                PolarityReversal, ...
+                OnPositive, ...
+                OnNegative, ...
+                OffPositive, ...
+                OffNegative);
+
+            rows.Properties.VariableNames(11:12) = cellstr(rawNames);
+        end
+
+    end
+
+    methods (Static)
+
+        function names = rawContrastNames(spectralColumns)
+            arguments
+                spectralColumns (1,:) string
+            end
+
+            names = spectralColumns + "_C";
+        end
+
+    end
+
+    methods (Access = private)
+
+        function [C, tau, CBySensor] = computeResolvedContrast(obj, args)
+            arguments
+                obj
+                args.familyIndex (1,1) ...
+                    {mustBeInteger, mustBePositive}
+                args.memberTable table
+                args.spectralColumns (1,2) string
+                args.receptiveFieldResponseFunction function_handle
+                args.receptiveFieldResponseBinder function_handle
+                args.contrastMapping function_handle
+                args.quantileLevel (1,1) double
+                args.riseRate (1,1) double
+                args.fallRate (1,1) double
+            end
+
+            C1 = obj.computeContrastForColumn( ...
+                familyIndex = args.familyIndex, ...
+                memberTable = args.memberTable, ...
+                spectralColumn = args.spectralColumns(1), ...
+                receptiveFieldResponseFunction = ...
+                    args.receptiveFieldResponseFunction, ...
+                receptiveFieldResponseBinder = ...
+                    args.receptiveFieldResponseBinder, ...
+                contrastMapping = args.contrastMapping);
+
+            C2 = obj.computeContrastForColumn( ...
+                familyIndex = args.familyIndex, ...
+                memberTable = args.memberTable, ...
+                spectralColumn = args.spectralColumns(2), ...
+                receptiveFieldResponseFunction = ...
+                    args.receptiveFieldResponseFunction, ...
+                receptiveFieldResponseBinder = ...
+                    args.receptiveFieldResponseBinder, ...
+                contrastMapping = args.contrastMapping);
+
+            CBySensor = {C1, C2};
+
+            nSnapshots = size(C1, 1);
+            C = zeros(size(C1), "like", C1);
+            tau = zeros(nSnapshots, 1);
+
+            for t = 1:nSnapshots
+                [~, tau, C(t, :), ~] = ...
+                    ContrastPolarityFilter.apply( ...
+                        C1(t, :), ...
+                        C2(t, :), ...
+                        t, ...
+                        tau, ...
+                        args.quantileLevel, ...
+                        args.riseRate, ...
+                        args.fallRate);
+            end
+        end
+
+        function C = computeContrastForColumn(obj, args)
+            arguments
+                obj
+                args.familyIndex (1,1) ...
+                    {mustBeInteger, mustBePositive}
+                args.memberTable table
+                args.spectralColumn (1,1) string
+                args.receptiveFieldResponseFunction function_handle
+                args.receptiveFieldResponseBinder function_handle
+                args.contrastMapping function_handle
+            end
+
+            compute = obj.computeByFamily{args.familyIndex};
+
+            if isempty(args.receptiveFieldResponseBinder)
+                responses = compute.compute( ...
+                    memberTable = args.memberTable, ...
+                    spectralColumn = args.spectralColumn, ...
+                    receptiveFieldResponseFunction = ...
+                        args.receptiveFieldResponseFunction);
+            else
+                responses = compute.compute( ...
+                    memberTable = args.memberTable, ...
+                    spectralColumn = args.spectralColumn, ...
+                    receptiveFieldResponseBinder = ...
+                        args.receptiveFieldResponseBinder);
+            end
+
+            C = args.contrastMapping( ...
+                responses.Center.', ...
+                responses.Surround.');
+
+            C = C.';
+        end
+
+        function channels = computeChannels(~, C)
+
+            reversalMap = PolarityReversalDetector.detectAll(C);
+
+            [onMap, offMap] = ...
+                OnOffContrastPolarityDetector.detectAll(C);
+
+            channels = struct( ...
+                "ResolvedContrast", C, ...
+                "PolarityReversal", abs(reversalMap) > 0, ...
+                "OnPositive", onMap > 0, ...
+                "OnNegative", onMap < 0, ...
+                "OffPositive", offMap > 0, ...
+                "OffNegative", offMap < 0);
+        end
+
+        function value = readScalar(~, memberTable, name)
+
+            if ~ismember(name, string(memberTable.Properties.VariableNames))
+                value = NaN;
+                return
+            end
+
+            value = memberTable.(name)(1);
+
+            if iscell(value)
+                value = value{1};
+            end
+
+            value = double(value);
+        end
+
+        function value = readString(~, memberTable, name)
+
+            if ~ismember(name, string(memberTable.Properties.VariableNames))
+                value = missing;
+                return
+            end
+
+            value = string(memberTable.(name)(1));
+        end
+
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

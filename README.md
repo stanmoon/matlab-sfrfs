@@ -1,7 +1,6 @@
 # Spectral Fault Receptive Fields (SFRFs) Toolbox for MATLAB
 
-This toolbox provides an implementation of **Spectral Fault Receptive Fields 
-(SFRFs)** for condition monitoring and prognosis.
+The **Spectral Fault Receptive Fields (SFRFs) Toolbox** provides MATLAB tools for vibration-based condition monitoring. Version 1.2.0 adds harmonic-resolved computation, contrast-polarity analysis, temporal event detection, and interactive exploration.
 <div align="center">
   <img src="images/sfrfs-logos-mini.png" alt="Receptive Fields Pathway"
   width="400">
@@ -69,13 +68,13 @@ SFRFs can be the basis of health monitoring systems, characterizing degradation
 trends. Our qualitative study explores its applicability to condition monitoring
 and prognosis of rolling bearings. 
 
-The following figure illustrates the processing pipeline for SFRFs.
+The following figure illustrates the original SFRF processing pipeline.
 <div align="center">
   <img src="images/visualabstractposter.png" 
 alt="SFRFs processing pipeline"
   width="600">
 </div>
-Figure 2: Processing pipeline. Degradation manifests as increased vibrations of
+Figure 2: Original SFRF processing pipeline. Degradation manifests as increased vibrations of
 the system. Horizontal and vertical accelerations are used to compute SFRFs as
 "frequency contrast" indicators by integrating the accelerometer readings around
 the well-known characteristic frequencies associated with different bearing
@@ -101,11 +100,11 @@ git clone git@github.com:stanmoon/matlab-sfrfs.git
 In MATLAB, run the installation script:
 
 ```matlab 
-sfrfs_install
+install_sfrfs
 ```
 
 Alternatively, you can install the packaged toolbox by double-clicking
-sfrfs.mltbx inside the dist folder.
+`SFRFsToolbox_v1.2.0.mltbx` inside the `dist` folder.
 
 ---
 
@@ -169,6 +168,8 @@ Home → Add-Ons → Manage Add-Ons, (Manage), then locate
 ---
 ## Documentation
 
+See the [API reference](toolbox/doc/Reference.mlx) and [v1.2.0 release notes](toolbox/doc/ReleaseNotes.mlx) for the latest capabilities.
+
 The toolbox includes both **interactive Live Script notebooks** and **static HTML documentation**.
 
 - The **interactive notebooks** (`.mlx`) are the primary source of examples, explanations, and API usage.
@@ -181,8 +182,7 @@ If you are working with a cloned repository, you can regenerate the full HTML do
 ```matlab
 doc_sfrfs
 ```
-This script collects all .interactive notebooks rendering them in HTML 
-format. The entry point is doc/html/SFRFsGuide.html.
+The script renders the Live Scripts as HTML. The entry point is `doc/html/SFRFsGuide.html`.
 
 ---
 ## Advanced: customizing SFRFs logging
@@ -209,6 +209,8 @@ export _JAVA_OPTIONS='-Djava.util.logging.SimpleFormatter.format="%1$tF %1$tT %4
 ## Further reading
 
 For further theoretical background and computational methods, see:
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. Spectral Contrast Polarity Analysis and Adaptive Sensor Fusion for Bearing Degradation Monitoring. In Proceedings of DSA 2026. IEEE (2026).
 
 - Stan Muñoz Gutiérrez and Franz Wotawa. Optimized Spectral Fault Receptive
 Fields for Diagnosis-Informed Prognosis. In 36th International Conference on
@@ -247,5 +249,5 @@ FFG under Grant Agreement No. FO999899377.
 
 ## Copyright
 
-© 2025 Stan Muñoz Gutiérrez and Franz Wotawa
+© 2025–2026 Stan Muñoz Gutiérrez and Franz Wotawa
 

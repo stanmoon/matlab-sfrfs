@@ -1,0 +1,904 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestLiftedHarmonicResponseCompute</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="TestLiftedHarmonicResponseCompute.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestLiftedHarmonicResponseCompute &lt; matlab.unittest.TestCase
+<span class="comment">% TestLiftedHarmonicResponseCompute</span>
+<span class="comment">%</span>
+<span class="comment">% Unit tests for LiftedHarmonicResponseCompute.</span>
+
+    <span class="keyword">methods</span>(Test)
+
+        <span class="keyword">function</span> testResponseBinderIsApplied(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            binder = @(mask) @(X, f) <span class="keyword">...</span>
+                trapz(f, abs(X), 1) ./ trapz(f, mask(:));
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = binder);
+
+            f = lifted.frequencyDomain;
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( <span class="keyword">...</span>
+                memberTable.(spectralColumn));
+
+            tbl = lifted.liftedGainFunctionsTable;
+
+            <span class="keyword">for</span> i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+
+                rfC = binder(masks.CenterMask(:));
+                rfS = binder(masks.SurroundMask(:));
+
+                nFFT = size(X, 1);
+
+                expC = rfC((masks.CenterMask(:) .* X) ./ nFFT, f).';
+                expS = rfS((masks.SurroundMask(:) .* X) ./ nFFT, f).';
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Center(:, i), <span class="keyword">...</span>
+                    expC, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Surround(:, i), <span class="keyword">...</span>
+                    expS, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testMissingRFRFSpecificationThrows(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            testCase.verifyError(@() obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn), <span class="keyword">...</span>
+                <span class="string">"sfrfs:LiftedHarmonicResponseCompute:"</span> + <span class="keyword">...</span>
+                <span class="string">"InvalidResponseSpecification"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testDoubleRFRFSpecificationThrows(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+            binder = @(mask) @(X, f) rf(X, f) + 0 .* sum(mask);
+
+            testCase.verifyError(@() obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = binder), <span class="keyword">...</span>
+                <span class="string">"sfrfs:LiftedHarmonicResponseCompute:"</span> + <span class="keyword">...</span>
+                <span class="string">"InvalidResponseSpecification"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testValidConstruction(testCase)
+            [sp, lifted] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            testCase.verifySameHandle(obj.liftedGainFunctions, lifted);
+            testCase.verifyEqual(obj.snapshotParameters, sp);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testComputeReturnsExpectedFields(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyTrue(isfield(responses, <span class="string">"Center"</span>));
+            testCase.verifyTrue(isfield(responses, <span class="string">"Surround"</span>));
+            testCase.verifyTrue(isfield(responses, <span class="string">"HarmonicIndex"</span>));
+            testCase.verifyTrue(isfield(responses, <span class="string">"CenterFrequencyHz"</span>));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testResponseSizes(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            nSnapshots = height(memberTable);
+            nH = height(lifted.liftedGainFunctionsTable);
+
+            testCase.verifySize(responses.Center, [nSnapshots, nH]);
+            testCase.verifySize(responses.Surround, [nSnapshots, nH]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testIntegralAbsMatchesManualComputation(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            f = lifted.frequencyDomain;
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( <span class="keyword">...</span>
+                memberTable.(spectralColumn));
+
+            tbl = lifted.liftedGainFunctionsTable;
+
+            nFFT = size(X, 1);
+            <span class="keyword">for</span> i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+
+                expC = <span class="keyword">...</span>
+                    trapz(f, abs(masks.CenterMask(:) .* X), 1).' ./ nFFT;
+                expS = <span class="keyword">...</span>
+                    trapz(f, abs(masks.SurroundMask(:) .* X), 1).' ./ nFFT;
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Center(:, i), <span class="keyword">...</span>
+                    expC, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Surround(:, i), <span class="keyword">...</span>
+                    expS, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testCustomRFRFIsInjected(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = @(X, f) sum(real(X), 1) + 0 .* f(1);
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            f = lifted.frequencyDomain;
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( <span class="keyword">...</span>
+                memberTable.(spectralColumn));
+
+            tbl = lifted.liftedGainFunctionsTable;
+
+            nFFT = size(X, 1);
+
+            <span class="keyword">for</span> i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+
+                expC = rf((masks.CenterMask(:) .* X) ./ nFFT, f).';
+                expS = rf((masks.SurroundMask(:) .* X) ./ nFFT, f).';
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Center(:, i), <span class="keyword">...</span>
+                    expC, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+
+                testCase.verifyEqual( <span class="keyword">...</span>
+                    responses.Surround(:, i), <span class="keyword">...</span>
+                    expS, <span class="keyword">...</span>
+                    <span class="string">"AbsTol"</span>, 1e-12);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testHarmonicMetadataIsPreserved(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture( <span class="keyword">...</span>
+                    harmonicIndices = [1; 3; 5]);
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyEqual(responses.HarmonicIndex, [1; 3; 5]);
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                responses.CenterFrequencyHz, <span class="keyword">...</span>
+                [50; 150; 250]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> testNumericSpectraMatrixSupported(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( <span class="keyword">...</span>
+                memberTable.(spectralColumn));
+
+            matrixTable = table( <span class="keyword">...</span>
+                1, <span class="keyword">...</span>
+                {X}, <span class="keyword">...</span>
+                <span class="string">'VariableNames'</span>, {<span class="string">'SnapshotIndex'</span>, char(spectralColumn)});
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = matrixTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            nSnapshots = size(X, 2);
+            nH = height(lifted.liftedGainFunctionsTable);
+
+            testCase.verifySize(responses.Center, [nSnapshots, nH]);
+            testCase.verifySize(responses.Surround, [nSnapshots, nH]);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> testFrequencyAxisIsPassedToRFRF(testCase)
+            [sp, lifted, memberTable, spectralColumn] = <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                liftedGainFunctions = lifted);
+
+            expectedF = lifted.frequencyDomain;
+
+            rf = @(X, f) <span class="keyword">...</span>
+                TestLiftedHarmonicResponseCompute <span class="keyword">...</span>
+                .verifyFrequencyAxisAndReturnZeros(X, f, expectedF);
+
+            responses = obj.compute( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumn = spectralColumn, <span class="keyword">...</span>
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                responses.Center, <span class="keyword">...</span>
+                zeros(size(responses.Center)));
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                responses.Surround, <span class="keyword">...</span>
+                zeros(size(responses.Surround)));
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>(Static, Access = private)
+
+        <span class="keyword">function</span> [sp, lifted, memberTable, spectralColumn] = fixture(args)
+            <span class="keyword">arguments</span>
+                args.characteristicFrequencyHz <span class="typesection">(1,1) double </span>= 50
+                args.harmonicIndices <span class="typesection">(:,1) double </span>= [1; 2; 4]
+            <span class="keyword">end</span>
+
+            sp = ParametersSnapshot( <span class="keyword">...</span>
+                samplingFrequency = 512, <span class="keyword">...</span>
+                duration = 1, <span class="keyword">...</span>
+                stride = 1);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 0, <span class="keyword">...</span>
+                numSidebands = 0, <span class="keyword">...</span>
+                numHarmonics = 4, <span class="keyword">...</span>
+                centerMask = SuperGaussianMaskParameters( <span class="keyword">...</span>
+                    alpha = 2, <span class="keyword">...</span>
+                    beta = 8), <span class="keyword">...</span>
+                surroundMask = SuperGaussianMaskParameters( <span class="keyword">...</span>
+                    alpha = 6, <span class="keyword">...</span>
+                    beta = 2), <span class="keyword">...</span>
+                inhibitionFactor = 0.9);
+
+            sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                SameForAllFaultTypes = sharedParams);
+
+            ft = SFRFsParametersRollingBearings <span class="keyword">...</span>
+                .OUTER_RACE_FAULT_TYPE_NAME;
+
+            sel = OperatingConditionSelection( <span class="keyword">...</span>
+                speed = 35, <span class="keyword">...</span>
+                load = 12);
+
+            lifted = LiftedHarmonicGainFunctions( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                sfrfsParameters = sfrfsParams, <span class="keyword">...</span>
+                faultType = ft, <span class="keyword">...</span>
+                selection = sel, <span class="keyword">...</span>
+                characteristicFrequencyHz = <span class="keyword">...</span>
+                    args.characteristicFrequencyHz, <span class="keyword">...</span>
+                harmonicIndices = args.harmonicIndices);
+
+            lifted.compute();
+
+            f = sp.getFrequencyDomain();
+            nSnapshots = 5;
+
+            spectra = cell(nSnapshots, 1);
+
+            <span class="keyword">for</span> j = 1:nSnapshots
+                phase = 2*pi*j*f ./ max(f + eps);
+
+                spectra{j} = complex( <span class="keyword">...</span>
+                    sin(phase), <span class="keyword">...</span>
+                    cos(phase));
+            <span class="keyword">end</span>
+
+            spectralColumn = <span class="string">"SyntheticFFT"</span>;
+
+            memberTable = table( <span class="keyword">...</span>
+                (1:nSnapshots).', <span class="keyword">...</span>
+                spectra, <span class="keyword">...</span>
+                <span class="string">'VariableNames'</span>, {<span class="string">'SnapshotIndex'</span>, char(spectralColumn)});
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> X = stackSpectra(spectra)
+            <span class="keyword">if</span> ~iscell(spectra)
+                X = spectra;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            nSnapshots = numel(spectra);
+            nBins = numel(spectra{1});
+
+            X = zeros(nBins, nSnapshots, <span class="string">"like"</span>, spectra{1});
+
+            <span class="keyword">for</span> i = 1:nSnapshots
+                X(:, i) = spectra{i}(:);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> r = verifyFrequencyAxisAndReturnZeros(X, f, expectedF)
+            <span class="keyword">if</span> ~isequal(f(:), expectedF(:))
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:TestLiftedHarmonicResponseCompute:"</span> + <span class="keyword">...</span>
+                    <span class="string">"UnexpectedFrequencyAxis"</span>, <span class="keyword">...</span>
+                    <span class="string">"Unexpected frequency axis."</span>);
+            <span class="keyword">end</span>
+
+            r = zeros(1, size(X, 2));
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestLiftedHarmonicResponseCompute < matlab.unittest.TestCase
+% TestLiftedHarmonicResponseCompute
+%
+% Unit tests for LiftedHarmonicResponseCompute.
+
+    methods(Test)
+
+        function testResponseBinderIsApplied(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+        
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+        
+            binder = @(mask) @(X, f) ...
+                trapz(f, abs(X), 1) ./ trapz(f, mask(:));
+        
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseBinder = binder);
+        
+            f = lifted.frequencyDomain;
+        
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( ...
+                memberTable.(spectralColumn));
+        
+            tbl = lifted.liftedGainFunctionsTable;
+        
+            for i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+        
+                rfC = binder(masks.CenterMask(:));
+                rfS = binder(masks.SurroundMask(:));
+        
+                nFFT = size(X, 1);
+
+                expC = rfC((masks.CenterMask(:) .* X) ./ nFFT, f).';
+                expS = rfS((masks.SurroundMask(:) .* X) ./ nFFT, f).';
+        
+                testCase.verifyEqual( ...
+                    responses.Center(:, i), ...
+                    expC, ...
+                    "AbsTol", 1e-12);
+        
+                testCase.verifyEqual( ...
+                    responses.Surround(:, i), ...
+                    expS, ...
+                    "AbsTol", 1e-12);
+            end
+        end
+        
+        function testMissingRFRFSpecificationThrows(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+        
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+        
+            testCase.verifyError(@() obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn), ...
+                "sfrfs:LiftedHarmonicResponseCompute:" + ...
+                "InvalidResponseSpecification");
+        end
+        
+        function testDoubleRFRFSpecificationThrows(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+        
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+        
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+            binder = @(mask) @(X, f) rf(X, f) + 0 .* sum(mask);
+        
+            testCase.verifyError(@() obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf, ...
+                receptiveFieldResponseBinder = binder), ...
+                "sfrfs:LiftedHarmonicResponseCompute:" + ...
+                "InvalidResponseSpecification");
+        end
+
+        function testValidConstruction(testCase)
+            [sp, lifted] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            testCase.verifySameHandle(obj.liftedGainFunctions, lifted);
+            testCase.verifyEqual(obj.snapshotParameters, sp);
+        end
+
+        function testComputeReturnsExpectedFields(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyTrue(isfield(responses, "Center"));
+            testCase.verifyTrue(isfield(responses, "Surround"));
+            testCase.verifyTrue(isfield(responses, "HarmonicIndex"));
+            testCase.verifyTrue(isfield(responses, "CenterFrequencyHz"));
+        end
+
+        function testResponseSizes(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            nSnapshots = height(memberTable);
+            nH = height(lifted.liftedGainFunctionsTable);
+
+            testCase.verifySize(responses.Center, [nSnapshots, nH]);
+            testCase.verifySize(responses.Surround, [nSnapshots, nH]);
+        end
+
+        function testIntegralAbsMatchesManualComputation(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            f = lifted.frequencyDomain;
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( ...
+                memberTable.(spectralColumn));
+
+            tbl = lifted.liftedGainFunctionsTable;
+
+            nFFT = size(X, 1);
+            for i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+
+                expC = ...
+                    trapz(f, abs(masks.CenterMask(:) .* X), 1).' ./ nFFT;
+                expS = ...
+                    trapz(f, abs(masks.SurroundMask(:) .* X), 1).' ./ nFFT;
+
+                testCase.verifyEqual( ...
+                    responses.Center(:, i), ...
+                    expC, ...
+                    "AbsTol", 1e-12);
+
+                testCase.verifyEqual( ...
+                    responses.Surround(:, i), ...
+                    expS, ...
+                    "AbsTol", 1e-12);
+            end
+        end
+
+        function testCustomRFRFIsInjected(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            rf = @(X, f) sum(real(X), 1) + 0 .* f(1);
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            f = lifted.frequencyDomain;
+
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( ...
+                memberTable.(spectralColumn));
+
+            tbl = lifted.liftedGainFunctionsTable;
+
+            nFFT = size(X, 1);
+
+            for i = 1:height(tbl)
+                masks = tbl.FrequencyBankMasks{i};
+
+                expC = rf((masks.CenterMask(:) .* X) ./ nFFT, f).';
+                expS = rf((masks.SurroundMask(:) .* X) ./ nFFT, f).';
+
+                testCase.verifyEqual( ...
+                    responses.Center(:, i), ...
+                    expC, ...
+                    "AbsTol", 1e-12);
+
+                testCase.verifyEqual( ...
+                    responses.Surround(:, i), ...
+                    expS, ...
+                    "AbsTol", 1e-12);
+            end
+        end
+
+        function testHarmonicMetadataIsPreserved(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture( ...
+                    harmonicIndices = [1; 3; 5]);
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyEqual(responses.HarmonicIndex, [1; 3; 5]);
+
+            testCase.verifyEqual( ...
+                responses.CenterFrequencyHz, ...
+                [50; 150; 250]);
+        end
+
+        function testNumericSpectraMatrixSupported(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+        
+            X = TestLiftedHarmonicResponseCompute.stackSpectra( ...
+                memberTable.(spectralColumn));
+        
+            matrixTable = table( ...
+                1, ...
+                {X}, ...
+                'VariableNames', {'SnapshotIndex', char(spectralColumn)});
+        
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+        
+            rf = ReceptiveFieldResponseFunctions.integralAbs();
+        
+            responses = obj.compute( ...
+                memberTable = matrixTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+        
+            nSnapshots = size(X, 2);
+            nH = height(lifted.liftedGainFunctionsTable);
+        
+            testCase.verifySize(responses.Center, [nSnapshots, nH]);
+            testCase.verifySize(responses.Surround, [nSnapshots, nH]);
+        end
+        function testFrequencyAxisIsPassedToRFRF(testCase)
+            [sp, lifted, memberTable, spectralColumn] = ...
+                TestLiftedHarmonicResponseCompute.fixture();
+
+            obj = LiftedHarmonicResponseCompute( ...
+                snapshotParameters = sp, ...
+                liftedGainFunctions = lifted);
+
+            expectedF = lifted.frequencyDomain;
+
+            rf = @(X, f) ...
+                TestLiftedHarmonicResponseCompute ...
+                .verifyFrequencyAxisAndReturnZeros(X, f, expectedF);
+
+            responses = obj.compute( ...
+                memberTable = memberTable, ...
+                spectralColumn = spectralColumn, ...
+                receptiveFieldResponseFunction = rf);
+
+            testCase.verifyEqual( ...
+                responses.Center, ...
+                zeros(size(responses.Center)));
+
+            testCase.verifyEqual( ...
+                responses.Surround, ...
+                zeros(size(responses.Surround)));
+        end
+
+    end
+
+    methods(Static, Access = private)
+
+        function [sp, lifted, memberTable, spectralColumn] = fixture(args)
+            arguments
+                args.characteristicFrequencyHz (1,1) double = 50
+                args.harmonicIndices (:,1) double = [1; 2; 4]
+            end
+
+            sp = ParametersSnapshot( ...
+                samplingFrequency = 512, ...
+                duration = 1, ...
+                stride = 1);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( ...
+                order = 0, ...
+                numSidebands = 0, ...
+                numHarmonics = 4, ...
+                centerMask = SuperGaussianMaskParameters( ...
+                    alpha = 2, ...
+                    beta = 8), ...
+                surroundMask = SuperGaussianMaskParameters( ...
+                    alpha = 6, ...
+                    beta = 2), ...
+                inhibitionFactor = 0.9);
+
+            sfrfsParams = SFRFsParametersRollingBearings( ...
+                SameForAllFaultTypes = sharedParams);
+
+            ft = SFRFsParametersRollingBearings ...
+                .OUTER_RACE_FAULT_TYPE_NAME;
+
+            sel = OperatingConditionSelection( ...
+                speed = 35, ...
+                load = 12);
+
+            lifted = LiftedHarmonicGainFunctions( ...
+                snapshotParameters = sp, ...
+                sfrfsParameters = sfrfsParams, ...
+                faultType = ft, ...
+                selection = sel, ...
+                characteristicFrequencyHz = ...
+                    args.characteristicFrequencyHz, ...
+                harmonicIndices = args.harmonicIndices);
+
+            lifted.compute();
+
+            f = sp.getFrequencyDomain();
+            nSnapshots = 5;
+
+            spectra = cell(nSnapshots, 1);
+
+            for j = 1:nSnapshots
+                phase = 2*pi*j*f ./ max(f + eps);
+
+                spectra{j} = complex( ...
+                    sin(phase), ...
+                    cos(phase));
+            end
+
+            spectralColumn = "SyntheticFFT";
+
+            memberTable = table( ...
+                (1:nSnapshots).', ...
+                spectra, ...
+                'VariableNames', {'SnapshotIndex', char(spectralColumn)});
+        end
+
+        function X = stackSpectra(spectra)
+            if ~iscell(spectra)
+                X = spectra;
+                return
+            end
+
+            nSnapshots = numel(spectra);
+            nBins = numel(spectra{1});
+
+            X = zeros(nBins, nSnapshots, "like", spectra{1});
+
+            for i = 1:nSnapshots
+                X(:, i) = spectra{i}(:);
+            end
+        end
+
+        function r = verifyFrequencyAxisAndReturnZeros(X, f, expectedF)
+            if ~isequal(f(:), expectedF(:))
+                error( ...
+                    "sfrfs:TestLiftedHarmonicResponseCompute:" + ...
+                    "UnexpectedFrequencyAxis", ...
+                    "Unexpected frequency axis.");
+            end
+
+            r = zeros(1, size(X, 2));
+        end
+
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

@@ -1,0 +1,1880 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>ContrastPolarityDegradationExplorer</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="ContrastPolarityDegradationExplorer.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> ContrastPolarityDegradationExplorer &lt; handle
+    <span class="comment">%CONTRASTPOLARITYDEGRADATIONEXPLORER Explore stored contrast-polarity representations.</span>
+    <span class="comment">%</span>
+    <span class="comment">% ContrastPolarityDegradationExplorer provides an interactive interface</span>
+    <span class="comment">% for examining the canonical exploration dataset produced by</span>
+    <span class="comment">% ContrastPolarityExplorationDatasetBuilder.</span>
+    <span class="comment">%</span>
+    <span class="comment">% The explorer operates on previously computed representations.</span>
+    <span class="comment">% It does not reconstruct spectral fault receptive fields, recompute</span>
+    <span class="comment">% contrast-polarity channels, or infer diagnostic or prognostic states.</span>
+    <span class="comment">%</span>
+    <span class="comment">% The interface supports selection by bearing and monitored fault</span>
+    <span class="comment">% family, snapshot-window navigation, and six complementary views:</span>
+    <span class="comment">%</span>
+    <span class="comment">%   DirectObservable</span>
+    <span class="comment">%   EpistemicSupport</span>
+    <span class="comment">%   EventDensity</span>
+    <span class="comment">%   PolarityBalance</span>
+    <span class="comment">%   HarmonicPolarityTrajectory</span>
+    <span class="comment">%   HarmonicRelevance</span>
+    <span class="comment">%</span>
+    <span class="comment">% Constructor:</span>
+    <span class="comment">%</span>
+    <span class="comment">%   explorer = viz.ContrastPolarityDegradationExplorer( ...</span>
+    <span class="comment">%       datasetTable = channelRunsQ95);</span>
+    <span class="comment">%</span>
+    <span class="comment">% Optional parameters:</span>
+    <span class="comment">%</span>
+    <span class="comment">%   bearingParameters - Bearing geometry and frequency parameters.</span>
+    <span class="comment">%   sfrfsParameters   - Spectral fault receptive-field configuration.</span>
+    <span class="comment">%</span>
+    <span class="comment">% Display the interactive explorer:</span>
+    <span class="comment">%</span>
+    <span class="comment">%   explorer.render();</span>
+    <span class="comment">%</span>
+    <span class="comment">% See also ContrastPolarityExplorationDatasetBuilder,</span>
+    <span class="comment">%          ContrastPolarityChannelDatasetBuilder.</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        datasetTable <span class="typesection">table</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Access = private)
+        fig
+        ax
+        infoArea
+
+        labelDrop
+        familyDrop
+        viewDrop
+        observableDrop
+        eventDrop
+        overlayEventDrop
+        relevanceModeDrop
+
+        startEdit
+        windowEdit
+        robustEdit
+        renderButton
+
+        bearingParameters
+        sfrfsParameters
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (Constant, Access = private)
+        MetadataNames = [ <span class="keyword">...</span>
+            <span class="string">"Label"</span>, <span class="keyword">...</span>
+            <span class="string">"Speed"</span>, <span class="keyword">...</span>
+            <span class="string">"Load"</span>, <span class="keyword">...</span>
+            <span class="string">"Lifetime"</span>, <span class="keyword">...</span>
+            <span class="string">"MonitoredFaultFamily"</span>, <span class="keyword">...</span>
+            <span class="string">"HarmonicCount"</span>, <span class="keyword">...</span>
+            <span class="string">"Failure_O"</span>, <span class="keyword">...</span>
+            <span class="string">"Failure_I"</span>, <span class="keyword">...</span>
+            <span class="string">"Failure_C"</span>, <span class="keyword">...</span>
+            <span class="string">"Failure_B"</span>];
+
+        EventNames = [ <span class="keyword">...</span>
+            <span class="string">"PolarityReversal"</span>, <span class="keyword">...</span>
+            <span class="string">"OnPositive"</span>, <span class="keyword">...</span>
+            <span class="string">"OnNegative"</span>, <span class="keyword">...</span>
+            <span class="string">"OffPositive"</span>, <span class="keyword">...</span>
+            <span class="string">"OffNegative"</span>];
+
+        ViewNames = [ <span class="keyword">...</span>
+            <span class="string">"DirectObservable"</span>, <span class="keyword">...</span>
+            <span class="string">"EpistemicSupport"</span>, <span class="keyword">...</span>
+            <span class="string">"EventDensity"</span>, <span class="keyword">...</span>
+            <span class="string">"PolarityBalance"</span>, <span class="keyword">...</span>
+            <span class="string">"HarmonicPolarityTrajectory"</span>, <span class="keyword">...</span>
+            <span class="string">"HarmonicRelevance"</span>];
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> obj = ContrastPolarityDegradationExplorer(args)
+
+            <span class="keyword">arguments</span>
+                args.datasetTable <span class="typesection">table {mustBeNonempty}</span>
+                args.bearingParameters = []
+                args.sfrfsParameters = []
+            <span class="keyword">end</span>
+
+            obj.datasetTable = args.datasetTable;
+            obj.bearingParameters = args.bearingParameters;
+            obj.sfrfsParameters = args.sfrfsParameters;
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> render(obj)
+
+            obj.fig = uifigure( <span class="keyword">...</span>
+                Name = <span class="string">"Contrast Polarity Degradation Explorer"</span>, <span class="keyword">...</span>
+                Position = [60 40 1700 980]);
+
+            main = uigridlayout(obj.fig, [1 2]);
+            main.ColumnWidth = {380, <span class="string">"1x"</span>};
+            main.RowHeight = {<span class="string">"1x"</span>};
+
+            controlPanel = uipanel(main, <span class="keyword">...</span>
+                Title = <span class="string">"Selection"</span>);
+
+            grid = uigridlayout(controlPanel, [19 2]);
+            grid.ColumnWidth = {115, <span class="string">"1x"</span>};
+            grid.RowHeight = repmat({30}, 1, 19);
+            grid.Padding = [8 8 8 8];
+
+            uilabel(grid, Text = <span class="string">"Bearing"</span>);
+            obj.labelDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr(obj.labels()), <span class="keyword">...</span>
+                ValueChangedFcn = @(~, ~) obj.refreshFamilies());
+
+            uilabel(grid, Text = <span class="string">"Fault family"</span>);
+            obj.familyDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr(obj.families()));
+
+            uilabel(grid, Text = <span class="string">"View"</span>);
+            obj.viewDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr(obj.ViewNames), <span class="keyword">...</span>
+                Value = <span class="string">"DirectObservable"</span>, <span class="keyword">...</span>
+                ValueChangedFcn = @(~, ~) obj.refreshVisibility());
+
+            uilabel(grid, Text = <span class="string">"Observable"</span>);
+            obj.observableDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr(obj.observableNames()));
+
+            uilabel(grid, Text = <span class="string">"Relevance mode"</span>);
+            obj.relevanceModeDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = [<span class="string">"Absolute"</span>, <span class="string">"ImportanceIndex"</span>], <span class="keyword">...</span>
+                Value = <span class="string">"Absolute"</span>);
+
+            uilabel(grid, Text = <span class="string">"Event count"</span>);
+            obj.eventDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr(obj.EventNames), <span class="keyword">...</span>
+                Value = <span class="string">"PolarityReversal"</span>);
+
+            uilabel(grid, Text = <span class="string">"Event overlay"</span>);
+            obj.overlayEventDrop = uidropdown(grid, <span class="keyword">...</span>
+                Items = cellstr([<span class="string">"None"</span>, obj.EventNames]), <span class="keyword">...</span>
+                Value = <span class="string">"None"</span>);
+
+            uilabel(grid, Text = <span class="string">"Start snapshot"</span>);
+            obj.startEdit = uieditfield(grid, <span class="string">"numeric"</span>, <span class="keyword">...</span>
+                Value = 1, <span class="keyword">...</span>
+                Limits = [1 inf], <span class="keyword">...</span>
+                RoundFractionalValues = <span class="string">"on"</span>);
+
+            uilabel(grid, Text = <span class="string">"Window length"</span>);
+            obj.windowEdit = uieditfield(grid, <span class="string">"numeric"</span>, <span class="keyword">...</span>
+                Value = 0, <span class="keyword">...</span>
+                Limits = [0 inf], <span class="keyword">...</span>
+                RoundFractionalValues = <span class="string">"on"</span>);
+
+            uilabel(grid, Text = <span class="string">"Robust prctile"</span>);
+            obj.robustEdit = uieditfield(grid, <span class="string">"numeric"</span>, <span class="keyword">...</span>
+                Value = 99, <span class="keyword">...</span>
+                Limits = [1 100]);
+
+            obj.renderButton = uibutton(grid, <span class="keyword">...</span>
+                Text = <span class="string">"Render"</span>, <span class="keyword">...</span>
+                ButtonPushedFcn = @(~, ~) obj.renderCurrent());
+            obj.renderButton.Layout.Row = 11;
+            obj.renderButton.Layout.Column = [1 2];
+
+            obj.infoArea = uitextarea(grid, <span class="keyword">...</span>
+                Editable = <span class="string">"off"</span>);
+            obj.infoArea.Layout.Row = [12 19];
+            obj.infoArea.Layout.Column = [1 2];
+
+            plotPanel = uipanel(main, <span class="keyword">...</span>
+                Title = <span class="string">"Visualization"</span>);
+
+            plotGrid = uigridlayout(plotPanel, [1 1]);
+            obj.ax = uiaxes(plotGrid);
+
+            obj.refreshFamilies();
+            obj.refreshVisibility();
+            obj.renderCurrent();
+
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Access = private)
+
+        <span class="keyword">function</span> refreshFamilies(obj)
+
+            label = string(obj.labelDrop.Value);
+            rows = obj.datasetTable(obj.datasetTable.Label == label, :);
+            fams = unique(rows.MonitoredFaultFamily, <span class="string">"stable"</span>);
+
+            obj.familyDrop.Items = cellstr(fams);
+
+            <span class="keyword">if</span> ~isempty(fams)
+                obj.familyDrop.Value = fams(1);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> refreshVisibility(obj)
+
+            viewName = string(obj.viewDrop.Value);
+
+            obj.observableDrop.Enable = <span class="string">"off"</span>;
+            obj.eventDrop.Enable = <span class="string">"off"</span>;
+            obj.overlayEventDrop.Enable = <span class="string">"off"</span>;
+            obj.relevanceModeDrop.Enable = <span class="string">"off"</span>;
+
+            <span class="keyword">if</span> viewName == <span class="string">"DirectObservable"</span>
+                obj.observableDrop.Enable = <span class="string">"on"</span>;
+                obj.overlayEventDrop.Enable = <span class="string">"on"</span>;
+            <span class="keyword">elseif</span> viewName == <span class="string">"HarmonicRelevance"</span>
+                obj.observableDrop.Enable = <span class="string">"on"</span>;
+                obj.relevanceModeDrop.Enable = <span class="string">"on"</span>;
+            <span class="keyword">elseif</span> viewName == <span class="string">"EventDensity"</span>
+                obj.eventDrop.Enable = <span class="string">"on"</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderCurrent(obj)
+
+            row = obj.selectedRow();
+            viewName = string(obj.viewDrop.Value);
+
+            cla(obj.ax, <span class="string">"reset"</span>);
+
+            <span class="keyword">switch</span> viewName
+                <span class="keyword">case</span> <span class="string">"DirectObservable"</span>
+                    obj.renderDirect(row, string(obj.observableDrop.Value));
+
+                <span class="keyword">case</span> <span class="string">"EpistemicSupport"</span>
+                    obj.renderEpistemicSupport(row);
+
+                <span class="keyword">case</span> <span class="string">"EventDensity"</span>
+                    obj.renderEventDensity(row, string(obj.eventDrop.Value));
+
+                <span class="keyword">case</span> <span class="string">"PolarityBalance"</span>
+                    obj.renderPolarityBalance(row);
+
+                <span class="keyword">case</span> <span class="string">"HarmonicPolarityTrajectory"</span>
+                    obj.renderPolarityTrajectory(row);
+
+                <span class="keyword">case</span> <span class="string">"HarmonicRelevance"</span>
+                    obj.renderHarmonicRelevance( <span class="keyword">...</span>
+                        row, <span class="keyword">...</span>
+                        string(obj.observableDrop.Value));
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> viewName ~= <span class="string">"HarmonicRelevance"</span>
+                obj.updateInfo(row);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderDirect(obj, row, name)
+
+            X = row.(name){1};
+
+            <span class="keyword">if</span> isvector(X)
+                y = X(:);
+                idx = obj.windowIndex(numel(y));
+
+                plot(obj.ax, idx, y(idx), LineWidth = 1.2);
+                grid(obj.ax, <span class="string">"on"</span>);
+                xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+                ylabel(obj.ax, name, Interpreter = <span class="string">"none"</span>);
+                title(obj.ax, name, Interpreter = <span class="string">"none"</span>);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            idx = obj.windowIndex(size(X, 1));
+            Z = X(idx, :).';
+
+            imagesc(obj.ax, idx, 1:size(Z, 1), Z);
+            axis(obj.ax, <span class="string">"tight"</span>);
+            set(obj.ax, YDir = <span class="string">"normal"</span>);
+
+            xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+            ylabel(obj.ax, <span class="string">"Harmonic index"</span>);
+            title(obj.ax, name, Interpreter = <span class="string">"none"</span>);
+
+            <span class="keyword">if</span> obj.isEventName(name)
+                colormap(obj.ax, obj.binaryEventColormap());
+                clim(obj.ax, [0 1]);
+            <span class="keyword">elseif</span> obj.isContrastLike(name)
+                colormap(obj.ax, obj.signedContrastColormap());
+                obj.applySignedColorLimits(Z);
+            <span class="keyword">else</span>
+                colormap(obj.ax, jet);
+            <span class="keyword">end</span>
+
+            colorbar(obj.ax);
+
+            obj.overlayEvents(row, idx, name);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> overlayEvents(obj, row, idx, observableName)
+
+            eventName = string(obj.overlayEventDrop.Value);
+
+            <span class="keyword">if</span> eventName == <span class="string">"None"</span> || ~obj.isContrastLike(observableName)
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            E = row.(eventName){1};
+            Ew = E(idx, :).';
+
+            [h, tLocal] = find(Ew ~= 0);
+
+            <span class="keyword">if</span> isempty(h)
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            t = idx(tLocal);
+
+            hold(obj.ax, <span class="string">"on"</span>);
+            plot(obj.ax, t, h, <span class="string">"kx"</span>, <span class="keyword">...</span>
+                LineStyle = <span class="string">"none"</span>, <span class="keyword">...</span>
+                MarkerSize = 5, <span class="keyword">...</span>
+                LineWidth = 0.8);
+            hold(obj.ax, <span class="string">"off"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderEpistemicSupport(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            supported = sum(C(idx, :) ~= 0, 2);
+            censored = size(C, 2) - supported;
+
+            y = [supported, censored];
+
+            b = bar(obj.ax, idx, y, <span class="string">"stacked"</span>);
+            b(1).FaceColor = [0.20, 0.55, 0.45];
+            b(2).FaceColor = [0.88, 0.88, 0.88];
+
+            <span class="keyword">for</span> k = 1:numel(b)
+                b(k).EdgeColor = <span class="string">"none"</span>;
+            <span class="keyword">end</span>
+
+            grid(obj.ax, <span class="string">"on"</span>);
+
+            xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+            ylabel(obj.ax, <span class="string">"Harmonic count"</span>);
+            title(obj.ax, <span class="string">"Epistemic support count"</span>);
+            legend(obj.ax, [<span class="string">"supported"</span>, <span class="string">"censored"</span>], Location = <span class="string">"best"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderEventDensity(obj, row, eventName)
+
+            E = row.(eventName){1};
+            idx = obj.windowIndex(size(E, 1));
+
+            eventCount = sum(E(idx, :) ~= 0, 2);
+
+            bar(obj.ax, idx, eventCount, <span class="keyword">...</span>
+                FaceColor = [0.35, 0.35, 0.35], <span class="keyword">...</span>
+                EdgeColor = <span class="string">"none"</span>);
+
+            grid(obj.ax, <span class="string">"on"</span>);
+
+            yMax = max(eventCount);
+
+            <span class="keyword">if</span> yMax &lt;= 0 || ~isfinite(yMax)
+                ylim(obj.ax, [0 1]);
+            <span class="keyword">else</span>
+                ylim(obj.ax, [0 max(1, 1.20 * yMax)]);
+            <span class="keyword">end</span>
+
+            xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+            ylabel(obj.ax, <span class="string">"Event count"</span>);
+            title(obj.ax, <span class="string">"Event count: "</span> + eventName, <span class="keyword">...</span>
+                Interpreter = <span class="string">"none"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderPolarityBalance(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            Cw = C(idx, :);
+
+            negativeCount = sum(Cw &lt; 0, 2);
+            positiveCount = sum(Cw &gt; 0, 2);
+            silentCount = sum(Cw == 0, 2);
+
+            y = [negativeCount, positiveCount, silentCount];
+
+            b = bar(obj.ax, idx, y, <span class="string">"stacked"</span>);
+            b(1).FaceColor = [0.30, 0.45, 0.80];
+            b(2).FaceColor = [0.80, 0.35, 0.30];
+            b(3).FaceColor = [0.88, 0.88, 0.88];
+
+            <span class="keyword">for</span> k = 1:numel(b)
+                b(k).EdgeColor = <span class="string">"none"</span>;
+            <span class="keyword">end</span>
+
+            grid(obj.ax, <span class="string">"on"</span>);
+
+            xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+            ylabel(obj.ax, <span class="string">"Harmonic count"</span>);
+            title(obj.ax, <span class="string">"Polarity composition count"</span>);
+            legend(obj.ax, <span class="keyword">...</span>
+                [<span class="string">"negative"</span>, <span class="string">"positive"</span>, <span class="string">"silent"</span>], <span class="keyword">...</span>
+                Location = <span class="string">"best"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderPolarityTrajectory(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            Cw = C(idx, :);
+
+            sPlus = sum(max(Cw, 0), 2);
+            sMinus = sum(max(-Cw, 0), 2);
+
+            plot(obj.ax, sPlus, sMinus, <span class="string">"-"</span>, <span class="keyword">...</span>
+                LineWidth = 0.25, <span class="keyword">...</span>
+                Color = [0.72, 0.72, 0.72]);
+            hold(obj.ax, <span class="string">"on"</span>);
+
+            scatter(obj.ax, <span class="keyword">...</span>
+                sPlus, <span class="keyword">...</span>
+                sMinus, <span class="keyword">...</span>
+                28, <span class="keyword">...</span>
+                idx(:), <span class="keyword">...</span>
+                <span class="string">"filled"</span>);
+
+            hold(obj.ax, <span class="string">"off"</span>);
+
+            grid(obj.ax, <span class="string">"on"</span>);
+            axis(obj.ax, <span class="string">"tight"</span>);
+            colormap(obj.ax, obj.timeColormap());
+
+            cb = colorbar(obj.ax);
+            cb.Label.String = <span class="string">"Snapshot index"</span>;
+
+            xlabel(obj.ax, <span class="string">"Positive population mass"</span>);
+            ylabel(obj.ax, <span class="string">"Negative population mass"</span>);
+            title(obj.ax, <span class="string">"Harmonic polarity trajectory"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> renderHarmonicRelevance(obj, row, name)
+
+            X = row.(name){1};
+
+            <span class="keyword">if</span> isvector(X)
+                y = X(:);
+                idx = obj.windowIndex(numel(y));
+
+                plot(obj.ax, idx, y(idx), LineWidth = 1.2);
+                grid(obj.ax, <span class="string">"on"</span>);
+
+                xlabel(obj.ax, <span class="string">"Snapshot index"</span>);
+                ylabel(obj.ax, name, Interpreter = <span class="string">"none"</span>);
+                title(obj.ax, <span class="keyword">...</span>
+                    <span class="string">"Temporal observable: "</span> + name, <span class="keyword">...</span>
+                    Interpreter = <span class="string">"none"</span>);
+
+                obj.updateInfo(row);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> obj.isEventName(name)
+                relevance = sum(X ~= 0, 1);
+                responseLabel = <span class="string">"Event count"</span>;
+                indexLabel = <span class="string">"Relative event importance index"</span>;
+                barColor = [0.35, 0.35, 0.35];
+                titleText = <span class="string">"Harmonic event relevance: "</span> + name;
+            <span class="keyword">else</span>
+                relevance = sum(abs(X), 1);
+                responseLabel = <span class="string">"Accumulated absolute response"</span>;
+                indexLabel = <span class="string">"Relative contrast importance index"</span>;
+                barColor = [0.20, 0.55, 0.45];
+                titleText = <span class="string">"Harmonic contrast relevance: "</span> + name;
+            <span class="keyword">end</span>
+
+            relevance = relevance(:);
+            H = numel(relevance);
+
+            retentionFraction = obj.robustEdit.Value / 100;
+
+            [keepMask, selectedEnergyFraction] = <span class="keyword">...</span>
+                obj.relevanceRetentionMask(relevance, retentionFraction);
+
+            displayRelevance = relevance;
+            displayRelevance(~keepMask) = 0;
+
+            [sortedRelevance, order] = sort(displayRelevance, <span class="string">"descend"</span>);
+
+            rankOfHarmonic = nan(H, 1);
+            rankOfHarmonic(order) = (1:H).';
+
+            importanceIndex = H - rankOfHarmonic + 1;
+            importanceIndex(displayRelevance == 0) = 0;
+
+            mode = string(obj.relevanceModeDrop.Value);
+
+            <span class="keyword">if</span> mode == <span class="string">"ImportanceIndex"</span>
+                yPlot = importanceIndex;
+                xLabel = indexLabel;
+                plotTitle = titleText + <span class="string">" | importance index | retain "</span> <span class="keyword">...</span>
+                    + string(obj.robustEdit.Value) + <span class="string">"%"</span>;
+            <span class="keyword">else</span>
+                yPlot = displayRelevance;
+                xLabel = responseLabel;
+                plotTitle = titleText + <span class="string">" | retained relevance | retain "</span> <span class="keyword">...</span>
+                    + string(obj.robustEdit.Value) + <span class="string">"%"</span>;
+            <span class="keyword">end</span>
+
+            cla(obj.ax, <span class="string">"reset"</span>);
+
+            barh(obj.ax, 1:H, yPlot, <span class="keyword">...</span>
+                FaceColor = barColor, <span class="keyword">...</span>
+                EdgeColor = <span class="string">"none"</span>);
+
+            set(obj.ax, YDir = <span class="string">"normal"</span>);
+            grid(obj.ax, <span class="string">"on"</span>);
+
+            ylabel(obj.ax, <span class="string">"Harmonic index"</span>);
+            xlabel(obj.ax, xLabel);
+
+            title(obj.ax, plotTitle, <span class="keyword">...</span>
+                Interpreter = <span class="string">"none"</span>, <span class="keyword">...</span>
+                FontWeight = <span class="string">"normal"</span>);
+
+            ylim(obj.ax, [0.5, H + 0.5]);
+            obj.addFrequencyRightAxis(row, H);
+
+            <span class="keyword">if</span> any(yPlot &gt; 0)
+                xlim(obj.ax, [0, 1.1 * max(yPlot)]);
+            <span class="keyword">else</span>
+                xlim(obj.ax, [0, 1]);
+            <span class="keyword">end</span>
+
+            shown = nnz(displayRelevance);
+
+            obj.infoArea.Value = cellstr([
+                <span class="string">"Observable: "</span> + name
+                <span class="string">"Mode: "</span> + mode
+                <span class="string">"Retained relevance target: "</span> <span class="keyword">...</span>
+                    + string(obj.robustEdit.Value) + <span class="string">"%"</span>
+                <span class="string">"Retained relevance actual: "</span> <span class="keyword">...</span>
+                    + string(100 * selectedEnergyFraction) + <span class="string">"%"</span>
+                <span class="string">"Top harmonic: "</span> + string(order(1))
+                <span class="string">"Top relevance: "</span> + string(sortedRelevance(1))
+                <span class="string">"Displayed harmonics: "</span> + string(shown)
+                <span class="string">"Nonzero harmonics: "</span> + string(nnz(relevance))
+                <span class="string">"Total harmonics: "</span> + string(H)
+                <span class="string">"Diagnosis: "</span> + obj.diagnosisSummary(row)
+                ]);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> row = selectedRow(obj)
+
+            label = string(obj.labelDrop.Value);
+            family = string(obj.familyDrop.Value);
+
+            mask = obj.datasetTable.Label == label &amp; <span class="keyword">...</span>
+                obj.datasetTable.MonitoredFaultFamily == family;
+
+            row = obj.datasetTable(mask, :);
+
+            <span class="keyword">if</span> height(row) ~= 1
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:Explorer:InvalidSelection"</span>, <span class="keyword">...</span>
+                    <span class="string">"Expected exactly one selected row."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> idx = windowIndex(obj, n)
+
+            first = max(1, round(obj.startEdit.Value));
+
+            <span class="keyword">if</span> obj.windowEdit.Value &lt;= 0
+                last = n;
+            <span class="keyword">else</span>
+                last = first + round(obj.windowEdit.Value) - 1;
+            <span class="keyword">end</span>
+
+            first = min(first, n);
+            last = min(max(first, last), n);
+
+            idx = first:last;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> updateInfo(obj, row)
+
+            C = row.ResolvedContrast{1};
+            H = size(C, 2);
+
+            support = sum(C ~= 0, <span class="string">"all"</span>) / numel(C);
+
+            sPlus = sum(max(C(:), 0));
+            sMinus = sum(max(-C(:), 0));
+
+            balance = (sPlus - sMinus) / (sPlus + sMinus + eps);
+
+            txt = [
+                <span class="string">"Label: "</span> + string(row.Label)
+                <span class="string">"Family: "</span> + string(row.MonitoredFaultFamily)
+                <span class="string">"Speed: "</span> + string(row.Speed)
+                <span class="string">"Load: "</span> + string(row.Load)
+                <span class="string">"Lifetime: "</span> + string(row.Lifetime)
+                <span class="string">"HarmonicCount: "</span> + string(row.HarmonicCount)
+                <span class="string">"EpistemicSupport: "</span> + string(support)
+                <span class="string">"PolarityBalance: "</span> + string(balance)
+                <span class="string">"Diagnosis: "</span> + obj.diagnosisSummary(row)
+                <span class="string">"Matrix shape: T x H = "</span> <span class="keyword">...</span>
+                    + string(size(C, 1)) + <span class="string">" x "</span> + string(H)
+                ];
+
+            obj.infoArea.Value = cellstr(txt);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> txt = diagnosisSummary(~, row)
+
+            labels = [<span class="string">"O"</span>, <span class="string">"I"</span>, <span class="string">"C"</span>, <span class="string">"B"</span>];
+
+            values = [ <span class="keyword">...</span>
+                row.Failure_O, <span class="keyword">...</span>
+                row.Failure_I, <span class="keyword">...</span>
+                row.Failure_C, <span class="keyword">...</span>
+                row.Failure_B];
+
+            parts = strings(1, numel(labels));
+
+            <span class="keyword">for</span> i = 1:numel(labels)
+
+                value = values(i);
+
+                <span class="keyword">if</span> isnan(value)
+                    symbol = <span class="string">"?"</span>;
+                <span class="keyword">elseif</span> value == 1
+                    symbol = <span class="string">"✓"</span>;
+                <span class="keyword">elseif</span> value == 0
+                    symbol = <span class="string">"&middot;"</span>;
+                <span class="keyword">else</span>
+                    error( <span class="keyword">...</span>
+                        <span class="string">"sfrfs:Explorer:InvalidDiagnosis"</span>, <span class="keyword">...</span>
+                        <span class="string">"Invalid diagnosis annotation for %s."</span>, <span class="keyword">...</span>
+                        labels(i));
+                <span class="keyword">end</span>
+
+                parts(i) = labels(i) + <span class="string">" "</span> + symbol;
+            <span class="keyword">end</span>
+
+            txt = strjoin(parts, <span class="string">"   "</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> applySignedColorLimits(obj, Z)
+
+            vals = Z(isfinite(Z));
+            vals = abs(vals(vals ~= 0));
+
+            <span class="keyword">if</span> isempty(vals)
+                zMax = 1;
+            <span class="keyword">else</span>
+                zMax = prctile(vals, obj.robustEdit.Value);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> zMax &lt;= 0 || ~isfinite(zMax)
+                zMax = 1;
+            <span class="keyword">end</span>
+
+            clim(obj.ax, [-zMax zMax]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isContrastLike(~, name)
+
+            name = string(name);
+
+            tf = contains(name, <span class="string">"ResolvedContrast"</span>) <span class="keyword">...</span>
+                || endsWith(name, <span class="string">"_C"</span>) <span class="keyword">...</span>
+                || contains(name, <span class="string">"Contrast"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = isEventName(obj, name)
+            tf = any(string(name) == obj.EventNames);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> labels = labels(obj)
+            labels = unique(obj.datasetTable.Label, <span class="string">"stable"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fams = families(obj)
+            fams = unique(obj.datasetTable.MonitoredFaultFamily, <span class="string">"stable"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> names = observableNames(obj)
+
+            vars = string(obj.datasetTable.Properties.VariableNames);
+            names = strings(0, 1);
+
+            <span class="keyword">for</span> i = 1:numel(vars)
+                name = vars(i);
+
+                <span class="keyword">if</span> any(name == obj.MetadataNames)
+                    <span class="keyword">continue</span>
+                <span class="keyword">end</span>
+
+                value = obj.datasetTable.(name);
+
+                <span class="keyword">if</span> ~iscell(value)
+                    <span class="keyword">continue</span>
+                <span class="keyword">end</span>
+
+                idx = find(~cellfun(@isempty, value), 1);
+
+                <span class="keyword">if</span> isempty(idx)
+                    <span class="keyword">continue</span>
+                <span class="keyword">end</span>
+
+                first = value{idx};
+
+                <span class="keyword">if</span> isnumeric(first) || islogical(first)
+                    names(end + 1, 1) = name;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> cmap = signedContrastColormap(~)
+
+            n = 256;
+            blue = [0.100, 0.300, 0.850];
+            white = [1.000, 1.000, 1.000];
+            red = [0.850, 0.100, 0.100];
+
+            cmap = zeros(n, 3);
+            mid = (n + 1) / 2;
+
+            <span class="keyword">for</span> i = 1:n
+                <span class="keyword">if</span> i &lt;= mid
+                    a = (i - 1) / (mid - 1);
+                    cmap(i, :) = (1 - a) * blue + a * white;
+                <span class="keyword">else</span>
+                    a = (i - mid) / (n - mid);
+                    cmap(i, :) = (1 - a) * white + a * red;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> cmap = binaryEventColormap(~)
+            cmap = [
+                1.000, 1.000, 1.000
+                0.000, 0.000, 0.000];
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> cmap = timeColormap(~)
+
+            n = 256;
+            darkBlue = [0.020, 0.060, 0.350];
+            cyan = [0.000, 0.850, 0.950];
+
+            a = linspace(0, 1, n).';
+            cmap = (1 - a) .* darkBlue + a .* cyan;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tf = hasFrequencyContext(obj)
+
+            tf = ~isempty(obj.bearingParameters) <span class="keyword">...</span>
+                &amp;&amp; ~isempty(obj.sfrfsParameters);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fc = centralFrequencyForRow(obj, row)
+
+            <span class="keyword">if</span> ~obj.hasFrequencyContext()
+                fc = NaN;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            oc = OperatingConditions(row.Speed, row.Load);
+
+            bfb = BearingFrequencyBands( <span class="keyword">...</span>
+                bearingParams = obj.bearingParameters, <span class="keyword">...</span>
+                sfrfsParams = obj.sfrfsParameters, <span class="keyword">...</span>
+                operatingConditions = oc);
+
+            family = string(row.MonitoredFaultFamily);
+
+            <span class="keyword">switch</span> family
+                <span class="keyword">case</span> <span class="string">"BPFO"</span>
+                    code = BearingFrequencyBands.BPFO_CODE;
+
+                <span class="keyword">case</span> <span class="string">"BPFI"</span>
+                    code = BearingFrequencyBands.BPFI_CODE;
+
+                <span class="keyword">case</span> <span class="string">"BSF"</span>
+                    code = BearingFrequencyBands.BSF_CODE;
+
+                <span class="keyword">case</span> <span class="string">"FTF"</span>
+                    code = BearingFrequencyBands.FTF_CODE;
+
+                <span class="keyword">otherwise</span>
+                    error( <span class="keyword">...</span>
+                        <span class="string">"sfrfs:Explorer:UnknownFaultFamily"</span>, <span class="keyword">...</span>
+                        <span class="string">"Unknown monitored fault family: %s"</span>, <span class="keyword">...</span>
+                        family);
+            <span class="keyword">end</span>
+
+            fc = bfb.getCentralFrequency(code, row.Speed);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> addFrequencyRightAxis(obj, row, H)
+
+            <span class="keyword">if</span> ~obj.hasFrequencyContext()
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            fc = obj.centralFrequencyForRow(row);
+
+            <span class="keyword">if</span> ~isfinite(fc) || fc &lt;= 0
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            yyaxis(obj.ax, <span class="string">"right"</span>);
+            obj.ax.YColor = [0 0 0];
+
+            ylim(obj.ax, fc .* [0.5, H + 0.5]);
+            ylabel(obj.ax, <span class="string">"Frequency [Hz]"</span>);
+
+            yyaxis(obj.ax, <span class="string">"left"</span>);
+            obj.ax.YColor = [0 0 0];
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [keepMask, selectedFraction] = <span class="keyword">...</span>
+                relevanceRetentionMask(~, relevance, retentionFraction)
+
+            relevance = relevance(:);
+            H = numel(relevance);
+
+            keepMask = false(H, 1);
+            selectedFraction = 0;
+
+            validMask = isfinite(relevance) &amp; relevance &gt; 0;
+
+            <span class="keyword">if</span> ~any(validMask)
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            positiveRelevance = relevance;
+            positiveRelevance(~validMask) = 0;
+
+            total = sum(positiveRelevance);
+
+            <span class="keyword">if</span> total &lt;= 0 || ~isfinite(total)
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            retentionFraction = min(max(retentionFraction, 0), 1);
+
+            [sortedRelevance, order] = sort( <span class="keyword">...</span>
+                positiveRelevance, <span class="keyword">...</span>
+                <span class="string">"descend"</span>);
+
+            cumulativeFraction = cumsum(sortedRelevance) ./ total;
+
+            crossing = find(cumulativeFraction &gt;= retentionFraction, 1);
+
+            <span class="keyword">if</span> isempty(crossing)
+                crossing = nnz(sortedRelevance &gt; 0);
+            <span class="keyword">end</span>
+
+            selectedOrder = order(1:crossing);
+            keepMask(selectedOrder) = true;
+
+            selectedFraction = sum(positiveRelevance(keepMask)) ./ total;
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef ContrastPolarityDegradationExplorer < handle
+    %CONTRASTPOLARITYDEGRADATIONEXPLORER Explore stored contrast-polarity representations.
+    %
+    % ContrastPolarityDegradationExplorer provides an interactive interface
+    % for examining the canonical exploration dataset produced by
+    % ContrastPolarityExplorationDatasetBuilder.
+    %
+    % The explorer operates on previously computed representations.
+    % It does not reconstruct spectral fault receptive fields, recompute
+    % contrast-polarity channels, or infer diagnostic or prognostic states.
+    %
+    % The interface supports selection by bearing and monitored fault
+    % family, snapshot-window navigation, and six complementary views:
+    %
+    %   DirectObservable
+    %   EpistemicSupport
+    %   EventDensity
+    %   PolarityBalance
+    %   HarmonicPolarityTrajectory
+    %   HarmonicRelevance
+    %
+    % Constructor:
+    %
+    %   explorer = viz.ContrastPolarityDegradationExplorer( ...
+    %       datasetTable = channelRunsQ95);
+    %
+    % Optional parameters:
+    %
+    %   bearingParameters - Bearing geometry and frequency parameters.
+    %   sfrfsParameters   - Spectral fault receptive-field configuration.
+    %
+    % Display the interactive explorer:
+    %
+    %   explorer.render();
+    %
+    % See also ContrastPolarityExplorationDatasetBuilder,
+    %          ContrastPolarityChannelDatasetBuilder.
+
+    properties (SetAccess = private)
+        datasetTable table
+    end
+
+    properties (Access = private)
+        fig
+        ax
+        infoArea
+
+        labelDrop
+        familyDrop
+        viewDrop
+        observableDrop
+        eventDrop
+        overlayEventDrop
+        relevanceModeDrop
+
+        startEdit
+        windowEdit
+        robustEdit
+        renderButton
+
+        bearingParameters
+        sfrfsParameters
+    end
+
+    properties (Constant, Access = private)
+        MetadataNames = [ ...
+            "Label", ...
+            "Speed", ...
+            "Load", ...
+            "Lifetime", ...
+            "MonitoredFaultFamily", ...
+            "HarmonicCount", ...
+            "Failure_O", ...
+            "Failure_I", ...
+            "Failure_C", ...
+            "Failure_B"];
+
+        EventNames = [ ...
+            "PolarityReversal", ...
+            "OnPositive", ...
+            "OnNegative", ...
+            "OffPositive", ...
+            "OffNegative"];
+
+        ViewNames = [ ...
+            "DirectObservable", ...
+            "EpistemicSupport", ...
+            "EventDensity", ...
+            "PolarityBalance", ...
+            "HarmonicPolarityTrajectory", ...
+            "HarmonicRelevance"];
+    end
+
+    methods
+
+        function obj = ContrastPolarityDegradationExplorer(args)
+
+            arguments
+                args.datasetTable table {mustBeNonempty}
+                args.bearingParameters = []
+                args.sfrfsParameters = []
+            end
+
+            obj.datasetTable = args.datasetTable;
+            obj.bearingParameters = args.bearingParameters;
+            obj.sfrfsParameters = args.sfrfsParameters;
+
+        end
+
+        function render(obj)
+
+            obj.fig = uifigure( ...
+                Name = "Contrast Polarity Degradation Explorer", ...
+                Position = [60 40 1700 980]);
+
+            main = uigridlayout(obj.fig, [1 2]);
+            main.ColumnWidth = {380, "1x"};
+            main.RowHeight = {"1x"};
+
+            controlPanel = uipanel(main, ...
+                Title = "Selection");
+
+            grid = uigridlayout(controlPanel, [19 2]);
+            grid.ColumnWidth = {115, "1x"};
+            grid.RowHeight = repmat({30}, 1, 19);
+            grid.Padding = [8 8 8 8];
+
+            uilabel(grid, Text = "Bearing");
+            obj.labelDrop = uidropdown(grid, ...
+                Items = cellstr(obj.labels()), ...
+                ValueChangedFcn = @(~, ~) obj.refreshFamilies());
+
+            uilabel(grid, Text = "Fault family");
+            obj.familyDrop = uidropdown(grid, ...
+                Items = cellstr(obj.families()));
+
+            uilabel(grid, Text = "View");
+            obj.viewDrop = uidropdown(grid, ...
+                Items = cellstr(obj.ViewNames), ...
+                Value = "DirectObservable", ...
+                ValueChangedFcn = @(~, ~) obj.refreshVisibility());
+
+            uilabel(grid, Text = "Observable");
+            obj.observableDrop = uidropdown(grid, ...
+                Items = cellstr(obj.observableNames()));
+
+            uilabel(grid, Text = "Relevance mode");
+            obj.relevanceModeDrop = uidropdown(grid, ...
+                Items = ["Absolute", "ImportanceIndex"], ...
+                Value = "Absolute");
+
+            uilabel(grid, Text = "Event count");
+            obj.eventDrop = uidropdown(grid, ...
+                Items = cellstr(obj.EventNames), ...
+                Value = "PolarityReversal");
+
+            uilabel(grid, Text = "Event overlay");
+            obj.overlayEventDrop = uidropdown(grid, ...
+                Items = cellstr(["None", obj.EventNames]), ...
+                Value = "None");
+
+            uilabel(grid, Text = "Start snapshot");
+            obj.startEdit = uieditfield(grid, "numeric", ...
+                Value = 1, ...
+                Limits = [1 inf], ...
+                RoundFractionalValues = "on");
+
+            uilabel(grid, Text = "Window length");
+            obj.windowEdit = uieditfield(grid, "numeric", ...
+                Value = 0, ...
+                Limits = [0 inf], ...
+                RoundFractionalValues = "on");
+
+            uilabel(grid, Text = "Robust prctile");
+            obj.robustEdit = uieditfield(grid, "numeric", ...
+                Value = 99, ...
+                Limits = [1 100]);
+
+            obj.renderButton = uibutton(grid, ...
+                Text = "Render", ...
+                ButtonPushedFcn = @(~, ~) obj.renderCurrent());
+            obj.renderButton.Layout.Row = 11;
+            obj.renderButton.Layout.Column = [1 2];
+
+            obj.infoArea = uitextarea(grid, ...
+                Editable = "off");
+            obj.infoArea.Layout.Row = [12 19];
+            obj.infoArea.Layout.Column = [1 2];
+
+            plotPanel = uipanel(main, ...
+                Title = "Visualization");
+
+            plotGrid = uigridlayout(plotPanel, [1 1]);
+            obj.ax = uiaxes(plotGrid);
+
+            obj.refreshFamilies();
+            obj.refreshVisibility();
+            obj.renderCurrent();
+
+        end
+    end
+
+    methods (Access = private)
+
+        function refreshFamilies(obj)
+
+            label = string(obj.labelDrop.Value);
+            rows = obj.datasetTable(obj.datasetTable.Label == label, :);
+            fams = unique(rows.MonitoredFaultFamily, "stable");
+
+            obj.familyDrop.Items = cellstr(fams);
+
+            if ~isempty(fams)
+                obj.familyDrop.Value = fams(1);
+            end
+        end
+
+        function refreshVisibility(obj)
+
+            viewName = string(obj.viewDrop.Value);
+
+            obj.observableDrop.Enable = "off";
+            obj.eventDrop.Enable = "off";
+            obj.overlayEventDrop.Enable = "off";
+            obj.relevanceModeDrop.Enable = "off";
+
+            if viewName == "DirectObservable"
+                obj.observableDrop.Enable = "on";
+                obj.overlayEventDrop.Enable = "on";
+            elseif viewName == "HarmonicRelevance"
+                obj.observableDrop.Enable = "on";
+                obj.relevanceModeDrop.Enable = "on";
+            elseif viewName == "EventDensity"
+                obj.eventDrop.Enable = "on";
+            end
+        end
+
+        function renderCurrent(obj)
+
+            row = obj.selectedRow();
+            viewName = string(obj.viewDrop.Value);
+
+            cla(obj.ax, "reset");
+
+            switch viewName
+                case "DirectObservable"
+                    obj.renderDirect(row, string(obj.observableDrop.Value));
+
+                case "EpistemicSupport"
+                    obj.renderEpistemicSupport(row);
+
+                case "EventDensity"
+                    obj.renderEventDensity(row, string(obj.eventDrop.Value));
+
+                case "PolarityBalance"
+                    obj.renderPolarityBalance(row);
+
+                case "HarmonicPolarityTrajectory"
+                    obj.renderPolarityTrajectory(row);
+
+                case "HarmonicRelevance"
+                    obj.renderHarmonicRelevance( ...
+                        row, ...
+                        string(obj.observableDrop.Value));
+            end
+
+            if viewName ~= "HarmonicRelevance"
+                obj.updateInfo(row);
+            end
+        end
+
+        function renderDirect(obj, row, name)
+
+            X = row.(name){1};
+
+            if isvector(X)
+                y = X(:);
+                idx = obj.windowIndex(numel(y));
+
+                plot(obj.ax, idx, y(idx), LineWidth = 1.2);
+                grid(obj.ax, "on");
+                xlabel(obj.ax, "Snapshot index");
+                ylabel(obj.ax, name, Interpreter = "none");
+                title(obj.ax, name, Interpreter = "none");
+                return
+            end
+
+            idx = obj.windowIndex(size(X, 1));
+            Z = X(idx, :).';
+
+            imagesc(obj.ax, idx, 1:size(Z, 1), Z);
+            axis(obj.ax, "tight");
+            set(obj.ax, YDir = "normal");
+
+            xlabel(obj.ax, "Snapshot index");
+            ylabel(obj.ax, "Harmonic index");
+            title(obj.ax, name, Interpreter = "none");
+
+            if obj.isEventName(name)
+                colormap(obj.ax, obj.binaryEventColormap());
+                clim(obj.ax, [0 1]);
+            elseif obj.isContrastLike(name)
+                colormap(obj.ax, obj.signedContrastColormap());
+                obj.applySignedColorLimits(Z);
+            else
+                colormap(obj.ax, jet);
+            end
+
+            colorbar(obj.ax);
+
+            obj.overlayEvents(row, idx, name);
+        end
+
+        function overlayEvents(obj, row, idx, observableName)
+
+            eventName = string(obj.overlayEventDrop.Value);
+
+            if eventName == "None" || ~obj.isContrastLike(observableName)
+                return
+            end
+
+            E = row.(eventName){1};
+            Ew = E(idx, :).';
+
+            [h, tLocal] = find(Ew ~= 0);
+
+            if isempty(h)
+                return
+            end
+
+            t = idx(tLocal);
+
+            hold(obj.ax, "on");
+            plot(obj.ax, t, h, "kx", ...
+                LineStyle = "none", ...
+                MarkerSize = 5, ...
+                LineWidth = 0.8);
+            hold(obj.ax, "off");
+        end
+
+        function renderEpistemicSupport(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            supported = sum(C(idx, :) ~= 0, 2);
+            censored = size(C, 2) - supported;
+
+            y = [supported, censored];
+
+            b = bar(obj.ax, idx, y, "stacked");
+            b(1).FaceColor = [0.20, 0.55, 0.45];
+            b(2).FaceColor = [0.88, 0.88, 0.88];
+
+            for k = 1:numel(b)
+                b(k).EdgeColor = "none";
+            end
+
+            grid(obj.ax, "on");
+
+            xlabel(obj.ax, "Snapshot index");
+            ylabel(obj.ax, "Harmonic count");
+            title(obj.ax, "Epistemic support count");
+            legend(obj.ax, ["supported", "censored"], Location = "best");
+        end
+
+        function renderEventDensity(obj, row, eventName)
+
+            E = row.(eventName){1};
+            idx = obj.windowIndex(size(E, 1));
+
+            eventCount = sum(E(idx, :) ~= 0, 2);
+
+            bar(obj.ax, idx, eventCount, ...
+                FaceColor = [0.35, 0.35, 0.35], ...
+                EdgeColor = "none");
+
+            grid(obj.ax, "on");
+
+            yMax = max(eventCount);
+
+            if yMax <= 0 || ~isfinite(yMax)
+                ylim(obj.ax, [0 1]);
+            else
+                ylim(obj.ax, [0 max(1, 1.20 * yMax)]);
+            end
+
+            xlabel(obj.ax, "Snapshot index");
+            ylabel(obj.ax, "Event count");
+            title(obj.ax, "Event count: " + eventName, ...
+                Interpreter = "none");
+        end
+
+        function renderPolarityBalance(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            Cw = C(idx, :);
+
+            negativeCount = sum(Cw < 0, 2);
+            positiveCount = sum(Cw > 0, 2);
+            silentCount = sum(Cw == 0, 2);
+
+            y = [negativeCount, positiveCount, silentCount];
+
+            b = bar(obj.ax, idx, y, "stacked");
+            b(1).FaceColor = [0.30, 0.45, 0.80];
+            b(2).FaceColor = [0.80, 0.35, 0.30];
+            b(3).FaceColor = [0.88, 0.88, 0.88];
+
+            for k = 1:numel(b)
+                b(k).EdgeColor = "none";
+            end
+
+            grid(obj.ax, "on");
+
+            xlabel(obj.ax, "Snapshot index");
+            ylabel(obj.ax, "Harmonic count");
+            title(obj.ax, "Polarity composition count");
+            legend(obj.ax, ...
+                ["negative", "positive", "silent"], ...
+                Location = "best");
+        end
+
+        function renderPolarityTrajectory(obj, row)
+
+            C = row.ResolvedContrast{1};
+            idx = obj.windowIndex(size(C, 1));
+
+            Cw = C(idx, :);
+
+            sPlus = sum(max(Cw, 0), 2);
+            sMinus = sum(max(-Cw, 0), 2);
+
+            plot(obj.ax, sPlus, sMinus, "-", ...
+                LineWidth = 0.25, ...
+                Color = [0.72, 0.72, 0.72]);
+            hold(obj.ax, "on");
+
+            scatter(obj.ax, ...
+                sPlus, ...
+                sMinus, ...
+                28, ...
+                idx(:), ...
+                "filled");
+
+            hold(obj.ax, "off");
+
+            grid(obj.ax, "on");
+            axis(obj.ax, "tight");
+            colormap(obj.ax, obj.timeColormap());
+
+            cb = colorbar(obj.ax);
+            cb.Label.String = "Snapshot index";
+
+            xlabel(obj.ax, "Positive population mass");
+            ylabel(obj.ax, "Negative population mass");
+            title(obj.ax, "Harmonic polarity trajectory");
+        end
+
+        function renderHarmonicRelevance(obj, row, name)
+
+            X = row.(name){1};
+
+            if isvector(X)
+                y = X(:);
+                idx = obj.windowIndex(numel(y));
+
+                plot(obj.ax, idx, y(idx), LineWidth = 1.2);
+                grid(obj.ax, "on");
+
+                xlabel(obj.ax, "Snapshot index");
+                ylabel(obj.ax, name, Interpreter = "none");
+                title(obj.ax, ...
+                    "Temporal observable: " + name, ...
+                    Interpreter = "none");
+
+                obj.updateInfo(row);
+                return
+            end
+
+            if obj.isEventName(name)
+                relevance = sum(X ~= 0, 1);
+                responseLabel = "Event count";
+                indexLabel = "Relative event importance index";
+                barColor = [0.35, 0.35, 0.35];
+                titleText = "Harmonic event relevance: " + name;
+            else
+                relevance = sum(abs(X), 1);
+                responseLabel = "Accumulated absolute response";
+                indexLabel = "Relative contrast importance index";
+                barColor = [0.20, 0.55, 0.45];
+                titleText = "Harmonic contrast relevance: " + name;
+            end
+
+            relevance = relevance(:);
+            H = numel(relevance);
+
+            retentionFraction = obj.robustEdit.Value / 100;
+
+            [keepMask, selectedEnergyFraction] = ...
+                obj.relevanceRetentionMask(relevance, retentionFraction);
+
+            displayRelevance = relevance;
+            displayRelevance(~keepMask) = 0;
+
+            [sortedRelevance, order] = sort(displayRelevance, "descend");
+
+            rankOfHarmonic = nan(H, 1);
+            rankOfHarmonic(order) = (1:H).';
+
+            importanceIndex = H - rankOfHarmonic + 1;
+            importanceIndex(displayRelevance == 0) = 0;
+
+            mode = string(obj.relevanceModeDrop.Value);
+
+            if mode == "ImportanceIndex"
+                yPlot = importanceIndex;
+                xLabel = indexLabel;
+                plotTitle = titleText + " | importance index | retain " ...
+                    + string(obj.robustEdit.Value) + "%";
+            else
+                yPlot = displayRelevance;
+                xLabel = responseLabel;
+                plotTitle = titleText + " | retained relevance | retain " ...
+                    + string(obj.robustEdit.Value) + "%";
+            end
+
+            cla(obj.ax, "reset");
+
+            barh(obj.ax, 1:H, yPlot, ...
+                FaceColor = barColor, ...
+                EdgeColor = "none");
+
+            set(obj.ax, YDir = "normal");
+            grid(obj.ax, "on");
+
+            ylabel(obj.ax, "Harmonic index");
+            xlabel(obj.ax, xLabel);
+
+            title(obj.ax, plotTitle, ...
+                Interpreter = "none", ...
+                FontWeight = "normal");
+
+            ylim(obj.ax, [0.5, H + 0.5]);
+            obj.addFrequencyRightAxis(row, H);
+
+            if any(yPlot > 0)
+                xlim(obj.ax, [0, 1.1 * max(yPlot)]);
+            else
+                xlim(obj.ax, [0, 1]);
+            end
+
+            shown = nnz(displayRelevance);
+
+            obj.infoArea.Value = cellstr([
+                "Observable: " + name
+                "Mode: " + mode
+                "Retained relevance target: " ...
+                    + string(obj.robustEdit.Value) + "%"
+                "Retained relevance actual: " ...
+                    + string(100 * selectedEnergyFraction) + "%"
+                "Top harmonic: " + string(order(1))
+                "Top relevance: " + string(sortedRelevance(1))
+                "Displayed harmonics: " + string(shown)
+                "Nonzero harmonics: " + string(nnz(relevance))
+                "Total harmonics: " + string(H)
+                "Diagnosis: " + obj.diagnosisSummary(row)
+                ]);
+
+        end
+
+        function row = selectedRow(obj)
+
+            label = string(obj.labelDrop.Value);
+            family = string(obj.familyDrop.Value);
+
+            mask = obj.datasetTable.Label == label & ...
+                obj.datasetTable.MonitoredFaultFamily == family;
+
+            row = obj.datasetTable(mask, :);
+
+            if height(row) ~= 1
+                error( ...
+                    "sfrfs:Explorer:InvalidSelection", ...
+                    "Expected exactly one selected row.");
+            end
+        end
+
+        function idx = windowIndex(obj, n)
+
+            first = max(1, round(obj.startEdit.Value));
+
+            if obj.windowEdit.Value <= 0
+                last = n;
+            else
+                last = first + round(obj.windowEdit.Value) - 1;
+            end
+
+            first = min(first, n);
+            last = min(max(first, last), n);
+
+            idx = first:last;
+        end
+
+        function updateInfo(obj, row)
+
+            C = row.ResolvedContrast{1};
+            H = size(C, 2);
+
+            support = sum(C ~= 0, "all") / numel(C);
+
+            sPlus = sum(max(C(:), 0));
+            sMinus = sum(max(-C(:), 0));
+
+            balance = (sPlus - sMinus) / (sPlus + sMinus + eps);
+
+            txt = [
+                "Label: " + string(row.Label)
+                "Family: " + string(row.MonitoredFaultFamily)
+                "Speed: " + string(row.Speed)
+                "Load: " + string(row.Load)
+                "Lifetime: " + string(row.Lifetime)
+                "HarmonicCount: " + string(row.HarmonicCount)
+                "EpistemicSupport: " + string(support)
+                "PolarityBalance: " + string(balance)
+                "Diagnosis: " + obj.diagnosisSummary(row)
+                "Matrix shape: T x H = " ...
+                    + string(size(C, 1)) + " x " + string(H)
+                ];
+
+            obj.infoArea.Value = cellstr(txt);
+        end
+
+        function txt = diagnosisSummary(~, row)
+
+            labels = ["O", "I", "C", "B"];
+
+            values = [ ...
+                row.Failure_O, ...
+                row.Failure_I, ...
+                row.Failure_C, ...
+                row.Failure_B];
+
+            parts = strings(1, numel(labels));
+
+            for i = 1:numel(labels)
+
+                value = values(i);
+
+                if isnan(value)
+                    symbol = "?";
+                elseif value == 1
+                    symbol = "✓";
+                elseif value == 0
+                    symbol = "·";
+                else
+                    error( ...
+                        "sfrfs:Explorer:InvalidDiagnosis", ...
+                        "Invalid diagnosis annotation for %s.", ...
+                        labels(i));
+                end
+
+                parts(i) = labels(i) + " " + symbol;
+            end
+
+            txt = strjoin(parts, "   ");
+        end
+        function applySignedColorLimits(obj, Z)
+
+            vals = Z(isfinite(Z));
+            vals = abs(vals(vals ~= 0));
+
+            if isempty(vals)
+                zMax = 1;
+            else
+                zMax = prctile(vals, obj.robustEdit.Value);
+            end
+
+            if zMax <= 0 || ~isfinite(zMax)
+                zMax = 1;
+            end
+
+            clim(obj.ax, [-zMax zMax]);
+        end
+
+        function tf = isContrastLike(~, name)
+
+            name = string(name);
+
+            tf = contains(name, "ResolvedContrast") ...
+                || endsWith(name, "_C") ...
+                || contains(name, "Contrast");
+        end
+
+        function tf = isEventName(obj, name)
+            tf = any(string(name) == obj.EventNames);
+        end
+
+        function labels = labels(obj)
+            labels = unique(obj.datasetTable.Label, "stable");
+        end
+
+        function fams = families(obj)
+            fams = unique(obj.datasetTable.MonitoredFaultFamily, "stable");
+        end
+
+        function names = observableNames(obj)
+
+            vars = string(obj.datasetTable.Properties.VariableNames);
+            names = strings(0, 1);
+
+            for i = 1:numel(vars)
+                name = vars(i);
+
+                if any(name == obj.MetadataNames)
+                    continue
+                end
+
+                value = obj.datasetTable.(name);
+
+                if ~iscell(value)
+                    continue
+                end
+
+                idx = find(~cellfun(@isempty, value), 1);
+
+                if isempty(idx)
+                    continue
+                end
+
+                first = value{idx};
+
+                if isnumeric(first) || islogical(first)
+                    names(end + 1, 1) = name;
+                end
+            end
+        end
+
+        function cmap = signedContrastColormap(~)
+
+            n = 256;
+            blue = [0.100, 0.300, 0.850];
+            white = [1.000, 1.000, 1.000];
+            red = [0.850, 0.100, 0.100];
+
+            cmap = zeros(n, 3);
+            mid = (n + 1) / 2;
+
+            for i = 1:n
+                if i <= mid
+                    a = (i - 1) / (mid - 1);
+                    cmap(i, :) = (1 - a) * blue + a * white;
+                else
+                    a = (i - mid) / (n - mid);
+                    cmap(i, :) = (1 - a) * white + a * red;
+                end
+            end
+        end
+
+        function cmap = binaryEventColormap(~)
+            cmap = [
+                1.000, 1.000, 1.000
+                0.000, 0.000, 0.000];
+        end
+
+        function cmap = timeColormap(~)
+
+            n = 256;
+            darkBlue = [0.020, 0.060, 0.350];
+            cyan = [0.000, 0.850, 0.950];
+
+            a = linspace(0, 1, n).';
+            cmap = (1 - a) .* darkBlue + a .* cyan;
+        end
+
+        function tf = hasFrequencyContext(obj)
+
+            tf = ~isempty(obj.bearingParameters) ...
+                && ~isempty(obj.sfrfsParameters);
+
+        end
+
+        function fc = centralFrequencyForRow(obj, row)
+
+            if ~obj.hasFrequencyContext()
+                fc = NaN;
+                return
+            end
+
+            oc = OperatingConditions(row.Speed, row.Load);
+
+            bfb = BearingFrequencyBands( ...
+                bearingParams = obj.bearingParameters, ...
+                sfrfsParams = obj.sfrfsParameters, ...
+                operatingConditions = oc);
+
+            family = string(row.MonitoredFaultFamily);
+
+            switch family
+                case "BPFO"
+                    code = BearingFrequencyBands.BPFO_CODE;
+
+                case "BPFI"
+                    code = BearingFrequencyBands.BPFI_CODE;
+
+                case "BSF"
+                    code = BearingFrequencyBands.BSF_CODE;
+
+                case "FTF"
+                    code = BearingFrequencyBands.FTF_CODE;
+
+                otherwise
+                    error( ...
+                        "sfrfs:Explorer:UnknownFaultFamily", ...
+                        "Unknown monitored fault family: %s", ...
+                        family);
+            end
+
+            fc = bfb.getCentralFrequency(code, row.Speed);
+
+        end
+
+        function addFrequencyRightAxis(obj, row, H)
+
+            if ~obj.hasFrequencyContext()
+                return
+            end
+
+            fc = obj.centralFrequencyForRow(row);
+
+            if ~isfinite(fc) || fc <= 0
+                return
+            end
+
+            yyaxis(obj.ax, "right");
+            obj.ax.YColor = [0 0 0];
+
+            ylim(obj.ax, fc .* [0.5, H + 0.5]);
+            ylabel(obj.ax, "Frequency [Hz]");
+
+            yyaxis(obj.ax, "left");
+            obj.ax.YColor = [0 0 0];
+
+        end
+
+        function [keepMask, selectedFraction] = ...
+                relevanceRetentionMask(~, relevance, retentionFraction)
+
+            relevance = relevance(:);
+            H = numel(relevance);
+
+            keepMask = false(H, 1);
+            selectedFraction = 0;
+
+            validMask = isfinite(relevance) & relevance > 0;
+
+            if ~any(validMask)
+                return
+            end
+
+            positiveRelevance = relevance;
+            positiveRelevance(~validMask) = 0;
+
+            total = sum(positiveRelevance);
+
+            if total <= 0 || ~isfinite(total)
+                return
+            end
+
+            retentionFraction = min(max(retentionFraction, 0), 1);
+
+            [sortedRelevance, order] = sort( ...
+                positiveRelevance, ...
+                "descend");
+
+            cumulativeFraction = cumsum(sortedRelevance) ./ total;
+
+            crossing = find(cumulativeFraction >= retentionFraction, 1);
+
+            if isempty(crossing)
+                crossing = nnz(sortedRelevance > 0);
+            end
+
+            selectedOrder = order(1:crossing);
+            keepMask(selectedOrder) = true;
+
+            selectedFraction = sum(positiveRelevance(keepMask)) ./ total;
+
+        end
+
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

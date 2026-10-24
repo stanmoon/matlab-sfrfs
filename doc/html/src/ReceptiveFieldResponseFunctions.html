@@ -7,9 +7,9 @@ This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
       -->
 <title>ReceptiveFieldResponseFunctions</title>
-<meta name="generator" content="MATLAB 25.2">
+<meta name="generator" content="MATLAB 26.1">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-01-31">
+<meta name="DC.date" content="2026-10-24">
 <meta name="DC.source" content="ReceptiveFieldResponseFunctions.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -98,6 +98,28 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
             fcn = @(X, f) <span class="keyword">...</span>
                 ReceptiveFieldResponseFunctions.doIntegralAbs(X, f);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> binder = maskedMeanAbs(args)
+            <span class="comment">%maskedMeanAbs Response binder for masked-mean absolute response.</span>
+            <span class="comment">%</span>
+            <span class="comment">% binder = maskedMeanAbs()</span>
+            <span class="comment">% rf = binder(mask)</span>
+            <span class="comment">% r = rf(X, f)</span>
+            <span class="comment">%</span>
+            <span class="comment">% X is assumed to already contain any upstream masking or spectral</span>
+            <span class="comment">% preprocessing. The supplied mask is used only to normalize by</span>
+            <span class="comment">% receptive-field area.</span>
+
+            <span class="keyword">arguments</span>
+                args.eps <span class="typesection">(1,1) double {mustBePositive}</span> = 1e-12
+            <span class="keyword">end</span>
+
+            epsVal = args.eps;
+
+            binder = @(mask) @(X, f) <span class="keyword">...</span>
+                ReceptiveFieldResponseFunctions.doMaskedMeanAbs( <span class="keyword">...</span>
+                X, f, mask, epsVal);
         <span class="keyword">end</span>
 
         <span class="keyword">function</span> fcn = entropy(args)
@@ -226,6 +248,34 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
             r = trapz(f, abs(X), 1);
         <span class="keyword">end</span>
 
+        <span class="keyword">function</span> r = doMaskedMeanAbs(X, f, mask, epsVal)
+            f = ReceptiveFieldResponseFunctions.validateXF(X, f);
+            ReceptiveFieldResponseFunctions.validateEps(epsVal);
+
+            mask = mask(:);
+
+            <span class="keyword">if</span> numel(mask) ~= size(X, 1)
+                error([<span class="string">'sfrfs:ReceptiveFieldResponseFunctions:'</span> <span class="keyword">...</span>
+                    <span class="string">'MaskAxisMismatch'</span>], <span class="keyword">...</span>
+                    <span class="string">"mask length must match size(X,1)."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> any(~isfinite(mask)) || any(mask &lt; 0)
+                error([<span class="string">'sfrfs:ReceptiveFieldResponseFunctions:'</span> <span class="keyword">...</span>
+                    <span class="string">'InvalidMask'</span>], <span class="keyword">...</span>
+                    <span class="string">"mask must be finite and nonnegative."</span>);
+            <span class="keyword">end</span>
+
+            denom = max(trapz(f, mask), epsVal);
+
+            <span class="comment">% X is assumed to already contain any upstream masking or</span>
+            <span class="comment">% spectral preprocessing. The mask is used only to normalize</span>
+            <span class="comment">% by receptive-field area. Applying the mask again here would</span>
+            <span class="comment">% alter the intended response semantics.</span>
+            r = trapz(f, abs(X), 1) ./ denom;
+        <span class="keyword">end</span>
+
+
         <span class="keyword">function</span> r = doEntropy(X, f, doNormalize, epsVal)
             ReceptiveFieldResponseFunctions.validateXF(X, f);
             ReceptiveFieldResponseFunctions.validateEps(epsVal);
@@ -294,7 +344,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 </pre>
 <p class="footer">
 <br>
-<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
 <br>
 </p>
 </div>
@@ -321,6 +371,28 @@ classdef ReceptiveFieldResponseFunctions
 
             fcn = @(X, f) ...
                 ReceptiveFieldResponseFunctions.doIntegralAbs(X, f);
+        end
+
+        function binder = maskedMeanAbs(args)
+            %maskedMeanAbs Response binder for masked-mean absolute response.
+            %
+            % binder = maskedMeanAbs()
+            % rf = binder(mask)
+            % r = rf(X, f)
+            %
+            % X is assumed to already contain any upstream masking or spectral
+            % preprocessing. The supplied mask is used only to normalize by
+            % receptive-field area.
+
+            arguments
+                args.eps (1,1) double {mustBePositive} = 1e-12
+            end
+
+            epsVal = args.eps;
+
+            binder = @(mask) @(X, f) ...
+                ReceptiveFieldResponseFunctions.doMaskedMeanAbs( ...
+                X, f, mask, epsVal);
         end
 
         function fcn = entropy(args)
@@ -448,6 +520,34 @@ classdef ReceptiveFieldResponseFunctions
             f = ReceptiveFieldResponseFunctions.validateXF(X, f);
             r = trapz(f, abs(X), 1);
         end
+
+        function r = doMaskedMeanAbs(X, f, mask, epsVal)
+            f = ReceptiveFieldResponseFunctions.validateXF(X, f);
+            ReceptiveFieldResponseFunctions.validateEps(epsVal);
+
+            mask = mask(:);
+
+            if numel(mask) ~= size(X, 1)
+                error(['sfrfs:ReceptiveFieldResponseFunctions:' ...
+                    'MaskAxisMismatch'], ...
+                    "mask length must match size(X,1).");
+            end
+
+            if any(~isfinite(mask)) || any(mask < 0)
+                error(['sfrfs:ReceptiveFieldResponseFunctions:' ...
+                    'InvalidMask'], ...
+                    "mask must be finite and nonnegative.");
+            end
+
+            denom = max(trapz(f, mask), epsVal);
+
+            % X is assumed to already contain any upstream masking or
+            % spectral preprocessing. The mask is used only to normalize
+            % by receptive-field area. Applying the mask again here would
+            % alter the intended response semantics.
+            r = trapz(f, abs(X), 1) ./ denom;
+        end
+
 
         function r = doEntropy(X, f, doNormalize, epsVal)
             ReceptiveFieldResponseFunctions.validateXF(X, f); 

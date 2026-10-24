@@ -43,3 +43,15 @@ deploymentLog.html
 release_sfrfs.m
 .gitignore
 .gitattributes
+% Exclude mat files
+*.mat
+% Exclude Git metadata, including worktree reference files
+.git
+.git/**
+**/.git
+
+% Exclude generated research datasets at repository root
+*.mat
+
+% Exclude package inventory and temporary audit files
+sfrfs_package_inventory.txt

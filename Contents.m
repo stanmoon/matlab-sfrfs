@@ -1,5 +1,5 @@
 % SFRFs Toolbox
-% Version 1.0.0 
+% Version 1.2.0
 %
 % Spectral Fault Receptive Fields (SFRFs) toolbox for condition monitoring,
 % diagnostics, and prognostics from vibration signals.

@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestContrastPolarityExplorationDatasetBuilder</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="TestContrastPolarityExplorationDatasetBuilder.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestContrastPolarityExplorationDatasetBuilder &lt; matlab.unittest.TestCase
+<span class="comment">%TESTCONTRASTPOLARITYEXPLORATIONDATASETBUILDER</span>
+<span class="comment">% Fast contract tests for the exploratory ensemble-to-channel builder.</span>
+<span class="comment">% These tests deliberately do not process the full XJTU-SY ensemble.</span>
+<span class="comment">% Numerical parity and saved MAT-file contents require a separate</span>
+<span class="comment">% integration comparison with the original experiment inputs.</span>
+
+    <span class="keyword">methods</span> (Test)
+        <span class="keyword">function</span> defaultConfiguration(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            testCase.verifyEqual(b.QuantileLevel, 0.95);
+            testCase.verifyEqual(b.RiseRate, 1/7);
+            testCase.verifyEqual(b.FallRate, 1/49);
+            testCase.verifyEqual(b.FamilyNames, <span class="keyword">...</span>
+                [<span class="string">"BPFO"</span>, <span class="string">"BPFI"</span>, <span class="string">"BSF"</span>, <span class="string">"FTF"</span>]);
+            testCase.verifyEqual(b.TemporalColumns, <span class="keyword">...</span>
+                [<span class="string">"HorizontalAcceleration"</span>, <span class="string">"VerticalAcceleration"</span>]);
+            testCase.verifyEqual(b.SpectralColumns, <span class="keyword">...</span>
+                [<span class="string">"HorizontalAcceleration_FFT"</span>, <span class="string">"VerticalAcceleration_FFT"</span>]);
+            testCase.verifyEmpty(b.DiagnosisTable);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> customConfiguration(testCase)
+            diagnoses = table(<span class="string">"BearingA"</span>, true, false, false, false, <span class="keyword">...</span>
+                <span class="string">'VariableNames'</span>, {<span class="string">'Label'</span>, <span class="string">'Failure_O'</span>, <span class="string">'Failure_I'</span>, <span class="keyword">...</span>
+                <span class="string">'Failure_C'</span>, <span class="string">'Failure_B'</span>});
+            b = ContrastPolarityExplorationDatasetBuilder( <span class="keyword">...</span>
+                quantileLevel = 0.9, riseRate = 0.2, fallRate = 0.1, <span class="keyword">...</span>
+                epsEntropy = 1e-10, diagnosisTable = diagnoses);
+            testCase.verifyEqual(b.QuantileLevel, 0.9);
+            testCase.verifyEqual(b.RiseRate, 0.2);
+            testCase.verifyEqual(b.FallRate, 0.1);
+            testCase.verifyEqual(b.EntropyEpsilon, 1e-10);
+            testCase.verifyEqual(b.DiagnosisTable, diagnoses);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rejectsUnsupportedFamilyOrder(testCase)
+            testCase.verifyError( <span class="keyword">...</span>
+                @() ContrastPolarityExplorationDatasetBuilder( <span class="keyword">...</span>
+                    familyNames = [<span class="string">"BPFI"</span>, <span class="string">"BPFO"</span>, <span class="string">"BSF"</span>, <span class="string">"FTF"</span>]), <span class="keyword">...</span>
+                <span class="string">"sfrfs:ExplorationDataset:Families"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> explicitFileRequiresSaving(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            testCase.verifyError( <span class="keyword">...</span>
+                @() b.buildFromEnsemble(ds, <span class="keyword">...</span>
+                    outputFile = <span class="string">"my_dataset.mat"</span>), <span class="keyword">...</span>
+                <span class="string">"sfrfs:ExplorationDataset:SaveNotEnabled"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rejectsMissingDatastoreVariables(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            ds.DataVariables = <span class="string">"UnexpectedVariable"</span>;
+            testCase.verifyError( <span class="keyword">...</span>
+                @() b.buildFromEnsemble(ds), <span class="keyword">...</span>
+                <span class="string">"sfrfs:ExplorationDataset:MissingVariables"</span>);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rejectsInvalidDiagnosisSchema(testCase)
+            diagnoses = table(<span class="keyword">...</span>
+                <span class="string">"BearingA"</span>, <span class="string">'VariableNames'</span>, {<span class="string">'Label'</span>});
+
+            builder = ContrastPolarityExplorationDatasetBuilder( <span class="keyword">...</span>
+                diagnosisTable = diagnoses);
+
+            ds = localEmptyEnsemble();
+
+            testCase.verifyError( <span class="keyword">...</span>
+                @() builder.buildFromEnsemble(ds), <span class="keyword">...</span>
+                ?MException);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rejectsEmptyEnsemble(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            testCase.verifyError( <span class="keyword">...</span>
+                @() b.buildFromEnsemble(ds), <span class="keyword">...</span>
+                <span class="string">"sfrfs:ExplorationDataset:EmptyEnsemble"</span>);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> ds = localEmptyEnsemble()
+<span class="comment">% Minimal in-memory datastore double for schema and empty-input checks.</span>
+    required = [<span class="string">"Label"</span>, <span class="string">"SnapshotIndex"</span>, <span class="string">"Speed"</span>, <span class="string">"Load"</span>, <span class="string">"Lifetime"</span>, <span class="keyword">...</span>
+        <span class="string">"HorizontalAcceleration"</span>, <span class="string">"VerticalAcceleration"</span>, <span class="keyword">...</span>
+        <span class="string">"HorizontalAcceleration_FFT"</span>, <span class="string">"VerticalAcceleration_FFT"</span>];
+    ds = ContrastPolarityEmptyEnsembleFixture(required);
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestContrastPolarityExplorationDatasetBuilder < matlab.unittest.TestCase
+%TESTCONTRASTPOLARITYEXPLORATIONDATASETBUILDER
+% Fast contract tests for the exploratory ensemble-to-channel builder.
+% These tests deliberately do not process the full XJTU-SY ensemble.
+% Numerical parity and saved MAT-file contents require a separate
+% integration comparison with the original experiment inputs.
+
+    methods (Test)
+        function defaultConfiguration(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            testCase.verifyEqual(b.QuantileLevel, 0.95);
+            testCase.verifyEqual(b.RiseRate, 1/7);
+            testCase.verifyEqual(b.FallRate, 1/49);
+            testCase.verifyEqual(b.FamilyNames, ...
+                ["BPFO", "BPFI", "BSF", "FTF"]);
+            testCase.verifyEqual(b.TemporalColumns, ...
+                ["HorizontalAcceleration", "VerticalAcceleration"]);
+            testCase.verifyEqual(b.SpectralColumns, ...
+                ["HorizontalAcceleration_FFT", "VerticalAcceleration_FFT"]);
+            testCase.verifyEmpty(b.DiagnosisTable);
+        end
+
+        function customConfiguration(testCase)
+            diagnoses = table("BearingA", true, false, false, false, ...
+                'VariableNames', {'Label', 'Failure_O', 'Failure_I', ...
+                'Failure_C', 'Failure_B'});
+            b = ContrastPolarityExplorationDatasetBuilder( ...
+                quantileLevel = 0.9, riseRate = 0.2, fallRate = 0.1, ...
+                epsEntropy = 1e-10, diagnosisTable = diagnoses);
+            testCase.verifyEqual(b.QuantileLevel, 0.9);
+            testCase.verifyEqual(b.RiseRate, 0.2);
+            testCase.verifyEqual(b.FallRate, 0.1);
+            testCase.verifyEqual(b.EntropyEpsilon, 1e-10);
+            testCase.verifyEqual(b.DiagnosisTable, diagnoses);
+        end
+
+        function rejectsUnsupportedFamilyOrder(testCase)
+            testCase.verifyError( ...
+                @() ContrastPolarityExplorationDatasetBuilder( ...
+                    familyNames = ["BPFI", "BPFO", "BSF", "FTF"]), ...
+                "sfrfs:ExplorationDataset:Families");
+        end
+
+        function explicitFileRequiresSaving(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            testCase.verifyError( ...
+                @() b.buildFromEnsemble(ds, ...
+                    outputFile = "my_dataset.mat"), ...
+                "sfrfs:ExplorationDataset:SaveNotEnabled");
+        end
+
+        function rejectsMissingDatastoreVariables(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            ds.DataVariables = "UnexpectedVariable";
+            testCase.verifyError( ...
+                @() b.buildFromEnsemble(ds), ...
+                "sfrfs:ExplorationDataset:MissingVariables");
+        end
+
+        function rejectsInvalidDiagnosisSchema(testCase)
+            diagnoses = table(...
+                "BearingA", 'VariableNames', {'Label'});
+
+            builder = ContrastPolarityExplorationDatasetBuilder( ...
+                diagnosisTable = diagnoses);
+
+            ds = localEmptyEnsemble();
+
+            testCase.verifyError( ...
+                @() builder.buildFromEnsemble(ds), ...
+                ?MException);
+        end
+
+        function rejectsEmptyEnsemble(testCase)
+            b = ContrastPolarityExplorationDatasetBuilder();
+            ds = localEmptyEnsemble();
+            testCase.verifyError( ...
+                @() b.buildFromEnsemble(ds), ...
+                "sfrfs:ExplorationDataset:EmptyEnsemble");
+        end
+    end
+end
+
+function ds = localEmptyEnsemble()
+% Minimal in-memory datastore double for schema and empty-input checks.
+    required = ["Label", "SnapshotIndex", "Speed", "Load", "Lifetime", ...
+        "HorizontalAcceleration", "VerticalAcceleration", ...
+        "HorizontalAcceleration_FFT", "VerticalAcceleration_FFT"];
+    ds = ContrastPolarityEmptyEnsembleFixture(required);
+end
+
+##### SOURCE END #####
+-->
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>OnOffContrastPolarityDetector</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="OnOffContrastPolarityDetector.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> OnOffContrastPolarityDetector
+<span class="comment">%ONOFFCONTRASTPOLARITYDETECTOR Detect signed contrast polarity ON/OFF events.</span>
+<span class="comment">%</span>
+<span class="comment">% Detects transitions between zero and nonzero harmonic contrasts,</span>
+<span class="comment">% preserving the polarity of the newly active or previously active</span>
+<span class="comment">% response in the corresponding ON or OFF event.</span>
+<span class="comment">%</span>
+<span class="comment">% Provides snapshot-wise detection, trajectory-wide signed event maps,</span>
+<span class="comment">% and per-harmonic positive and negative event counts.</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> [eOn, eOff] = detect(C, t)
+
+            <span class="keyword">arguments</span>
+                C <span class="typesection">{mustBeNumeric, mustBeReal}</span>
+                t <span class="typesection">(1,1) {mustBeInteger, mustBePositive}</span>
+            <span class="keyword">end</span>
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+            OnOffContrastPolarityDetector.mustHaveValidSnapshotIndex(C, t);
+
+            eOn = zeros(1, size(C, 2), <span class="string">"like"</span>, C);
+            eOff = zeros(1, size(C, 2), <span class="string">"like"</span>, C);
+
+            <span class="keyword">if</span> t == 1
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            previous = C(t - 1, :);
+            current = C(t, :);
+
+            previousSign = sign(previous);
+            currentSign = sign(current);
+
+            onMask = previousSign == 0 &amp; currentSign ~= 0;
+            offMask = previousSign ~= 0 &amp; currentSign == 0;
+
+            eOn(onMask) = currentSign(onMask);
+            eOff(offMask) = previousSign(offMask);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> [onMap, offMap] = detectAll(C)
+
+            <span class="keyword">arguments</span>
+                C <span class="typesection">{mustBeNumeric, mustBeReal}</span>
+            <span class="keyword">end</span>
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+
+            onMap = zeros(size(C), <span class="string">"like"</span>, C);
+            offMap = zeros(size(C), <span class="string">"like"</span>, C);
+
+            <span class="keyword">for</span> t = 1:size(C, 1)
+                [eOn, eOff] = <span class="keyword">...</span>
+                    OnOffContrastPolarityDetector.detect(C, t);
+
+                onMap(t, :) = eOn;
+                offMap(t, :) = eOff;
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> summary = summarize(C)
+
+            <span class="keyword">arguments</span>
+                C <span class="typesection">{mustBeNumeric, mustBeReal}</span>
+            <span class="keyword">end</span>
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+
+            [onMap, offMap] = <span class="keyword">...</span>
+                OnOffContrastPolarityDetector.detectAll(C);
+
+            summary = struct( <span class="keyword">...</span>
+                <span class="string">"OnMap"</span>, onMap, <span class="keyword">...</span>
+                <span class="string">"OffMap"</span>, offMap, <span class="keyword">...</span>
+                <span class="string">"PositiveOnCountPerHarmonic"</span>, <span class="keyword">...</span>
+                    sum(onMap &gt; 0, 1).', <span class="keyword">...</span>
+                <span class="string">"NegativeOnCountPerHarmonic"</span>, <span class="keyword">...</span>
+                    sum(onMap &lt; 0, 1).', <span class="keyword">...</span>
+                <span class="string">"PositiveOffCountPerHarmonic"</span>, <span class="keyword">...</span>
+                    sum(offMap &gt; 0, 1).', <span class="keyword">...</span>
+                <span class="string">"NegativeOffCountPerHarmonic"</span>, <span class="keyword">...</span>
+                    sum(offMap &lt; 0, 1).');
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> mustHaveValidTrajectory(C)
+
+            <span class="keyword">if</span> ~ismatrix(C) || isempty(C)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:OnOffContrastPolarityDetector:InvalidContrast"</span>, <span class="keyword">...</span>
+                    <span class="string">"Contrast trajectory must be a nonempty matrix."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> any(~isfinite(C(:)))
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:OnOffContrastPolarityDetector:InvalidContrast"</span>, <span class="keyword">...</span>
+                    <span class="string">"Contrast trajectory must contain only finite values."</span>);
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> mustHaveValidSnapshotIndex(C, t)
+
+            <span class="keyword">if</span> t &gt; size(C, 1)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:OnOffContrastPolarityDetector:InvalidSnapshot"</span>, <span class="keyword">...</span>
+                    <span class="string">"Snapshot index exceeds trajectory length."</span>);
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef OnOffContrastPolarityDetector
+%ONOFFCONTRASTPOLARITYDETECTOR Detect signed contrast polarity ON/OFF events.
+%
+% Detects transitions between zero and nonzero harmonic contrasts,
+% preserving the polarity of the newly active or previously active
+% response in the corresponding ON or OFF event.
+%
+% Provides snapshot-wise detection, trajectory-wide signed event maps,
+% and per-harmonic positive and negative event counts.
+
+    methods (Static)
+
+        function [eOn, eOff] = detect(C, t)
+
+            arguments
+                C {mustBeNumeric, mustBeReal}
+                t (1,1) {mustBeInteger, mustBePositive}
+            end
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+            OnOffContrastPolarityDetector.mustHaveValidSnapshotIndex(C, t);
+
+            eOn = zeros(1, size(C, 2), "like", C);
+            eOff = zeros(1, size(C, 2), "like", C);
+
+            if t == 1
+                return
+            end
+
+            previous = C(t - 1, :);
+            current = C(t, :);
+
+            previousSign = sign(previous);
+            currentSign = sign(current);
+
+            onMask = previousSign == 0 & currentSign ~= 0;
+            offMask = previousSign ~= 0 & currentSign == 0;
+
+            eOn(onMask) = currentSign(onMask);
+            eOff(offMask) = previousSign(offMask);
+
+        end
+
+        function [onMap, offMap] = detectAll(C)
+
+            arguments
+                C {mustBeNumeric, mustBeReal}
+            end
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+
+            onMap = zeros(size(C), "like", C);
+            offMap = zeros(size(C), "like", C);
+
+            for t = 1:size(C, 1)
+                [eOn, eOff] = ...
+                    OnOffContrastPolarityDetector.detect(C, t);
+
+                onMap(t, :) = eOn;
+                offMap(t, :) = eOff;
+            end
+
+        end
+
+        function summary = summarize(C)
+
+            arguments
+                C {mustBeNumeric, mustBeReal}
+            end
+
+            OnOffContrastPolarityDetector.mustHaveValidTrajectory(C);
+
+            [onMap, offMap] = ...
+                OnOffContrastPolarityDetector.detectAll(C);
+
+            summary = struct( ...
+                "OnMap", onMap, ...
+                "OffMap", offMap, ...
+                "PositiveOnCountPerHarmonic", ...
+                    sum(onMap > 0, 1).', ...
+                "NegativeOnCountPerHarmonic", ...
+                    sum(onMap < 0, 1).', ...
+                "PositiveOffCountPerHarmonic", ...
+                    sum(offMap > 0, 1).', ...
+                "NegativeOffCountPerHarmonic", ...
+                    sum(offMap < 0, 1).');
+
+        end
+
+    end
+
+    methods (Static, Access = private)
+
+        function mustHaveValidTrajectory(C)
+
+            if ~ismatrix(C) || isempty(C)
+                error( ...
+                    "sfrfs:OnOffContrastPolarityDetector:InvalidContrast", ...
+                    "Contrast trajectory must be a nonempty matrix.");
+            end
+
+            if any(~isfinite(C(:)))
+                error( ...
+                    "sfrfs:OnOffContrastPolarityDetector:InvalidContrast", ...
+                    "Contrast trajectory must contain only finite values.");
+            end
+
+        end
+
+        function mustHaveValidSnapshotIndex(C, t)
+
+            if t > size(C, 1)
+                error( ...
+                    "sfrfs:OnOffContrastPolarityDetector:InvalidSnapshot", ...
+                    "Snapshot index exceeds trajectory length.");
+            end
+
+        end
+
+    end
+
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

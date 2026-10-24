@@ -1,0 +1,924 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>TestContrastPolarityChannelDatasetBuilder</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="TestContrastPolarityChannelDatasetBuilder.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> TestContrastPolarityChannelDatasetBuilder &lt; matlab.unittest.TestCase
+
+    <span class="keyword">methods</span> (Test)
+
+        <span class="keyword">function</span> exposesExpectedSchemas(testCase)
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                ContrastPolarityChannelDatasetBuilder.ChannelNames, <span class="keyword">...</span>
+                [ <span class="keyword">...</span>
+                    <span class="string">"ResolvedContrast"</span>, <span class="keyword">...</span>
+                    <span class="string">"PolarityReversal"</span>, <span class="keyword">...</span>
+                    <span class="string">"OnPositive"</span>, <span class="keyword">...</span>
+                    <span class="string">"OnNegative"</span>, <span class="keyword">...</span>
+                    <span class="string">"OffPositive"</span>, <span class="keyword">...</span>
+                    <span class="string">"OffNegative"</span>]);
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                ContrastPolarityChannelDatasetBuilder.MatrixLayout, <span class="keyword">...</span>
+                [<span class="string">"snapshot"</span>, <span class="string">"harmonic"</span>]);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> rawContrastNamesAppendContrastSuffix(testCase)
+
+            names = <span class="keyword">...</span>
+                ContrastPolarityChannelDatasetBuilder.rawContrastNames( <span class="keyword">...</span>
+                    [<span class="string">"HorizontalAcceleration_FFT"</span>, <span class="keyword">...</span>
+                     <span class="string">"VerticalAcceleration_FFT"</span>]);
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                names, <span class="keyword">...</span>
+                [<span class="string">"HorizontalAcceleration_FFT_C"</span>, <span class="keyword">...</span>
+                 <span class="string">"VerticalAcceleration_FFT_C"</span>]);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsReturnsOneRowPerFamily(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            testCase.verifyEqual(height(rows), 2);
+            testCase.verifyEqual( <span class="keyword">...</span>
+                rows.MonitoredFaultFamily, <span class="keyword">...</span>
+                [<span class="string">"BPFO"</span>; <span class="string">"BPFI"</span>]);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsReturnsExpectedColumns(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            expectedColumns = [ <span class="keyword">...</span>
+                <span class="string">"Label"</span>, <span class="keyword">...</span>
+                <span class="string">"Speed"</span>, <span class="keyword">...</span>
+                <span class="string">"Load"</span>, <span class="keyword">...</span>
+                <span class="string">"Lifetime"</span>, <span class="keyword">...</span>
+                <span class="string">"MonitoredFaultFamily"</span>, <span class="keyword">...</span>
+                <span class="string">"HarmonicCount"</span>, <span class="keyword">...</span>
+                <span class="string">"Failure_O"</span>, <span class="keyword">...</span>
+                <span class="string">"Failure_I"</span>, <span class="keyword">...</span>
+                <span class="string">"Failure_C"</span>, <span class="keyword">...</span>
+                <span class="string">"Failure_B"</span>, <span class="keyword">...</span>
+                <span class="string">"HorizontalAcceleration_FFT_C"</span>, <span class="keyword">...</span>
+                <span class="string">"VerticalAcceleration_FFT_C"</span>, <span class="keyword">...</span>
+                <span class="string">"AgreementFloor"</span>, <span class="keyword">...</span>
+                <span class="string">"ResolvedContrast"</span>, <span class="keyword">...</span>
+                <span class="string">"PolarityReversal"</span>, <span class="keyword">...</span>
+                <span class="string">"OnPositive"</span>, <span class="keyword">...</span>
+                <span class="string">"OnNegative"</span>, <span class="keyword">...</span>
+                <span class="string">"OffPositive"</span>, <span class="keyword">...</span>
+                <span class="string">"OffNegative"</span>];
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                string(rows.Properties.VariableNames), <span class="keyword">...</span>
+                expectedColumns);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsReturnsMatrixChannels(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            <span class="keyword">for</span> i = 1:height(rows)
+
+                H = rows.HarmonicCount(i);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.HorizontalAcceleration_FFT_C{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.VerticalAcceleration_FFT_C{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.ResolvedContrast{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.PolarityReversal{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.OnPositive{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.OnNegative{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.OffPositive{i}, <span class="keyword">...</span>
+                    [4, H]);
+
+                testCase.verifySize( <span class="keyword">...</span>
+                    rows.OffNegative{i}, <span class="keyword">...</span>
+                    [4, H]);
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsReturnsAgreementFloorVector(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            <span class="keyword">for</span> i = 1:height(rows)
+
+                tau = rows.AgreementFloor{i};
+
+                testCase.verifySize(tau, [4, 1]);
+                testCase.verifyTrue(all(isfinite(tau)));
+                testCase.verifyGreaterThanOrEqual(tau, 0);
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsComputesBinaryEventChannels(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            eventNames = [ <span class="keyword">...</span>
+                <span class="string">"PolarityReversal"</span>, <span class="keyword">...</span>
+                <span class="string">"OnPositive"</span>, <span class="keyword">...</span>
+                <span class="string">"OnNegative"</span>, <span class="keyword">...</span>
+                <span class="string">"OffPositive"</span>, <span class="keyword">...</span>
+                <span class="string">"OffNegative"</span>];
+
+            <span class="keyword">for</span> i = 1:height(rows)
+                <span class="keyword">for</span> j = 1:numel(eventNames)
+
+                    E = rows.(eventNames(j)){i};
+
+                    testCase.verifyTrue( <span class="keyword">...</span>
+                        all(E(:) == 0 | E(:) == 1));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> buildMemberRowsCarriesMetadata(testCase)
+
+            [builder, FFTCols] = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = <span class="keyword">...</span>
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( <span class="keyword">...</span>
+                memberTable = memberTable, <span class="keyword">...</span>
+                spectralColumns = FFTCols, <span class="keyword">...</span>
+                receptiveFieldResponseBinder = <span class="keyword">...</span>
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), <span class="keyword">...</span>
+                contrastMapping = ContrastMappings.difference(), <span class="keyword">...</span>
+                quantileLevel = 0, <span class="keyword">...</span>
+                riseRate = 1, <span class="keyword">...</span>
+                fallRate = 1);
+
+            testCase.verifyEqual( <span class="keyword">...</span>
+                rows.Label, <span class="keyword">...</span>
+                repmat(<span class="string">"Bearing1_1"</span>, 2, 1));
+
+            testCase.verifyEqual(rows.Speed, repmat(35, 2, 1));
+            testCase.verifyEqual(rows.Load, repmat(12, 2, 1));
+            testCase.verifyEqual(rows.Lifetime, repmat(4, 2, 1));
+
+            testCase.verifyEqual(rows.Failure_O, ones(2, 1));
+            testCase.verifyEqual(rows.Failure_I, zeros(2, 1));
+            testCase.verifyEqual(rows.Failure_C, zeros(2, 1));
+            testCase.verifyEqual(rows.Failure_B, zeros(2, 1));
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> [builder, FFTCols] = localBuilder()
+
+            sp = ParametersSnapshot( <span class="keyword">...</span>
+                samplingFrequency = 25600, <span class="keyword">...</span>
+                duration = 1.28, <span class="keyword">...</span>
+                stride = 60);
+
+            bp = ParametersRollingBearings( <span class="keyword">...</span>
+                numRollingElements = 8, <span class="keyword">...</span>
+                ballDiameter = 7.92, <span class="keyword">...</span>
+                pitchDiameter = 34.55, <span class="keyword">...</span>
+                contactAngle = 0);
+
+            sel = OperatingConditionSelection(speed = 35, load = 12);
+            oc = OperatingConditions(35, 12);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( <span class="keyword">...</span>
+                order = 0, <span class="keyword">...</span>
+                numSidebands = 0, <span class="keyword">...</span>
+                numHarmonics = 3, <span class="keyword">...</span>
+                centerMask = SuperGaussianMaskParameters( <span class="keyword">...</span>
+                    alpha = 2, <span class="keyword">...</span>
+                    beta = 8), <span class="keyword">...</span>
+                surroundMask = SuperGaussianMaskParameters( <span class="keyword">...</span>
+                    alpha = 6, <span class="keyword">...</span>
+                    beta = 2), <span class="keyword">...</span>
+                inhibitionFactor = 1);
+
+            sfrfsParams = SFRFsParametersRollingBearings( <span class="keyword">...</span>
+                SameForAllFaultTypes = sharedParams);
+
+            bfb = BearingFrequencyBands( <span class="keyword">...</span>
+                bearingParams = bp, <span class="keyword">...</span>
+                sfrfsParams = sfrfsParams, <span class="keyword">...</span>
+                operatingConditions = oc);
+
+            ftOuter = string( <span class="keyword">...</span>
+                SFRFsParametersRollingBearings <span class="keyword">...</span>
+                    .OUTER_RACE_FAULT_TYPE_NAME);
+
+            ftInner = string( <span class="keyword">...</span>
+                SFRFsParametersRollingBearings <span class="keyword">...</span>
+                    .INNER_RACE_FAULT_TYPE_NAME);
+
+            fcOuter = bfb.getCentralFrequency( <span class="keyword">...</span>
+                BearingFrequencyBands.BPFO_CODE, <span class="keyword">...</span>
+                sel.speed);
+
+            fcInner = bfb.getCentralFrequency( <span class="keyword">...</span>
+                BearingFrequencyBands.BPFI_CODE, <span class="keyword">...</span>
+                sel.speed);
+
+            liftedOuter = LiftedHarmonicGainFunctions( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                sfrfsParameters = sfrfsParams, <span class="keyword">...</span>
+                faultType = ftOuter, <span class="keyword">...</span>
+                selection = sel, <span class="keyword">...</span>
+                characteristicFrequencyHz = fcOuter, <span class="keyword">...</span>
+                harmonicIndices = (1:3).');
+
+            liftedInner = LiftedHarmonicGainFunctions( <span class="keyword">...</span>
+                snapshotParameters = sp, <span class="keyword">...</span>
+                sfrfsParameters = sfrfsParams, <span class="keyword">...</span>
+                faultType = ftInner, <span class="keyword">...</span>
+                selection = sel, <span class="keyword">...</span>
+                characteristicFrequencyHz = fcInner, <span class="keyword">...</span>
+                harmonicIndices = (1:3).');
+
+            liftedOuter.compute();
+            liftedInner.compute();
+
+            builder = ContrastPolarityChannelDatasetBuilder( <span class="keyword">...</span>
+                liftedGainFunctionsByFamily = <span class="keyword">...</span>
+                    {liftedOuter, liftedInner}, <span class="keyword">...</span>
+                familyNames = [<span class="string">"BPFO"</span>, <span class="string">"BPFI"</span>]);
+
+            FFTCols = [ <span class="keyword">...</span>
+                <span class="string">"HorizontalAcceleration_FFT"</span>, <span class="keyword">...</span>
+                <span class="string">"VerticalAcceleration_FFT"</span>];
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> memberTable = localMemberTable()
+
+            sp = ParametersSnapshot( <span class="keyword">...</span>
+                samplingFrequency = 25600, <span class="keyword">...</span>
+                duration = 1.28, <span class="keyword">...</span>
+                stride = 60);
+
+            n = numel(sp.getFrequencyDomain());
+
+            Label = repmat(<span class="string">"Bearing1_1"</span>, 4, 1);
+            SnapshotIndex = (1:4).';
+            Speed = repmat(35, 4, 1);
+            Load = repmat(12, 4, 1);
+            Lifetime = repmat(4, 4, 1);
+
+            Failure_O = ones(4, 1);
+            Failure_I = zeros(4, 1);
+            Failure_C = zeros(4, 1);
+            Failure_B = zeros(4, 1);
+
+            HorizontalAcceleration_FFT = {
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 1.0)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 2.0)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 0.5)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 3.0)};
+
+            VerticalAcceleration_FFT = {
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 0.5)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 2.5)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 1.5)
+                TestContrastPolarityChannelDatasetBuilder <span class="keyword">...</span>
+                    .localSpectrum(n, 0.2)};
+
+            memberTable = table( <span class="keyword">...</span>
+                Label, <span class="keyword">...</span>
+                SnapshotIndex, <span class="keyword">...</span>
+                Speed, <span class="keyword">...</span>
+                Load, <span class="keyword">...</span>
+                Lifetime, <span class="keyword">...</span>
+                Failure_O, <span class="keyword">...</span>
+                Failure_I, <span class="keyword">...</span>
+                Failure_C, <span class="keyword">...</span>
+                Failure_B, <span class="keyword">...</span>
+                HorizontalAcceleration_FFT, <span class="keyword">...</span>
+                VerticalAcceleration_FFT);
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> X = localSpectrum(n, scale)
+
+            X = zeros(n, 1);
+            X(100:140) = scale;
+            X(200:240) = scale / 2;
+            X = complex(X, 0);
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef TestContrastPolarityChannelDatasetBuilder < matlab.unittest.TestCase
+
+    methods (Test)
+
+        function exposesExpectedSchemas(testCase)
+
+            testCase.verifyEqual( ...
+                ContrastPolarityChannelDatasetBuilder.ChannelNames, ...
+                [ ...
+                    "ResolvedContrast", ...
+                    "PolarityReversal", ...
+                    "OnPositive", ...
+                    "OnNegative", ...
+                    "OffPositive", ...
+                    "OffNegative"]);
+
+            testCase.verifyEqual( ...
+                ContrastPolarityChannelDatasetBuilder.MatrixLayout, ...
+                ["snapshot", "harmonic"]);
+
+        end
+
+        function rawContrastNamesAppendContrastSuffix(testCase)
+
+            names = ...
+                ContrastPolarityChannelDatasetBuilder.rawContrastNames( ...
+                    ["HorizontalAcceleration_FFT", ...
+                     "VerticalAcceleration_FFT"]);
+
+            testCase.verifyEqual( ...
+                names, ...
+                ["HorizontalAcceleration_FFT_C", ...
+                 "VerticalAcceleration_FFT_C"]);
+
+        end
+
+        function buildMemberRowsReturnsOneRowPerFamily(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            testCase.verifyEqual(height(rows), 2);
+            testCase.verifyEqual( ...
+                rows.MonitoredFaultFamily, ...
+                ["BPFO"; "BPFI"]);
+
+        end
+
+        function buildMemberRowsReturnsExpectedColumns(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            expectedColumns = [ ...
+                "Label", ...
+                "Speed", ...
+                "Load", ...
+                "Lifetime", ...
+                "MonitoredFaultFamily", ...
+                "HarmonicCount", ...
+                "Failure_O", ...
+                "Failure_I", ...
+                "Failure_C", ...
+                "Failure_B", ...
+                "HorizontalAcceleration_FFT_C", ...
+                "VerticalAcceleration_FFT_C", ...
+                "AgreementFloor", ...
+                "ResolvedContrast", ...
+                "PolarityReversal", ...
+                "OnPositive", ...
+                "OnNegative", ...
+                "OffPositive", ...
+                "OffNegative"];
+
+            testCase.verifyEqual( ...
+                string(rows.Properties.VariableNames), ...
+                expectedColumns);
+
+        end
+
+        function buildMemberRowsReturnsMatrixChannels(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            for i = 1:height(rows)
+
+                H = rows.HarmonicCount(i);
+
+                testCase.verifySize( ...
+                    rows.HorizontalAcceleration_FFT_C{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.VerticalAcceleration_FFT_C{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.ResolvedContrast{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.PolarityReversal{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.OnPositive{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.OnNegative{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.OffPositive{i}, ...
+                    [4, H]);
+
+                testCase.verifySize( ...
+                    rows.OffNegative{i}, ...
+                    [4, H]);
+            end
+
+        end
+
+        function buildMemberRowsReturnsAgreementFloorVector(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            for i = 1:height(rows)
+
+                tau = rows.AgreementFloor{i};
+
+                testCase.verifySize(tau, [4, 1]);
+                testCase.verifyTrue(all(isfinite(tau)));
+                testCase.verifyGreaterThanOrEqual(tau, 0);
+
+            end
+
+        end
+
+        function buildMemberRowsComputesBinaryEventChannels(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            eventNames = [ ...
+                "PolarityReversal", ...
+                "OnPositive", ...
+                "OnNegative", ...
+                "OffPositive", ...
+                "OffNegative"];
+
+            for i = 1:height(rows)
+                for j = 1:numel(eventNames)
+
+                    E = rows.(eventNames(j)){i};
+
+                    testCase.verifyTrue( ...
+                        all(E(:) == 0 | E(:) == 1));
+                end
+            end
+
+        end
+
+        function buildMemberRowsCarriesMetadata(testCase)
+
+            [builder, FFTCols] = ...
+                TestContrastPolarityChannelDatasetBuilder.localBuilder();
+
+            memberTable = ...
+                TestContrastPolarityChannelDatasetBuilder.localMemberTable();
+
+            rows = builder.buildMemberRows( ...
+                memberTable = memberTable, ...
+                spectralColumns = FFTCols, ...
+                receptiveFieldResponseBinder = ...
+                    ReceptiveFieldResponseFunctions.maskedMeanAbs(), ...
+                contrastMapping = ContrastMappings.difference(), ...
+                quantileLevel = 0, ...
+                riseRate = 1, ...
+                fallRate = 1);
+
+            testCase.verifyEqual( ...
+                rows.Label, ...
+                repmat("Bearing1_1", 2, 1));
+
+            testCase.verifyEqual(rows.Speed, repmat(35, 2, 1));
+            testCase.verifyEqual(rows.Load, repmat(12, 2, 1));
+            testCase.verifyEqual(rows.Lifetime, repmat(4, 2, 1));
+
+            testCase.verifyEqual(rows.Failure_O, ones(2, 1));
+            testCase.verifyEqual(rows.Failure_I, zeros(2, 1));
+            testCase.verifyEqual(rows.Failure_C, zeros(2, 1));
+            testCase.verifyEqual(rows.Failure_B, zeros(2, 1));
+
+        end
+
+    end
+
+    methods (Static, Access = private)
+
+        function [builder, FFTCols] = localBuilder()
+
+            sp = ParametersSnapshot( ...
+                samplingFrequency = 25600, ...
+                duration = 1.28, ...
+                stride = 60);
+
+            bp = ParametersRollingBearings( ...
+                numRollingElements = 8, ...
+                ballDiameter = 7.92, ...
+                pitchDiameter = 34.55, ...
+                contactAngle = 0);
+
+            sel = OperatingConditionSelection(speed = 35, load = 12);
+            oc = OperatingConditions(35, 12);
+
+            sharedParams = SFRFsParameters.buildSFRFsParameters( ...
+                order = 0, ...
+                numSidebands = 0, ...
+                numHarmonics = 3, ...
+                centerMask = SuperGaussianMaskParameters( ...
+                    alpha = 2, ...
+                    beta = 8), ...
+                surroundMask = SuperGaussianMaskParameters( ...
+                    alpha = 6, ...
+                    beta = 2), ...
+                inhibitionFactor = 1);
+
+            sfrfsParams = SFRFsParametersRollingBearings( ...
+                SameForAllFaultTypes = sharedParams);
+
+            bfb = BearingFrequencyBands( ...
+                bearingParams = bp, ...
+                sfrfsParams = sfrfsParams, ...
+                operatingConditions = oc);
+
+            ftOuter = string( ...
+                SFRFsParametersRollingBearings ...
+                    .OUTER_RACE_FAULT_TYPE_NAME);
+
+            ftInner = string( ...
+                SFRFsParametersRollingBearings ...
+                    .INNER_RACE_FAULT_TYPE_NAME);
+
+            fcOuter = bfb.getCentralFrequency( ...
+                BearingFrequencyBands.BPFO_CODE, ...
+                sel.speed);
+
+            fcInner = bfb.getCentralFrequency( ...
+                BearingFrequencyBands.BPFI_CODE, ...
+                sel.speed);
+
+            liftedOuter = LiftedHarmonicGainFunctions( ...
+                snapshotParameters = sp, ...
+                sfrfsParameters = sfrfsParams, ...
+                faultType = ftOuter, ...
+                selection = sel, ...
+                characteristicFrequencyHz = fcOuter, ...
+                harmonicIndices = (1:3).');
+
+            liftedInner = LiftedHarmonicGainFunctions( ...
+                snapshotParameters = sp, ...
+                sfrfsParameters = sfrfsParams, ...
+                faultType = ftInner, ...
+                selection = sel, ...
+                characteristicFrequencyHz = fcInner, ...
+                harmonicIndices = (1:3).');
+
+            liftedOuter.compute();
+            liftedInner.compute();
+
+            builder = ContrastPolarityChannelDatasetBuilder( ...
+                liftedGainFunctionsByFamily = ...
+                    {liftedOuter, liftedInner}, ...
+                familyNames = ["BPFO", "BPFI"]);
+
+            FFTCols = [ ...
+                "HorizontalAcceleration_FFT", ...
+                "VerticalAcceleration_FFT"];
+
+        end
+
+        function memberTable = localMemberTable()
+
+            sp = ParametersSnapshot( ...
+                samplingFrequency = 25600, ...
+                duration = 1.28, ...
+                stride = 60);
+
+            n = numel(sp.getFrequencyDomain());
+
+            Label = repmat("Bearing1_1", 4, 1);
+            SnapshotIndex = (1:4).';
+            Speed = repmat(35, 4, 1);
+            Load = repmat(12, 4, 1);
+            Lifetime = repmat(4, 4, 1);
+
+            Failure_O = ones(4, 1);
+            Failure_I = zeros(4, 1);
+            Failure_C = zeros(4, 1);
+            Failure_B = zeros(4, 1);
+
+            HorizontalAcceleration_FFT = {
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 1.0)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 2.0)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 0.5)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 3.0)};
+
+            VerticalAcceleration_FFT = {
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 0.5)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 2.5)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 1.5)
+                TestContrastPolarityChannelDatasetBuilder ...
+                    .localSpectrum(n, 0.2)};
+
+            memberTable = table( ...
+                Label, ...
+                SnapshotIndex, ...
+                Speed, ...
+                Load, ...
+                Lifetime, ...
+                Failure_O, ...
+                Failure_I, ...
+                Failure_C, ...
+                Failure_B, ...
+                HorizontalAcceleration_FFT, ...
+                VerticalAcceleration_FFT);
+
+        end
+
+        function X = localSpectrum(n, scale)
+
+            X = zeros(n, 1);
+            X(100:140) = scale;
+            X(200:240) = scale / 2;
+            X = complex(X, 0);
+
+        end
+
+    end
+
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

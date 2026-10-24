@@ -1,0 +1,702 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>LiftedHarmonicGainFunctions</title>
+<meta name="generator" content="MATLAB 26.1">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-10-24">
+<meta name="DC.source" content="LiftedHarmonicGainFunctions.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="keyword">classdef</span> LiftedHarmonicGainFunctions &lt; handle
+<span class="comment">%LiftedHarmonicGainFunctions</span>
+<span class="comment">%</span>
+<span class="comment">% Builds center/surround mask banks for selected harmonics of one</span>
+<span class="comment">% characteristic frequency.</span>
+
+    <span class="keyword">properties</span>
+        liftedGainFunctionsTable <span class="typesection">table </span>= table.empty
+        frequencyDomain <span class="typesection">double </span>= []
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span> (SetAccess = private)
+        snapshotParameters
+        sfrfsParameters
+        faultType <span class="typesection">string</span>
+        selection
+        characteristicFrequencyHz <span class="typesection">double</span>
+        harmonicIndices <span class="typesection">double</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = LiftedHarmonicGainFunctions(args)
+            <span class="keyword">arguments</span>
+                args.snapshotParameters <span class="typesection">(1,1) ParametersSnapshot</span>
+                args.sfrfsParameters <span class="typesection">(1,1) SFRFsParametersRollingBearings</span>
+                args.faultType <span class="typesection">(1,1) string</span>
+                args.selection <span class="typesection">(1,1) OperatingConditionSelection</span>
+                args.characteristicFrequencyHz <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive}</span>
+                args.harmonicIndices <span class="typesection">(:,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBeInteger, mustBePositive}</span> = double.empty(0, 1)
+            <span class="keyword">end</span>
+
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.sfrfsParameters = args.sfrfsParameters;
+            obj.faultType = args.faultType;
+            obj.selection = args.selection;
+            obj.characteristicFrequencyHz = <span class="keyword">...</span>
+                args.characteristicFrequencyHz;
+
+            obj.harmonicIndices = obj.resolveHarmonicIndices( <span class="keyword">...</span>
+                harmonicIndices = args.harmonicIndices, <span class="keyword">...</span>
+                characteristicFrequencyHz = <span class="keyword">...</span>
+                    args.characteristicFrequencyHz, <span class="keyword">...</span>
+                snapshotParameters = args.snapshotParameters);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> compute(obj)
+            f = obj.snapshotParameters.getFrequencyDomain();
+            obj.frequencyDomain = f(:);
+
+            p = obj.sfrfsParameters.(obj.faultType);
+            centerParams = p.centerMask;
+            surroundParams = p.surroundMask;
+
+            alphaC = obj.getHalfWidth(centerParams);
+            alphaS = obj.getHalfWidth(surroundParams);
+
+            h = obj.harmonicIndices;
+            nH = numel(h);
+
+            CenterFrequencyHz = h .* obj.characteristicFrequencyHz;
+            CenterBandHz = cell(nH, 1);
+            SurroundBandHz = cell(nH, 1);
+            FrequencyBankMasks = cell(nH, 1);
+
+            <span class="keyword">for</span> i = 1:nH
+                fc = CenterFrequencyHz(i);
+
+                centerBand = [fc - alphaC, fc + alphaC];
+                surroundBand = [fc - alphaS, fc + alphaS];
+
+                centerMask = FrequencyMask.evaluate( <span class="keyword">...</span>
+                    obj.frequencyDomain, <span class="keyword">...</span>
+                    centerBand, <span class="keyword">...</span>
+                    centerParams);
+
+                surroundMask = FrequencyMask.evaluate( <span class="keyword">...</span>
+                    obj.frequencyDomain, <span class="keyword">...</span>
+                    surroundBand, <span class="keyword">...</span>
+                    surroundParams);
+
+                CenterBandHz{i} = centerBand;
+                SurroundBandHz{i} = surroundBand;
+
+                FrequencyBankMasks{i} = struct( <span class="keyword">...</span>
+                    <span class="string">"CenterMask"</span>, centerMask, <span class="keyword">...</span>
+                    <span class="string">"SurroundMask"</span>, surroundMask);
+            <span class="keyword">end</span>
+
+            FaultType = repmat(obj.faultType, nH, 1);
+            HarmonicIndex = h;
+
+            obj.liftedGainFunctionsTable = table( <span class="keyword">...</span>
+                FaultType, <span class="keyword">...</span>
+                HarmonicIndex, <span class="keyword">...</span>
+                CenterFrequencyHz, <span class="keyword">...</span>
+                CenterBandHz, <span class="keyword">...</span>
+                SurroundBandHz, <span class="keyword">...</span>
+                FrequencyBankMasks);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static)
+
+        <span class="keyword">function</span> maxHarmonic = computeMaxHarmonicIndex(args)
+            <span class="keyword">arguments</span>
+                args.snapshotParameters <span class="typesection">(1,1) ParametersSnapshot</span>
+                args.characteristicFrequencyHz <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive}</span>
+            <span class="keyword">end</span>
+
+            f = args.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+            f = f(isfinite(f));
+
+            <span class="keyword">if</span> isempty(f)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain"</span>, <span class="keyword">...</span>
+                    <span class="string">"The frequency domain must contain finite values."</span>);
+            <span class="keyword">end</span>
+
+            fNyquist = <span class="keyword">...</span>
+                LiftedHarmonicGainFunctions.getNyquistFrequency( <span class="keyword">...</span>
+                    args.snapshotParameters, <span class="keyword">...</span>
+                    f);
+
+            nSupport = <span class="keyword">...</span>
+                LiftedHarmonicGainFunctions.getPositiveSupportSize( <span class="keyword">...</span>
+                    f, <span class="keyword">...</span>
+                    fNyquist);
+
+            maxByFrequency = floor( <span class="keyword">...</span>
+                fNyquist / args.characteristicFrequencyHz);
+
+            maxByBins = max(nSupport, 0);
+
+            maxHarmonic = min(maxByFrequency, maxByBins);
+
+            <span class="keyword">if</span> maxHarmonic &lt; 1
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:NoHarmonics"</span>, <span class="keyword">...</span>
+                    <span class="string">"No harmonic lies within the usable frequency support."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span> (Static, Access = private)
+
+        <span class="keyword">function</span> harmonicIndices = resolveHarmonicIndices(args)
+            <span class="keyword">arguments</span>
+                args.harmonicIndices <span class="typesection">(:,1) double</span>
+                args.characteristicFrequencyHz <span class="typesection">(1,1) double </span><span class="keyword">...</span>
+                    <span class="typesection">{mustBePositive}</span>
+                args.snapshotParameters <span class="typesection">(1,1) ParametersSnapshot</span>
+            <span class="keyword">end</span>
+
+            f = args.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+            f = f(isfinite(f));
+
+            <span class="keyword">if</span> isempty(f)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain"</span>, <span class="keyword">...</span>
+                    <span class="string">"The frequency domain must contain finite values."</span>);
+            <span class="keyword">end</span>
+
+            fNyquist = <span class="keyword">...</span>
+                LiftedHarmonicGainFunctions.getNyquistFrequency( <span class="keyword">...</span>
+                    args.snapshotParameters, <span class="keyword">...</span>
+                    f);
+
+            nSupport = <span class="keyword">...</span>
+                LiftedHarmonicGainFunctions.getPositiveSupportSize( <span class="keyword">...</span>
+                    f, <span class="keyword">...</span>
+                    fNyquist);
+
+            maxByFrequency = floor( <span class="keyword">...</span>
+                fNyquist / args.characteristicFrequencyHz);
+
+            maxByBins = max(nSupport, 0);
+
+            maxHarmonic = min(maxByFrequency, maxByBins);
+
+            <span class="keyword">if</span> maxHarmonic &lt; 1
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:NoHarmonics"</span>, <span class="keyword">...</span>
+                    <span class="string">"No harmonic lies within the usable frequency support."</span>);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isempty(args.harmonicIndices)
+                harmonicIndices = (1:maxHarmonic).';
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            harmonicIndices = args.harmonicIndices(:);
+
+            <span class="keyword">if</span> any(harmonicIndices &gt; maxHarmonic)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:HarmonicRange"</span>, <span class="keyword">...</span>
+                    <span class="string">"Requested harmonics exceed the computable maximum."</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fNyquist = getNyquistFrequency(snapshotParameters, f)
+            fs = LiftedHarmonicGainFunctions.getSamplingFrequency( <span class="keyword">...</span>
+                snapshotParameters);
+
+            <span class="keyword">if</span> isfinite(fs) &amp;&amp; fs &gt; 0
+                fNyquist = fs / 2;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            fNonnegative = f(f &gt;= 0);
+
+            <span class="keyword">if</span> isempty(fNonnegative)
+                error( <span class="keyword">...</span>
+                    <span class="string">"sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain"</span>, <span class="keyword">...</span>
+                    <span class="string">"The frequency domain has no nonnegative values."</span>);
+            <span class="keyword">end</span>
+
+            fNyquist = max(fNonnegative);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> fs = getSamplingFrequency(snapshotParameters)
+            fs = NaN;
+
+            <span class="keyword">if</span> isprop(snapshotParameters, <span class="string">"samplingFrequencyHz"</span>)
+                fs = snapshotParameters.samplingFrequencyHz;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isprop(snapshotParameters, <span class="string">"samplingFrequency"</span>)
+                fs = snapshotParameters.samplingFrequency;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isprop(snapshotParameters, <span class="string">"fs"</span>)
+                fs = snapshotParameters.fs;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isprop(snapshotParameters, <span class="string">"Fs"</span>)
+                fs = snapshotParameters.Fs;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ismethod(snapshotParameters, <span class="string">"getSamplingFrequencyHz"</span>)
+                fs = snapshotParameters.getSamplingFrequencyHz();
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ismethod(snapshotParameters, <span class="string">"getSamplingFrequency"</span>)
+                fs = snapshotParameters.getSamplingFrequency();
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> nSupport = getPositiveSupportSize(f, fNyquist)
+            f = f(:);
+            f = f(isfinite(f));
+
+            <span class="keyword">if</span> isempty(f)
+                nSupport = 0;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            fNonnegative = f(f &gt;= 0);
+            tol = LiftedHarmonicGainFunctions.frequencyTolerance(fNyquist);
+
+            <span class="keyword">if</span> isempty(fNonnegative)
+                nSupport = 0;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> max(fNonnegative) &gt; fNyquist + tol
+                nSupport = floor(numel(f) / 2);
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            nSupport = nnz(fNonnegative &lt;= fNyquist + tol);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> tol = frequencyTolerance(fNyquist)
+            tol = max(1e-9, 1e-9 * abs(fNyquist));
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> w = getHalfWidth(maskParams)
+            <span class="keyword">if</span> isprop(maskParams, <span class="string">"alpha"</span>)
+                w = maskParams.alpha;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> isprop(maskParams, <span class="string">"bandwidth"</span>)
+                w = maskParams.bandwidth / 2;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+
+            error( <span class="keyword">...</span>
+                <span class="string">"sfrfs:LiftedHarmonicGainFunctions:InvalidMaskParams"</span>, <span class="keyword">...</span>
+                <span class="string">"Mask parameters must expose alpha or bandwidth."</span>);
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2026a</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+classdef LiftedHarmonicGainFunctions < handle
+%LiftedHarmonicGainFunctions
+%
+% Builds center/surround mask banks for selected harmonics of one
+% characteristic frequency.
+
+    properties
+        liftedGainFunctionsTable table = table.empty
+        frequencyDomain double = []
+    end
+
+    properties (SetAccess = private)
+        snapshotParameters
+        sfrfsParameters
+        faultType string
+        selection
+        characteristicFrequencyHz double
+        harmonicIndices double
+    end
+
+    methods
+        function obj = LiftedHarmonicGainFunctions(args)
+            arguments
+                args.snapshotParameters (1,1) ParametersSnapshot
+                args.sfrfsParameters (1,1) SFRFsParametersRollingBearings
+                args.faultType (1,1) string
+                args.selection (1,1) OperatingConditionSelection
+                args.characteristicFrequencyHz (1,1) double ...
+                    {mustBePositive}
+                args.harmonicIndices (:,1) double ...
+                    {mustBeInteger, mustBePositive} = double.empty(0, 1)
+            end
+
+            obj.snapshotParameters = args.snapshotParameters;
+            obj.sfrfsParameters = args.sfrfsParameters;
+            obj.faultType = args.faultType;
+            obj.selection = args.selection;
+            obj.characteristicFrequencyHz = ...
+                args.characteristicFrequencyHz;
+
+            obj.harmonicIndices = obj.resolveHarmonicIndices( ...
+                harmonicIndices = args.harmonicIndices, ...
+                characteristicFrequencyHz = ...
+                    args.characteristicFrequencyHz, ...
+                snapshotParameters = args.snapshotParameters);
+        end
+
+        function compute(obj)
+            f = obj.snapshotParameters.getFrequencyDomain();
+            obj.frequencyDomain = f(:);
+
+            p = obj.sfrfsParameters.(obj.faultType);
+            centerParams = p.centerMask;
+            surroundParams = p.surroundMask;
+
+            alphaC = obj.getHalfWidth(centerParams);
+            alphaS = obj.getHalfWidth(surroundParams);
+
+            h = obj.harmonicIndices;
+            nH = numel(h);
+
+            CenterFrequencyHz = h .* obj.characteristicFrequencyHz;
+            CenterBandHz = cell(nH, 1);
+            SurroundBandHz = cell(nH, 1);
+            FrequencyBankMasks = cell(nH, 1);
+
+            for i = 1:nH
+                fc = CenterFrequencyHz(i);
+
+                centerBand = [fc - alphaC, fc + alphaC];
+                surroundBand = [fc - alphaS, fc + alphaS];
+
+                centerMask = FrequencyMask.evaluate( ...
+                    obj.frequencyDomain, ...
+                    centerBand, ...
+                    centerParams);
+
+                surroundMask = FrequencyMask.evaluate( ...
+                    obj.frequencyDomain, ...
+                    surroundBand, ...
+                    surroundParams);
+
+                CenterBandHz{i} = centerBand;
+                SurroundBandHz{i} = surroundBand;
+
+                FrequencyBankMasks{i} = struct( ...
+                    "CenterMask", centerMask, ...
+                    "SurroundMask", surroundMask);
+            end
+
+            FaultType = repmat(obj.faultType, nH, 1);
+            HarmonicIndex = h;
+
+            obj.liftedGainFunctionsTable = table( ...
+                FaultType, ...
+                HarmonicIndex, ...
+                CenterFrequencyHz, ...
+                CenterBandHz, ...
+                SurroundBandHz, ...
+                FrequencyBankMasks);
+        end
+    end
+
+    methods (Static)
+
+        function maxHarmonic = computeMaxHarmonicIndex(args)
+            arguments
+                args.snapshotParameters (1,1) ParametersSnapshot
+                args.characteristicFrequencyHz (1,1) double ...
+                    {mustBePositive}
+            end
+    
+            f = args.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+            f = f(isfinite(f));
+    
+            if isempty(f)
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain", ...
+                    "The frequency domain must contain finite values.");
+            end
+    
+            fNyquist = ...
+                LiftedHarmonicGainFunctions.getNyquistFrequency( ...
+                    args.snapshotParameters, ...
+                    f);
+    
+            nSupport = ...
+                LiftedHarmonicGainFunctions.getPositiveSupportSize( ...
+                    f, ...
+                    fNyquist);
+    
+            maxByFrequency = floor( ...
+                fNyquist / args.characteristicFrequencyHz);
+    
+            maxByBins = max(nSupport, 0);
+    
+            maxHarmonic = min(maxByFrequency, maxByBins);
+    
+            if maxHarmonic < 1
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:NoHarmonics", ...
+                    "No harmonic lies within the usable frequency support.");
+            end
+        end
+    
+    end
+
+    methods (Static, Access = private)
+
+        function harmonicIndices = resolveHarmonicIndices(args)
+            arguments
+                args.harmonicIndices (:,1) double
+                args.characteristicFrequencyHz (1,1) double ...
+                    {mustBePositive}
+                args.snapshotParameters (1,1) ParametersSnapshot
+            end
+
+            f = args.snapshotParameters.getFrequencyDomain();
+            f = f(:);
+            f = f(isfinite(f));
+
+            if isempty(f)
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain", ...
+                    "The frequency domain must contain finite values.");
+            end
+
+            fNyquist = ...
+                LiftedHarmonicGainFunctions.getNyquistFrequency( ...
+                    args.snapshotParameters, ...
+                    f);
+
+            nSupport = ...
+                LiftedHarmonicGainFunctions.getPositiveSupportSize( ...
+                    f, ...
+                    fNyquist);
+
+            maxByFrequency = floor( ...
+                fNyquist / args.characteristicFrequencyHz);
+
+            maxByBins = max(nSupport, 0);
+
+            maxHarmonic = min(maxByFrequency, maxByBins);
+
+            if maxHarmonic < 1
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:NoHarmonics", ...
+                    "No harmonic lies within the usable frequency support.");
+            end
+
+            if isempty(args.harmonicIndices)
+                harmonicIndices = (1:maxHarmonic).';
+                return
+            end
+
+            harmonicIndices = args.harmonicIndices(:);
+
+            if any(harmonicIndices > maxHarmonic)
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:HarmonicRange", ...
+                    "Requested harmonics exceed the computable maximum.");
+            end
+        end
+
+        function fNyquist = getNyquistFrequency(snapshotParameters, f)
+            fs = LiftedHarmonicGainFunctions.getSamplingFrequency( ...
+                snapshotParameters);
+
+            if isfinite(fs) && fs > 0
+                fNyquist = fs / 2;
+                return
+            end
+
+            fNonnegative = f(f >= 0);
+
+            if isempty(fNonnegative)
+                error( ...
+                    "sfrfs:LiftedHarmonicGainFunctions:InvalidFreqDomain", ...
+                    "The frequency domain has no nonnegative values.");
+            end
+
+            fNyquist = max(fNonnegative);
+        end
+
+        function fs = getSamplingFrequency(snapshotParameters)
+            fs = NaN;
+
+            if isprop(snapshotParameters, "samplingFrequencyHz")
+                fs = snapshotParameters.samplingFrequencyHz;
+                return
+            end
+
+            if isprop(snapshotParameters, "samplingFrequency")
+                fs = snapshotParameters.samplingFrequency;
+                return
+            end
+
+            if isprop(snapshotParameters, "fs")
+                fs = snapshotParameters.fs;
+                return
+            end
+
+            if isprop(snapshotParameters, "Fs")
+                fs = snapshotParameters.Fs;
+                return
+            end
+
+            if ismethod(snapshotParameters, "getSamplingFrequencyHz")
+                fs = snapshotParameters.getSamplingFrequencyHz();
+                return
+            end
+
+            if ismethod(snapshotParameters, "getSamplingFrequency")
+                fs = snapshotParameters.getSamplingFrequency();
+            end
+        end
+
+        function nSupport = getPositiveSupportSize(f, fNyquist)
+            f = f(:);
+            f = f(isfinite(f));
+
+            if isempty(f)
+                nSupport = 0;
+                return
+            end
+
+            fNonnegative = f(f >= 0);
+            tol = LiftedHarmonicGainFunctions.frequencyTolerance(fNyquist);
+
+            if isempty(fNonnegative)
+                nSupport = 0;
+                return
+            end
+
+            if max(fNonnegative) > fNyquist + tol
+                nSupport = floor(numel(f) / 2);
+                return
+            end
+
+            nSupport = nnz(fNonnegative <= fNyquist + tol);
+        end
+
+        function tol = frequencyTolerance(fNyquist)
+            tol = max(1e-9, 1e-9 * abs(fNyquist));
+        end
+
+        function w = getHalfWidth(maskParams)
+            if isprop(maskParams, "alpha")
+                w = maskParams.alpha;
+                return
+            end
+
+            if isprop(maskParams, "bandwidth")
+                w = maskParams.bandwidth / 2;
+                return
+            end
+
+            error( ...
+                "sfrfs:LiftedHarmonicGainFunctions:InvalidMaskParams", ...
+                "Mask parameters must expose alpha or bandwidth.");
+        end
+
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>
