@@ -210,19 +210,39 @@ export _JAVA_OPTIONS='-Djava.util.logging.SimpleFormatter.format="%1$tF %1$tT %4
 
 For further theoretical background and computational methods, see:
 
-- Stan Muñoz Gutiérrez and Franz Wotawa. Spectral Contrast Polarity Analysis and Adaptive Sensor Fusion for Bearing Degradation Monitoring. In Proceedings of DSA 2026. IEEE (2026).
 
-- Stan Muñoz Gutiérrez and Franz Wotawa. Optimized Spectral Fault Receptive
-Fields for Diagnosis-Informed Prognosis. In 36th International Conference on
-Principles of Diagnosis and Resilient Systems (DX 2025). Open Access Series in
-Informatics (OASIcs), Volume 136, pp. 9:1-9:20, Schloss Dagstuhl –
-Leibniz-Zentrum für Informatik (2025) 
-[DOI:10.4230/OASIcs.DX.2025.9](https://doi.org/10.4230/OASIcs.DX.2025.9).
- 
-- Stan Muñoz Gutiérrez and Franz Wotawa. A Qualitative Study on the 
-Applicability and Optimization of Spectral Fault Receptive Fields for Condition
-Monitoring and Prognosis (1.0). Zenodo. (2025)
-[DOI:10.5281/zenodo.15660819](https://doi.org/10.5281/zenodo.15660819)
+## Further reading
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. **Spectral Fault Receptive Fields:
+  A MATLAB Toolbox for Health Monitoring of Rotating Machinery.** In *Advances
+  and Trends in Artificial Intelligence: Theory and Applications*, IEA/AIE
+  2026 Proceedings, Lecture Notes in Computer Science, vol. 16616,
+  pp. 80–91. Springer (2027).
+  [DOI: 10.1007/978-981-92-2888-1_7](https://doi.org/10.1007/978-981-92-2888-1_7).
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. **Spectral Contrast Polarity Analysis
+  and Adaptive Sensor Fusion for Bearing Degradation Monitoring.** In
+  *Proceedings of the 2026 13th International Conference on Dependable Systems
+  and Their Applications (DSA 2026)*. IEEE Conference Publishing Services
+  (CPS) (2026).
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. **A Formal Framework for Spectral
+  Fault Receptive Fields (with Examples for Bearing Health Monitoring).**
+  Zenodo (2026).
+  [DOI: 10.5281/zenodo.22844916](https://doi.org/10.5281/zenodo.22844916).
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. **Optimized Spectral Fault Receptive
+  Fields for Diagnosis-Informed Prognosis.** In *Proceedings of the 36th
+  International Conference on Principles of Diagnosis and Resilient Systems
+  (DX 2025)*, Open Access Series in Informatics (OASIcs), vol. 136,
+  pp. 9:1–9:20. Schloss Dagstuhl – Leibniz-Zentrum für Informatik (2025).
+  [DOI: 10.4230/OASIcs.DX.2025.9](https://doi.org/10.4230/OASIcs.DX.2025.9).
+
+- Stan Muñoz Gutiérrez and Franz Wotawa. **A Qualitative Study on the
+  Applicability and Optimization of Spectral Fault Receptive Fields for
+  Condition Monitoring and Prognosis (Version 1.0).** Zenodo (2025).
+  [DOI: 10.5281/zenodo.15660819](https://doi.org/10.5281/zenodo.15660819).
+
 
 ## Toolbox OOP design
 SFRFs toolbox is an object-oriented implementation in MATLAB.  
